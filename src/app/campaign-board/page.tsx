@@ -75,7 +75,7 @@ export default function CampaignBoardPage() {
           profiles (full_name)
         `)
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
       if (campaignsError) throw campaignsError
@@ -95,7 +95,7 @@ export default function CampaignBoardPage() {
               .from('playbook_steps')
               .select('id')
               .eq('playbook_template_id', campaign.playbook_template_id)
-              .eq('deleted_at', null)
+              .is('deleted_at', null)
 
             if (!stepsError) {
               totalSteps = steps?.length || 0
@@ -108,7 +108,7 @@ export default function CampaignBoardPage() {
             .select('*')
             .eq('campaign_id', campaign.id)
             .eq('status', 'scheduled')
-            .eq('deleted_at', null)
+            .is('deleted_at', null)
             .order('scheduled_date', { ascending: true })
             .limit(1)
             .single()
@@ -129,7 +129,7 @@ export default function CampaignBoardPage() {
         .from('markets')
         .select('*')
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (marketsError) throw marketsError
@@ -140,7 +140,7 @@ export default function CampaignBoardPage() {
         .from('verticals')
         .select('*')
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (verticalsError) throw verticalsError

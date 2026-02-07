@@ -56,7 +56,7 @@ export default function CompetitorsPage() {
         .from('markets')
         .select('*')
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (marketsError) throw marketsError
@@ -103,7 +103,7 @@ export default function CompetitorsPage() {
         `)
         .eq('organization_id', currentOrgId)
         .eq('market_id', selectedMarketId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (companiesError) throw companiesError

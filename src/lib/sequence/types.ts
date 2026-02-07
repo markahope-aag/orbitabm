@@ -7,8 +7,6 @@ import type {
   PlaybookTemplateRow,
   ActivityRow,
   PlaybookStepRow,
-  EmailTemplateRow,
-  AssetRow,
   ProfileRow,
 } from '@/lib/types/database'
 

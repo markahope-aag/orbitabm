@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let query = supabase
+    const query = supabase
       .from('markets')
       .select('*')
       .eq('organization_id', organizationId)
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
       .range(offset, offset + limit - 1)
 
     const { data, error, count } = await query
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       error: null
     })
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       error: null
     })
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

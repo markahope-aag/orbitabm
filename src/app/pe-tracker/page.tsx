@@ -101,7 +101,7 @@ export default function PETrackerPage() {
           pe_acquisitions (count)
         `)
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (platformsError) throw platformsError
@@ -124,7 +124,7 @@ export default function PETrackerPage() {
           )
         `)
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('acquisition_date', { ascending: false })
 
       if (acquisitionsError) throw acquisitionsError
@@ -140,7 +140,7 @@ export default function PETrackerPage() {
           verticals (name)
         `)
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (companiesError) throw companiesError

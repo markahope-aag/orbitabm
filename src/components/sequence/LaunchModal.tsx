@@ -1,6 +1,6 @@
 'use client'
 
-import { X, CheckCircle, AlertTriangle, Rocket } from 'lucide-react'
+import { AlertTriangle, Rocket } from 'lucide-react'
 import type { ChecklistItem } from '@/lib/sequence/types'
 
 interface LaunchModalProps {

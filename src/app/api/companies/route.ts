@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,9 +15,10 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0')
 
     if (!organizationId) {
-      return NextResponse.json(
-        { error: 'organization_id is required' },
-        { status: 400 }
+      throw new ApiError(
+        'Organization ID is required',
+        ERROR_CODES.VALIDATION_ERROR,
+        400
       )
     }
 
@@ -28,7 +30,7 @@ export async function GET(request: NextRequest) {
         verticals (name)
       `)
       .eq('organization_id', organizationId)
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
 
     // Apply filters
     if (marketId) query = query.eq('market_id', marketId)
@@ -41,21 +43,38 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query
 
     if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
+      throw new ApiError(
+        'Failed to fetch companies',
+        ERROR_CODES.DATABASE_ERROR,
+        500,
+        error
       )
     }
 
     return NextResponse.json({
       data,
       count,
-      error: null
+      success: true
     })
 
   } catch (error) {
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { 
+          error: error.message, 
+          code: error.code,
+          success: false 
+        },
+        { status: error.statusCode }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error', 
+        code: ERROR_CODES.SERVER_ERROR,
+        success: false 
+      },
       { status: 500 }
     )
   }
@@ -66,6 +85,15 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const body = await request.json()
 
+    // Basic validation
+    if (!body.name || !body.organization_id) {
+      throw new ApiError(
+        'Name and organization_id are required',
+        ERROR_CODES.VALIDATION_ERROR,
+        400
+      )
+    }
+
     const { data, error } = await supabase
       .from('companies')
       .insert([body])
@@ -73,20 +101,47 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
+      // Handle specific database errors
+      if (error.code === '23505') { // Unique constraint violation
+        throw new ApiError(
+          'A company with this name already exists',
+          ERROR_CODES.DUPLICATE_ENTRY,
+          409,
+          error
+        )
+      }
+      
+      throw new ApiError(
+        'Failed to create company',
+        ERROR_CODES.DATABASE_ERROR,
+        400,
+        error
       )
     }
 
     return NextResponse.json({
       data,
-      error: null
+      success: true
     })
 
   } catch (error) {
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { 
+          error: error.message, 
+          code: error.code,
+          success: false 
+        },
+        { status: error.statusCode }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error', 
+        code: ERROR_CODES.SERVER_ERROR,
+        success: false 
+      },
       { status: 500 }
     )
   }

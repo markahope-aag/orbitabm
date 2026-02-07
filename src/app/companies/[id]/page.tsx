@@ -26,7 +26,7 @@ interface ContactWithCompany extends ContactRow {
 
 interface CampaignWithCompany extends CampaignRow {
   companies?: { name: string }
-  playbooks?: { name: string }
+  playbook_templates?: { name: string }
 }
 
 interface AssetWithCompany extends AssetRow {
@@ -70,7 +70,7 @@ export default function CompanyDetailPage() {
           verticals (name)
         `)
         .eq('id', companyId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .single()
 
       if (companyError) throw companyError
@@ -87,7 +87,7 @@ export default function CompanyDetailPage() {
           companies (name)
         `)
         .eq('company_id', companyId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('is_primary', { ascending: false })
 
       if (contactsError) throw contactsError
@@ -99,10 +99,10 @@ export default function CompanyDetailPage() {
         .select(`
           *,
           companies (name),
-          playbooks (name)
+          playbook_templates (name)
         `)
         .eq('company_id', companyId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
       if (campaignsError) throw campaignsError
@@ -113,7 +113,7 @@ export default function CompanyDetailPage() {
         .from('digital_snapshots')
         .select('*')
         .eq('company_id', companyId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('snapshot_date', { ascending: false })
 
       if (snapshotsError) throw snapshotsError
@@ -127,7 +127,7 @@ export default function CompanyDetailPage() {
           companies (name)
         `)
         .eq('company_id', companyId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
       if (assetsError) throw assetsError
@@ -145,8 +145,8 @@ export default function CompanyDetailPage() {
           .eq('market_id', companyData.market_id)
           .eq('vertical_id', companyData.vertical_id)
           .neq('id', companyId)
-          .eq('deleted_at', null)
-          .order('annual_revenue', { ascending: false })
+          .is('deleted_at', null)
+          .order('estimated_revenue', { ascending: false })
 
         if (competitorsError) throw competitorsError
         setCompetitors(competitorsData as CompanyWithRelations[] || [])
@@ -506,7 +506,7 @@ export default function CompanyDetailPage() {
                 {
                   key: 'playbook_name',
                   header: 'Playbook',
-                  render: (row) => (row as unknown as CampaignWithCompany).playbooks?.name || 'N/A'
+                  render: (row) => (row as unknown as CampaignWithCompany).playbook_templates?.name || 'N/A'
                 }
               ]}
               searchable={false}

@@ -105,7 +105,7 @@ export default function CampaignsPage() {
           profiles (full_name)
         `)
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
       if (campaignsError) throw campaignsError
@@ -118,7 +118,7 @@ export default function CampaignsPage() {
               .from('playbook_steps')
               .select('id')
               .eq('playbook_template_id', campaign.playbook_template_id)
-              .eq('deleted_at', null)
+              .is('deleted_at', null)
 
             if (stepsError) {
               console.error('Error fetching steps for campaign:', stepsError)
@@ -145,7 +145,7 @@ export default function CampaignsPage() {
           verticals (name)
         `)
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (companiesError) throw companiesError
@@ -175,7 +175,7 @@ export default function CampaignsPage() {
         .from('markets')
         .select('*')
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (marketsError) throw marketsError
@@ -186,7 +186,7 @@ export default function CampaignsPage() {
         .from('verticals')
         .select('*')
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (verticalsError) throw verticalsError
@@ -198,7 +198,7 @@ export default function CampaignsPage() {
         .select('*')
         .eq('organization_id', currentOrgId)
         .eq('is_active', true)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (playbooksError) throw playbooksError
@@ -254,7 +254,7 @@ export default function CampaignsPage() {
         .from('playbook_steps')
         .select('*')
         .eq('playbook_template_id', formData.playbook_template_id)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('step_number')
 
       if (stepsError) throw stepsError

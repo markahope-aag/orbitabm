@@ -141,7 +141,7 @@ export default function CampaignDetailPage() {
           profiles (full_name)
         `)
         .eq('id', campaignId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .single()
 
       if (campaignError) throw campaignError
@@ -157,7 +157,7 @@ export default function CampaignDetailPage() {
           playbook_steps (step_number, day_offset)
         `)
         .eq('campaign_id', campaignId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('scheduled_date')
 
       if (activitiesError) throw activitiesError
@@ -173,7 +173,7 @@ export default function CampaignDetailPage() {
           `)
           .eq('company_id', campaignData.company_id)
           .eq('is_primary', true)
-          .eq('deleted_at', null)
+          .is('deleted_at', null)
           .single()
 
         if (!contactError && contactData) {
@@ -185,7 +185,7 @@ export default function CampaignDetailPage() {
           .from('digital_snapshots')
           .select('*')
           .eq('company_id', campaignData.company_id)
-          .eq('deleted_at', null)
+          .is('deleted_at', null)
           .order('snapshot_date', { ascending: false })
           .limit(1)
           .single()
@@ -203,7 +203,7 @@ export default function CampaignDetailPage() {
           companies (*)
         `)
         .eq('campaign_id', campaignId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
 
       if (competitorsError) throw competitorsError
       setCompetitors(competitorsData as CompetitorWithCompany[] || [])
@@ -213,8 +213,8 @@ export default function CampaignDetailPage() {
         .from('results')
         .select('*')
         .eq('campaign_id', campaignId)
-        .eq('deleted_at', null)
-        .order('date', { ascending: false })
+        .is('deleted_at', null)
+        .order('result_date', { ascending: false })
 
       if (resultsError) throw resultsError
       setResults(resultsData || [])
@@ -227,7 +227,7 @@ export default function CampaignDetailPage() {
           companies (name)
         `)
         .eq('campaign_id', campaignId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
       if (assetsError) throw assetsError
@@ -293,7 +293,6 @@ export default function CampaignDetailPage() {
       const payload = {
         organization_id: currentOrgId,
         campaign_id: campaignId,
-        company_id: campaign.company_id,
         result_type: resultFormData.result_type,
         result_date: resultFormData.result_date,
         total_contract_value: resultFormData.total_contract_value ? parseInt(resultFormData.total_contract_value) : null,

@@ -20,12 +20,12 @@ export async function POST(request: NextRequest) {
         .from('markets')
         .select('id, name')
         .eq('organization_id', organization_id)
-        .eq('deleted_at', null),
+        .is('deleted_at', null),
       supabase
         .from('verticals')
         .select('id, name')
         .eq('organization_id', organization_id)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
     ])
 
     const markets = marketsResult.data || []
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
         // Lookup market by name
         if (record.market) {
-          const market = markets.find((m: any) => 
+          const market = markets.find((m: { id: string; name: string }) => 
             m.name.toLowerCase() === record.market.toLowerCase()
           )
           if (market) {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 
         // Lookup vertical by name
         if (record.vertical) {
-          const vertical = verticals.find((v: any) => 
+          const vertical = verticals.find((v: { id: string; name: string }) => 
             v.name.toLowerCase() === record.vertical.toLowerCase()
           )
           if (vertical) {
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

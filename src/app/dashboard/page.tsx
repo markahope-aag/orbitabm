@@ -18,10 +18,9 @@ import {
   MoreHorizontal
 } from 'lucide-react'
 import { useOrg } from '@/lib/context/OrgContext'
-import type { 
+import type {
   ActivityRow,
-  ResultRow,
-  CompanyRow
+  ResultRow
 } from '@/lib/types/database'
 
 interface DashboardMetrics {
@@ -32,12 +31,11 @@ interface DashboardMetrics {
 }
 
 interface UpcomingActivity extends ActivityRow {
-  companies?: CompanyRow
-  campaigns?: { name: string }
+  campaigns?: { name: string; companies?: { name: string } }
 }
 
 interface RecentResult extends ResultRow {
-  companies?: CompanyRow
+  campaigns?: { name: string; companies?: { name: string } }
 }
 
 interface CampaignStatusCount {
@@ -121,12 +119,16 @@ export default function Dashboard() {
 
   const fetchMetrics = async () => {
     // Active campaigns
-    const { count: activeCampaignsCount } = await supabase
+    const { count: activeCampaignsCount, error: campaignsError } = await supabase
       .from('campaigns')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', currentOrgId)
       .eq('status', 'active')
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
+    
+    if (campaignsError) {
+      console.warn('Error fetching campaigns count:', campaignsError)
+    }
 
     // Activities due this week
     const startOfWeek = new Date()
@@ -134,29 +136,41 @@ export default function Dashboard() {
     const endOfWeek = new Date(startOfWeek)
     endOfWeek.setDate(startOfWeek.getDate() + 6)
 
-    const { count: activitiesDueCount } = await supabase
+    const { count: activitiesDueCount, error: activitiesError } = await supabase
       .from('activities')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', currentOrgId)
       .eq('status', 'scheduled')
       .gte('scheduled_date', startOfWeek.toISOString().split('T')[0])
       .lte('scheduled_date', endOfWeek.toISOString().split('T')[0])
+    
+    if (activitiesError) {
+      console.warn('Error fetching activities count:', activitiesError)
+    }
 
     // Overdue activities
     const today = new Date().toISOString().split('T')[0]
-    const { count: overdueCount } = await supabase
+    const { count: overdueCount, error: overdueError } = await supabase
       .from('activities')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', currentOrgId)
       .eq('status', 'scheduled')
       .lt('scheduled_date', today)
+    
+    if (overdueError) {
+      console.warn('Error fetching overdue activities:', overdueError)
+    }
 
     // Pipeline value
-    const { data: contractResults } = await supabase
+    const { data: contractResults, error: resultsError } = await supabase
       .from('results')
       .select('total_contract_value')
       .eq('organization_id', currentOrgId)
       .eq('result_type', 'contract_signed')
+    
+    if (resultsError) {
+      console.warn('Error fetching results:', resultsError)
+    }
 
     const pipelineValue = contractResults?.reduce((sum, result) => 
       sum + (result.total_contract_value || 0), 0) || 0
@@ -178,8 +192,7 @@ export default function Dashboard() {
       .from('activities')
       .select(`
         *,
-        companies (name),
-        campaigns (name)
+        campaigns (name, companies (name))
       `)
       .eq('organization_id', currentOrgId)
       .eq('status', 'scheduled')
@@ -197,7 +210,7 @@ export default function Dashboard() {
       .from('results')
       .select(`
         *,
-        companies (name)
+        campaigns (name, companies (name))
       `)
       .eq('organization_id', currentOrgId)
       .order('result_date', { ascending: false })
@@ -212,7 +225,7 @@ export default function Dashboard() {
       .from('campaigns')
       .select('status')
       .eq('organization_id', currentOrgId)
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
 
     if (error) throw error
 
@@ -245,7 +258,7 @@ export default function Dashboard() {
       .from('markets')
       .select('*')
       .eq('organization_id', currentOrgId)
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
 
     if (error) throw error
 
@@ -258,7 +271,7 @@ export default function Dashboard() {
           .eq('organization_id', currentOrgId)
           .eq('market_id', market.id)
           .eq('status', 'active')
-          .eq('deleted_at', null)
+          .is('deleted_at', null)
 
         // Count total companies
         const { count: totalCompanies } = await supabase
@@ -266,7 +279,7 @@ export default function Dashboard() {
           .select('*', { count: 'exact', head: true })
           .eq('organization_id', currentOrgId)
           .eq('market_id', market.id)
-          .eq('deleted_at', null)
+          .is('deleted_at', null)
 
         return {
           id: market.id,
@@ -293,7 +306,7 @@ export default function Dashboard() {
       `)
       .eq('organization_id', currentOrgId)
       .eq('status', 'active')
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
 
     if (error) throw error
 
@@ -474,7 +487,7 @@ export default function Dashboard() {
                         <ChannelIcon className="w-5 h-5 text-slate-500" />
                         <div className="flex-1">
                           <div className="font-medium text-slate-900">
-                            {activity.companies?.name || 'Unknown Company'}
+                            {activity.campaigns?.companies?.name || 'Unknown Company'}
                           </div>
                           <div className="text-sm text-slate-600">
                             {getActivityTypeDisplay(activity.activity_type)} • {activity.campaigns?.name}
@@ -505,7 +518,7 @@ export default function Dashboard() {
                     <div key={result.id} className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="font-medium text-slate-900">
-                          {result.companies?.name || 'Unknown Company'}
+                          {result.campaigns?.companies?.name || 'Unknown Company'}
                         </div>
                         <div className="flex items-center space-x-2">
                           <StatusBadge status={result.result_type} />

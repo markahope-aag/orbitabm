@@ -65,7 +65,7 @@ export default function AssetsPage() {
           campaigns (name)
         `)
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
       if (assetsError) throw assetsError
@@ -76,7 +76,7 @@ export default function AssetsPage() {
         .from('companies')
         .select('*')
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (companiesError) throw companiesError
@@ -87,7 +87,7 @@ export default function AssetsPage() {
         .from('campaigns')
         .select('*')
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (campaignsError) throw campaignsError

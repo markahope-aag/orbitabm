@@ -95,7 +95,7 @@ export default function PlaybooksPage() {
           playbook_steps (*)
         `)
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (playbooksError) throw playbooksError
@@ -118,7 +118,7 @@ export default function PlaybooksPage() {
         .from('verticals')
         .select('*')
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (verticalsError) throw verticalsError

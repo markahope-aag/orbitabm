@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { ChevronDown, ChevronRight, Mail, Linkedin, Eye, Sparkles, MessageSquare } from 'lucide-react'
+import { ChevronDown, ChevronRight, Linkedin, Eye, Sparkles, MessageSquare } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { StatusBadge, Badge } from '@/components/ui'
@@ -14,7 +14,6 @@ interface EmailTimelineCardProps {
   onDraftChange: (draft: EmailDraft) => void
   onDraftBlur: () => void
   onPreview: () => void
-  onInsertMergeField: (token: string) => void
 }
 
 export function EmailTimelineCard({
@@ -24,7 +23,6 @@ export function EmailTimelineCard({
   onDraftChange,
   onDraftBlur,
   onPreview,
-  onInsertMergeField,
 }: EmailTimelineCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [bodyMode, setBodyMode] = useState<'edit' | 'preview'>('edit')
@@ -42,29 +40,6 @@ export function EmailTimelineCard({
     if (activity.status === 'completed') return 'sent'
     if (draft.subjectLine && draft.body) return 'ready'
     return 'draft'
-  }
-
-  // Insert merge field at cursor in the active text area
-  const handleInsertField = (token: string) => {
-    onInsertMergeField(token)
-
-    // Try to insert at cursor in the body textarea
-    const el = bodyRef.current
-    if (el && document.activeElement === el) {
-      const start = el.selectionStart
-      const end = el.selectionEnd
-      const newBody = draft.body.slice(0, start) + token + draft.body.slice(end)
-      onDraftChange({ ...draft, body: newBody })
-      // Restore cursor after React re-render
-      requestAnimationFrame(() => {
-        el.selectionStart = el.selectionEnd = start + token.length
-        el.focus()
-      })
-      return
-    }
-
-    // Fallback: append to body
-    onDraftChange({ ...draft, body: draft.body + token })
   }
 
   const inputClass =

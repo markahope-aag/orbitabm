@@ -16,7 +16,7 @@ export async function GET(
         companies (name)
       `)
       .eq('id', id)
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
       .single()
 
     if (error) {
@@ -31,7 +31,7 @@ export async function GET(
       error: null
     })
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -52,7 +52,7 @@ export async function PATCH(
       .from('contacts')
       .update(body)
       .eq('id', id)
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
       .select()
       .single()
 
@@ -68,7 +68,7 @@ export async function PATCH(
       error: null
     })
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -88,7 +88,7 @@ export async function DELETE(
       .from('contacts')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
       .select()
       .single()
 
@@ -104,7 +104,7 @@ export async function DELETE(
       error: null
     })
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

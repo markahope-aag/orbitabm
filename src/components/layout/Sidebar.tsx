@@ -4,7 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { useOrg } from '@/lib/context/OrgContext'
+import { useAuth } from '@/lib/context/AuthContext'
+import OrganizationSwitcher from '@/components/organizations/OrganizationSwitcher'
 import {
   LayoutDashboard,
   Kanban,
@@ -22,7 +23,10 @@ import {
   Upload,
   Menu,
   X,
-  ChevronDown
+  ChevronDown,
+  LogOut,
+  User,
+  Settings
 } from 'lucide-react'
 
 const navigation = [
@@ -65,13 +69,6 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false)
-  const { currentOrg, organizations, setCurrentOrgId, loading } = useOrg()
-
-  const handleOrgChange = (orgId: string) => {
-    setCurrentOrgId(orgId)
-    setOrgDropdownOpen(false)
-  }
 
   return (
     <>
@@ -115,38 +112,12 @@ export function Sidebar() {
             </div>
 
             {/* Organization Selector */}
-            <div className="relative">
-              <button
-                onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
-                className="w-full text-left p-3 rounded-md bg-navy-900 hover:bg-navy-800 transition-colors flex items-center justify-between border border-navy-700"
-                disabled={loading}
-              >
-                <span className="text-sm font-medium truncate">
-                  {loading ? 'Loading...' : (currentOrg?.name || 'Select Organization')}
-                </span>
-                <ChevronDown size={16} className={`transition-transform ${orgDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Organization Dropdown */}
-              {orgDropdownOpen && organizations && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-navy-900 rounded-md shadow-lg border border-navy-700 z-10">
-                  {organizations.map((org) => (
-                    <button
-                      key={org.id}
-                      onClick={() => handleOrgChange(org.id)}
-                      className={`
-                        w-full text-left px-3 py-2 text-sm hover:bg-navy-800 transition-colors
-                        ${currentOrg?.id === org.id ? 'bg-navy-800 text-cyan-400' : ''}
-                        first:rounded-t-md last:rounded-b-md
-                      `}
-                    >
-                      <div className="font-medium">{org.name}</div>
-                      <div className="text-xs text-navy-300 capitalize">{org.type}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <OrganizationSwitcher 
+              onCreateNew={() => {
+                // Navigate to organizations page
+                window.location.href = '/organizations'
+              }}
+            />
           </div>
 
           {/* Navigation */}
@@ -184,8 +155,72 @@ export function Sidebar() {
               </div>
             ))}
           </nav>
+          
+          {/* User Menu */}
+          <UserMenu />
         </div>
       </div>
     </>
+  )
+}
+
+function UserMenu() {
+  const { user, signOut } = useAuth()
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleSignOut = async () => {
+    await signOut()
+  }
+
+  if (!user) return null
+
+  return (
+    <div className="mt-auto border-t border-navy-800 pt-4">
+      <div className="relative">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center space-x-3 px-3 py-2 text-left text-navy-300 hover:text-white hover:bg-navy-800 rounded-md transition-colors"
+        >
+          <div className="flex-shrink-0">
+            <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center">
+              <User size={16} className="text-white" />
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">
+              {user.user_metadata?.full_name || user.email}
+            </p>
+            <p className="text-xs text-navy-400 truncate">
+              {user.email}
+            </p>
+          </div>
+          <ChevronDown 
+            size={16} 
+            className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+
+        {isOpen && (
+          <div className="absolute bottom-full left-0 right-0 mb-2 bg-navy-800 border border-navy-700 rounded-md shadow-lg">
+            <div className="py-1">
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-full flex items-center space-x-3 px-3 py-2 text-left text-navy-300 hover:text-white hover:bg-navy-700 transition-colors"
+              >
+                <Settings size={16} />
+                <span className="text-sm">Settings</span>
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center space-x-3 px-3 py-2 text-left text-navy-300 hover:text-white hover:bg-navy-700 transition-colors"
+              >
+                <LogOut size={16} />
+                <span className="text-sm">Sign out</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

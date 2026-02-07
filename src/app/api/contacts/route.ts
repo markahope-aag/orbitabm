@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
         companies (name)
       `)
       .eq('organization_id', organizationId)
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
 
     // Apply filters
     if (companyId) query = query.eq('company_id', companyId)
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       error: null
     })
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       error: null
     })
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

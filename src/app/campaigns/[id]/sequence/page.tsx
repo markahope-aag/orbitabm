@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useOrg } from '@/lib/context/OrgContext'
 import { showErrorToast, showSuccessToast, toastPromise } from '@/lib/utils/toast'
@@ -21,7 +22,6 @@ import type {
   ActivityWithStep,
   ContactOption,
   EmailDraft,
-  SequenceNotes,
   ChecklistItem,
 } from '@/lib/sequence/types'
 import type { ContactRow, GeneratedDocumentRow, AssetRow } from '@/lib/types/database'
@@ -147,7 +147,7 @@ export default function SequencePage() {
         .filter((id): id is string => !!id)
       const uniqueStepIds = [...new Set(stepIds)]
 
-      let emailTemplateMap = new Map<string, { subject_line: string; subject_line_alt: string | null; body: string; target_contact_role: string | null; notes: string | null; id: string }>()
+      const emailTemplateMap = new Map<string, { subject_line: string; subject_line_alt: string | null; body: string; target_contact_role: string | null; notes: string | null; id: string }>()
       if (uniqueStepIds.length > 0) {
         const { data: templates } = await supabase
           .from('email_templates')
@@ -418,9 +418,9 @@ export default function SequencePage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Campaign Not Found</h1>
-          <a href="/campaigns" className="text-cyan-600 hover:text-cyan-700">
+          <Link href="/campaigns" className="text-cyan-600 hover:text-cyan-700">
             Back to campaigns
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -507,7 +507,6 @@ export default function SequencePage() {
                       onDraftChange={(d) => updateDraft(activity.id, d)}
                       onDraftBlur={() => saveEmailDraft(draft)}
                       onPreview={() => openPreview(draft)}
-                      onInsertMergeField={() => {}}
                     />
                   )
                 })}

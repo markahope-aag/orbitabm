@@ -398,9 +398,6 @@ export default function ResearchPage() {
     )
   }
 
-  // Section definitions for manual sections
-  const manualSections = SECTION_DEFINITIONS.filter((s) => s.type === 'manual')
-
   return (
     <div className="min-h-screen bg-slate-50">
       <ResearchTopBar

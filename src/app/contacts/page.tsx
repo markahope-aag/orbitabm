@@ -68,7 +68,7 @@ export default function ContactsPage() {
           companies (*)
         `)
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('first_name')
 
       if (contactsError) throw contactsError
@@ -79,7 +79,7 @@ export default function ContactsPage() {
         .from('companies')
         .select('*')
         .eq('organization_id', currentOrgId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name')
 
       if (companiesError) throw companiesError

@@ -13,16 +13,14 @@ import {
   CheckCircle
 } from 'lucide-react'
 import { useOrg } from '@/lib/context/OrgContext'
-import type { 
-  ActivityRow, 
-  CompanyRow,
+import type {
+  ActivityRow,
   CampaignRow,
   ContactRow
 } from '@/lib/types/database'
 
 interface ActivityWithRelations extends ActivityRow {
-  companies?: CompanyRow
-  campaigns?: CampaignRow
+  campaigns?: CampaignRow & { companies?: { name: string } }
   contacts?: ContactRow
 }
 
@@ -83,8 +81,7 @@ export default function ActivitiesPage() {
         .from('activities')
         .select(`
           *,
-          companies (name),
-          campaigns (name),
+          campaigns (name, companies (name)),
           contacts (first_name, last_name)
         `)
         .eq('organization_id', currentOrgId)
@@ -354,7 +351,7 @@ export default function ActivitiesPage() {
               {
                 key: 'company',
                 header: 'Company',
-                render: (row) => (row as unknown as ActivityWithRelations).companies?.name || 'N/A'
+                render: (row) => (row as unknown as ActivityWithRelations).campaigns?.companies?.name || 'N/A'
               },
               {
                 key: 'campaign',
@@ -466,7 +463,7 @@ export default function ActivitiesPage() {
                 {getActivityTypeDisplay(selectedActivity.activity_type)}
               </h4>
               <p className="text-sm text-slate-600">
-                {selectedActivity.companies?.name} • {selectedActivity.campaigns?.name}
+                {selectedActivity.campaigns?.companies?.name} • {selectedActivity.campaigns?.name}
               </p>
               <p className="text-sm text-slate-500">
                 Scheduled: {selectedActivity.scheduled_date ? new Date(selectedActivity.scheduled_date).toLocaleDateString() : 'N/A'}
