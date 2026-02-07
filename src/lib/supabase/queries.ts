@@ -3,22 +3,22 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type {
-  OrganizationRow, OrganizationInsert, OrganizationUpdate,
-  ProfileRow, ProfileInsert, ProfileUpdate,
-  MarketRow, MarketInsert, MarketUpdate,
-  VerticalRow, VerticalInsert, VerticalUpdate,
-  PEPlatformRow, PEPlatformInsert, PEPlatformUpdate,
-  CompanyRow, CompanyInsert, CompanyUpdate,
-  ContactRow, ContactInsert, ContactUpdate,
-  PEAcquisitionRow, PEAcquisitionInsert, PEAcquisitionUpdate,
-  DigitalSnapshotRow, DigitalSnapshotInsert, DigitalSnapshotUpdate,
-  PlaybookTemplateRow, PlaybookTemplateInsert, PlaybookTemplateUpdate,
-  PlaybookStepRow, PlaybookStepInsert, PlaybookStepUpdate,
-  CampaignRow, CampaignInsert, CampaignUpdate,
-  CampaignCompetitorRow, CampaignCompetitorInsert, CampaignCompetitorUpdate,
-  ActivityRow, ActivityInsert, ActivityUpdate,
-  AssetRow, AssetInsert, AssetUpdate,
-  ResultRow, ResultInsert, ResultUpdate
+  OrganizationInsert, OrganizationUpdate,
+  ProfileInsert, ProfileUpdate,
+  MarketInsert, MarketUpdate,
+  VerticalInsert, VerticalUpdate,
+  PEPlatformInsert, PEPlatformUpdate,
+  CompanyInsert, CompanyUpdate,
+  ContactInsert, ContactUpdate,
+  PEAcquisitionInsert, PEAcquisitionUpdate,
+  DigitalSnapshotInsert, DigitalSnapshotUpdate,
+  PlaybookTemplateInsert, PlaybookTemplateUpdate,
+  PlaybookStepInsert, PlaybookStepUpdate,
+  CampaignInsert, CampaignUpdate,
+  CampaignCompetitorInsert,
+  ActivityInsert, ActivityUpdate,
+  AssetInsert, AssetUpdate,
+  ResultInsert, ResultUpdate
 } from '@/lib/types/database'
 
 // =====================================================

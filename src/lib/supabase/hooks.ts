@@ -18,7 +18,6 @@ import type {
   PlaybookTemplateRow,
   PlaybookStepRow,
   CampaignRow,
-  CampaignCompetitorRow,
   ActivityRow,
   AssetRow,
   ResultRow
