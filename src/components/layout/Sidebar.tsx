@@ -19,6 +19,7 @@ import {
   Layers,
   Users,
   Building,
+  Upload,
   Menu,
   X,
   ChevronDown
@@ -55,6 +56,7 @@ const navigation = [
     items: [
       { name: 'Verticals', href: '/verticals', icon: Layers },
       { name: 'Contacts', href: '/contacts', icon: Users },
+      { name: 'Import Data', href: '/import', icon: Upload },
       { name: 'Organizations', href: '/organizations', icon: Building },
     ]
   }

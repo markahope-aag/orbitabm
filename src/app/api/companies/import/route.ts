@@ -1,0 +1,133 @@
+import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const body = await request.json()
+    const { data: importData, organization_id } = body
+
+    if (!Array.isArray(importData) || !organization_id) {
+      return NextResponse.json(
+        { error: 'Invalid request body. Expected { data: Array, organization_id: string }' },
+        { status: 400 }
+      )
+    }
+
+    // Fetch markets and verticals for lookup
+    const [marketsResult, verticalsResult] = await Promise.all([
+      supabase
+        .from('markets')
+        .select('id, name')
+        .eq('organization_id', organization_id)
+        .eq('deleted_at', null),
+      supabase
+        .from('verticals')
+        .select('id, name')
+        .eq('organization_id', organization_id)
+        .eq('deleted_at', null)
+    ])
+
+    const markets = marketsResult.data || []
+    const verticals = verticalsResult.data || []
+
+    // Process each record
+    const processedData = []
+    const errors = []
+
+    for (let i = 0; i < importData.length; i++) {
+      const record = importData[i]
+      
+      try {
+        const processedRecord = {
+          organization_id,
+          name: record.name,
+          website: record.website || null,
+          phone: record.phone || null,
+          address_line1: record.address_line1 || null,
+          address_line2: record.address_line2 || null,
+          city: record.city || null,
+          state: record.state || null,
+          zip: record.zip || null,
+          estimated_revenue: record.estimated_revenue ? parseInt(record.estimated_revenue) : null,
+          employee_count: record.employee_count ? parseInt(record.employee_count) : null,
+          year_founded: record.year_founded ? parseInt(record.year_founded) : null,
+          ownership_type: record.ownership_type || 'private',
+          qualifying_tier: record.qualifying_tier || null,
+          status: record.status || 'active',
+          manufacturer_affiliations: record.manufacturer_affiliations || null,
+          certifications: record.certifications || null,
+          awards: record.awards || null,
+          notes: record.notes || null,
+          market_id: null,
+          vertical_id: null
+        }
+
+        // Lookup market by name
+        if (record.market) {
+          const market = markets.find((m: any) => 
+            m.name.toLowerCase() === record.market.toLowerCase()
+          )
+          if (market) {
+            processedRecord.market_id = market.id
+          } else {
+            errors.push(`Row ${i + 1}: Market "${record.market}" not found`)
+          }
+        }
+
+        // Lookup vertical by name
+        if (record.vertical) {
+          const vertical = verticals.find((v: any) => 
+            v.name.toLowerCase() === record.vertical.toLowerCase()
+          )
+          if (vertical) {
+            processedRecord.vertical_id = vertical.id
+          } else {
+            errors.push(`Row ${i + 1}: Vertical "${record.vertical}" not found`)
+          }
+        }
+
+        processedData.push(processedRecord)
+
+      } catch (err) {
+        errors.push(`Row ${i + 1}: ${err instanceof Error ? err.message : 'Processing error'}`)
+      }
+    }
+
+    // Insert all valid records
+    if (processedData.length > 0) {
+      const { data, error } = await supabase
+        .from('companies')
+        .upsert(processedData, { 
+          onConflict: 'organization_id,name',
+          ignoreDuplicates: false 
+        })
+        .select()
+
+      if (error) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 400 }
+        )
+      }
+
+      return NextResponse.json({
+        created: data?.length || 0,
+        errors,
+        data
+      })
+    } else {
+      return NextResponse.json({
+        created: 0,
+        errors,
+        data: []
+      })
+    }
+
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

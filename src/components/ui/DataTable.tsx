@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Search, ChevronUp, ChevronDown, Plus } from 'lucide-react'
+import { Search, ChevronUp, ChevronDown, Plus, Download } from 'lucide-react'
+import { exportToCSV } from '@/lib/utils/csvExport'
 
 interface Column<T = Record<string, unknown>> {
   key: string
@@ -20,6 +21,10 @@ interface DataTableProps<T = Record<string, unknown>> {
   emptyMessage?: string
   searchable?: boolean
   searchFields?: string[]
+  exportable?: boolean
+  exportFilename?: string
+  entityName?: string
+  orgSlug?: string
 }
 
 export function DataTable<T extends Record<string, unknown> = Record<string, unknown>>({
@@ -31,7 +36,11 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
   addLabel = "Add New",
   emptyMessage = "No data available",
   searchable = true,
-  searchFields = []
+  searchFields = [],
+  exportable = true,
+  exportFilename,
+  entityName = 'data',
+  orgSlug = 'export'
 }: DataTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortConfig, setSortConfig] = useState<{
@@ -87,6 +96,26 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
     })
   }
 
+  const handleExport = () => {
+    exportToCSV(
+      sortedData as T[],
+      columns.map(col => ({
+        key: col.key,
+        header: col.header,
+        render: col.render ? (row: any) => {
+          const rendered = col.render!(row)
+          // Convert React nodes to strings for CSV
+          if (typeof rendered === 'string' || typeof rendered === 'number') {
+            return rendered
+          }
+          return String(rendered || '')
+        } : undefined
+      })),
+      entityName,
+      { filename: exportFilename, orgSlug }
+    )
+  }
+
   const getSortIcon = (key: string) => {
     if (sortConfig?.key !== key) {
       return <ChevronUp className="w-4 h-4 text-slate-400" />
@@ -135,15 +164,27 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
           )}
           {!searchable && <div></div>}
           
-          {onAdd && (
-            <button
-              onClick={onAdd}
-              className="flex items-center space-x-2 px-4 py-2 bg-cyan-500 text-white rounded-md hover:bg-cyan-600 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{addLabel}</span>
-            </button>
-          )}
+          <div className="flex items-center space-x-3">
+            {exportable && sortedData.length > 0 && (
+              <button
+                onClick={handleExport}
+                className="flex items-center space-x-2 px-3 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export CSV</span>
+              </button>
+            )}
+            
+            {onAdd && (
+              <button
+                onClick={onAdd}
+                className="flex items-center space-x-2 px-4 py-2 bg-cyan-500 text-white rounded-md hover:bg-cyan-600 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{addLabel}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
