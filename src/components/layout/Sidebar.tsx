@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { useOrg } from '@/lib/context/OrgContext'
@@ -76,7 +77,7 @@ export function Sidebar() {
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-md bg-slate-900 text-white"
+          className="p-2 rounded-md bg-navy-950 text-white"
         >
           {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -93,26 +94,29 @@ export function Sidebar() {
       {/* Sidebar */}
       <div className={`
         fixed lg:static inset-y-0 left-0 z-40
-        w-64 bg-slate-900 text-white
+        w-64 bg-navy-950 text-white
         transform transition-transform duration-300 ease-in-out
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-slate-700">
-            {/* App Name */}
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-white rounded-full" />
-              </div>
-              <h1 className="text-xl font-bold">OrbitABM</h1>
+          <div className="p-6 border-b border-navy-800">
+            {/* App Logo & Name */}
+            <div className="flex items-center space-x-3 mb-4">
+              <Image
+                src="/brand/logo-light.svg"
+                alt="OrbitABM"
+                width={120}
+                height={32}
+                className="h-8 w-auto"
+              />
             </div>
 
             {/* Organization Selector */}
             <div className="relative">
               <button
                 onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
-                className="w-full text-left p-2 rounded-md bg-slate-800 hover:bg-slate-700 transition-colors flex items-center justify-between"
+                className="w-full text-left p-3 rounded-md bg-navy-900 hover:bg-navy-800 transition-colors flex items-center justify-between border border-navy-700"
                 disabled={loading}
               >
                 <span className="text-sm font-medium truncate">
@@ -123,19 +127,19 @@ export function Sidebar() {
 
               {/* Organization Dropdown */}
               {orgDropdownOpen && organizations && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 rounded-md shadow-lg border border-slate-600 z-10">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-navy-900 rounded-md shadow-lg border border-navy-700 z-10">
                   {organizations.map((org) => (
                     <button
                       key={org.id}
                       onClick={() => handleOrgChange(org.id)}
                       className={`
-                        w-full text-left px-3 py-2 text-sm hover:bg-slate-700 transition-colors
-                        ${currentOrg?.id === org.id ? 'bg-slate-700 text-blue-400' : ''}
+                        w-full text-left px-3 py-2 text-sm hover:bg-navy-800 transition-colors
+                        ${currentOrg?.id === org.id ? 'bg-navy-800 text-cyan-400' : ''}
                         first:rounded-t-md last:rounded-b-md
                       `}
                     >
                       <div className="font-medium">{org.name}</div>
-                      <div className="text-xs text-slate-400 capitalize">{org.type}</div>
+                      <div className="text-xs text-navy-300 capitalize">{org.type}</div>
                     </button>
                   ))}
                 </div>
@@ -147,7 +151,7 @@ export function Sidebar() {
           <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
             {navigation.map((section) => (
               <div key={section.section}>
-                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                <h3 className="text-xs font-semibold text-navy-400 uppercase tracking-wider mb-3">
                   {section.section}
                 </h3>
                 <ul className="space-y-1">
@@ -163,8 +167,8 @@ export function Sidebar() {
                           className={`
                             flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors
                             ${isActive 
-                              ? 'bg-blue-600 text-white' 
-                              : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                              ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/25' 
+                              : 'text-navy-300 hover:text-white hover:bg-navy-800'
                             }
                           `}
                         >
