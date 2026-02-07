@@ -59,6 +59,30 @@
     {
       "name": "Email Templates",
       "description": "Email template management endpoints"
+    },
+    {
+      "name": "Organizations",
+      "description": "Organization management endpoints"
+    },
+    {
+      "name": "Activities",
+      "description": "Campaign activity tracking endpoints"
+    },
+    {
+      "name": "Assets",
+      "description": "Marketing asset management endpoints"
+    },
+    {
+      "name": "Results",
+      "description": "Campaign result tracking endpoints"
+    },
+    {
+      "name": "Playbook Templates",
+      "description": "Playbook template management endpoints"
+    },
+    {
+      "name": "Playbook Steps",
+      "description": "Playbook step management endpoints"
     }
   ],
   "paths": {
@@ -2237,6 +2261,1992 @@
           }
         }
       }
+    },
+    "/organizations": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "List organizations",
+        "description": "Retrieve a list of organizations with optional filtering and pagination",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by organization type",
+            "schema": {
+              "type": "string",
+              "enum": ["agency", "client"]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search by name or slug",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of results per page",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Organization"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": { "type": "integer" },
+                        "limit": { "type": "integer" },
+                        "total": { "type": "integer" },
+                        "totalPages": { "type": "integer" },
+                        "hasNext": { "type": "boolean" },
+                        "hasPrev": { "type": "boolean" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Create organization",
+        "description": "Create a new organization",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Organization created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Organization"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/organizations/{id}": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "Get organization by ID",
+        "description": "Retrieve a single organization by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Organization UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Organization"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Organizations"],
+        "summary": "Update organization",
+        "description": "Update an existing organization (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Organization UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Organization updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Organization"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Organizations"],
+        "summary": "Delete organization",
+        "description": "Soft delete an organization (sets deleted_at timestamp)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Organization UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organization deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Organization deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/organizations/my-organizations": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "Get current user's organizations",
+        "description": "Retrieve organizations accessible to the authenticated user",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Organization"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "current_organization_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "user_role": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/markets": {
+      "get": {
+        "tags": ["Markets"],
+        "summary": "List markets",
+        "description": "Retrieve a list of markets for an organization",
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Offset" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Market"
+                      }
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Markets"],
+        "summary": "Create market",
+        "description": "Create a new market",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Market created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Market"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/markets/{id}": {
+      "get": {
+        "tags": ["Markets"],
+        "summary": "Get market by ID",
+        "description": "Retrieve a single market by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Market UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Market"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Markets"],
+        "summary": "Update market",
+        "description": "Update an existing market (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Market UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Market updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Market"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Markets"],
+        "summary": "Delete market",
+        "description": "Soft delete a market (sets deleted_at timestamp)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Market UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Market deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Market"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/contacts": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "List contacts",
+        "description": "Retrieve a list of contacts with optional filtering and pagination",
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          {
+            "name": "company_id",
+            "in": "query",
+            "description": "Filter by company UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "relationship_status",
+            "in": "query",
+            "description": "Filter by relationship status",
+            "schema": { "type": "string" }
+          },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Offset" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ContactWithRelations"
+                      }
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Create contact",
+        "description": "Create a new contact",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contact created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Contact"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/contacts/{id}": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Get contact by ID",
+        "description": "Retrieve a single contact by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Contact UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ContactWithRelations"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Contacts"],
+        "summary": "Update contact",
+        "description": "Update an existing contact (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Contact UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contact updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Contact"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Contacts"],
+        "summary": "Delete contact",
+        "description": "Soft delete a contact (sets deleted_at timestamp)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Contact UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Contact"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/activities": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "List activities",
+        "description": "Retrieve a list of campaign activities with optional filtering and pagination",
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          {
+            "name": "campaign_id",
+            "in": "query",
+            "description": "Filter by campaign UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "contact_id",
+            "in": "query",
+            "description": "Filter by contact UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "activity_type",
+            "in": "query",
+            "description": "Filter by activity type",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "description": "Filter by channel",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "schema": { "type": "string" }
+          },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Offset" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ActivityWithRelations"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Create activity",
+        "description": "Create a new campaign activity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Activity created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ActivityWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/activities/{id}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get activity by ID",
+        "description": "Retrieve a single activity by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Activity UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ActivityWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Activities"],
+        "summary": "Update activity",
+        "description": "Update an existing activity (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Activity UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Activity updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ActivityWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Activities"],
+        "summary": "Delete activity",
+        "description": "Permanently delete an activity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Activity UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "deleted": { "type": "boolean", "example": true }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/assets": {
+      "get": {
+        "tags": ["Assets"],
+        "summary": "List assets",
+        "description": "Retrieve a list of marketing assets with optional filtering and pagination",
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          {
+            "name": "campaign_id",
+            "in": "query",
+            "description": "Filter by campaign UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "description": "Filter by company UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "asset_type",
+            "in": "query",
+            "description": "Filter by asset type",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "schema": { "type": "string" }
+          },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Offset" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AssetWithRelations"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Assets"],
+        "summary": "Create asset",
+        "description": "Create a new marketing asset",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Asset created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AssetWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/assets/{id}": {
+      "get": {
+        "tags": ["Assets"],
+        "summary": "Get asset by ID",
+        "description": "Retrieve a single asset by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Asset UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AssetWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Assets"],
+        "summary": "Update asset",
+        "description": "Update an existing asset (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Asset UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asset updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AssetWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Assets"],
+        "summary": "Delete asset",
+        "description": "Soft delete an asset (sets deleted_at timestamp)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Asset UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "deleted": { "type": "boolean", "example": true }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/results": {
+      "get": {
+        "tags": ["Results"],
+        "summary": "List results",
+        "description": "Retrieve a list of campaign results with optional filtering and pagination",
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          {
+            "name": "campaign_id",
+            "in": "query",
+            "description": "Filter by campaign UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "result_type",
+            "in": "query",
+            "description": "Filter by result type",
+            "schema": { "type": "string" }
+          },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Offset" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ResultWithRelations"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Results"],
+        "summary": "Create result",
+        "description": "Create a new campaign result",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Result created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ResultWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/results/{id}": {
+      "get": {
+        "tags": ["Results"],
+        "summary": "Get result by ID",
+        "description": "Retrieve a single result by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Result UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ResultWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Results"],
+        "summary": "Update result",
+        "description": "Update an existing result (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Result UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Result updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ResultWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Results"],
+        "summary": "Delete result",
+        "description": "Permanently delete a result",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Result UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "deleted": { "type": "boolean", "example": true }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/playbook-templates": {
+      "get": {
+        "tags": ["Playbook Templates"],
+        "summary": "List playbook templates",
+        "description": "Retrieve a list of playbook templates with optional filtering and pagination",
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          {
+            "name": "vertical_id",
+            "in": "query",
+            "description": "Filter by vertical UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "description": "Filter by active status",
+            "schema": { "type": "boolean" }
+          },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Offset" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlaybookTemplateWithRelations"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Playbook Templates"],
+        "summary": "Create playbook template",
+        "description": "Create a new playbook template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaybookTemplateCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Playbook template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlaybookTemplateWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/playbook-templates/{id}": {
+      "get": {
+        "tags": ["Playbook Templates"],
+        "summary": "Get playbook template by ID",
+        "description": "Retrieve a single playbook template with full step details",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Playbook template UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlaybookTemplateDetailed"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Playbook Templates"],
+        "summary": "Update playbook template",
+        "description": "Update an existing playbook template (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Playbook template UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaybookTemplateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Playbook template updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlaybookTemplateWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Playbook Templates"],
+        "summary": "Delete playbook template",
+        "description": "Soft delete a playbook template (sets deleted_at timestamp)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Playbook template UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Playbook template deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "deleted": { "type": "boolean", "example": true }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/playbook-steps": {
+      "get": {
+        "tags": ["Playbook Steps"],
+        "summary": "List playbook steps",
+        "description": "Retrieve a list of playbook steps with optional filtering and pagination",
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          {
+            "name": "playbook_template_id",
+            "in": "query",
+            "description": "Filter by playbook template UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Offset" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlaybookStepWithRelations"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Playbook Steps"],
+        "summary": "Create playbook step",
+        "description": "Create a new playbook step",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaybookStepCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Playbook step created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlaybookStepWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/playbook-steps/{id}": {
+      "get": {
+        "tags": ["Playbook Steps"],
+        "summary": "Get playbook step by ID",
+        "description": "Retrieve a single playbook step by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Playbook step UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlaybookStepWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Playbook Steps"],
+        "summary": "Update playbook step",
+        "description": "Update an existing playbook step (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Playbook step UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaybookStepUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Playbook step updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PlaybookStepWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Playbook Steps"],
+        "summary": "Delete playbook step",
+        "description": "Permanently delete a playbook step",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Playbook step UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Playbook step deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "deleted": { "type": "boolean", "example": true }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3836,6 +5846,540 @@
           "target_contact_role": { "type": "string", "enum": ["economic_buyer", "technical_buyer", "brand_buyer", "champion", "any"], "nullable": true, "description": "Target contact role" },
           "merge_fields_required": { "type": "array", "items": { "type": "string" }, "nullable": true, "description": "Required merge fields" },
           "notes": { "type": "string", "nullable": true, "description": "Additional notes" }
+        }
+      },
+      "Organization": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "name": { "type": "string", "description": "Organization name", "example": "Orbit Marketing Agency" },
+          "slug": { "type": "string", "description": "URL-friendly slug", "example": "orbit-marketing" },
+          "type": { "type": "string", "enum": ["agency", "client"], "description": "Organization type" },
+          "website": { "type": "string", "format": "uri", "nullable": true, "description": "Organization website URL" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+          "deleted_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Deletion timestamp" }
+        },
+        "required": ["id", "name", "slug", "type"]
+      },
+      "OrganizationCreate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Organization name", "example": "Orbit Marketing Agency" },
+          "slug": { "type": "string", "description": "URL-friendly slug (lowercase, alphanumeric, hyphens)", "example": "orbit-marketing" },
+          "type": { "type": "string", "enum": ["agency", "client"], "description": "Organization type" },
+          "website": { "type": "string", "format": "uri", "description": "Organization website URL" },
+          "notes": { "type": "string", "description": "Additional notes" }
+        },
+        "required": ["name", "slug", "type"]
+      },
+      "OrganizationUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Organization name" },
+          "slug": { "type": "string", "description": "URL-friendly slug" },
+          "type": { "type": "string", "enum": ["agency", "client"], "description": "Organization type" },
+          "website": { "type": "string", "format": "uri", "nullable": true, "description": "Organization website URL" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" }
+        }
+      },
+      "Market": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Market UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "name": { "type": "string", "description": "Market name", "example": "Fort Wayne, IN" },
+          "state": { "type": "string", "nullable": true, "description": "State abbreviation", "example": "IN" },
+          "metro_population": { "type": "integer", "nullable": true, "description": "Metro area population", "example": 350000 },
+          "dma_rank": { "type": "integer", "nullable": true, "description": "DMA rank" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+          "deleted_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Deletion timestamp" }
+        },
+        "required": ["id", "organization_id", "name"]
+      },
+      "MarketCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "name": { "type": "string", "description": "Market name", "example": "Fort Wayne, IN" },
+          "state": { "type": "string", "description": "State abbreviation" },
+          "metro_population": { "type": "integer", "description": "Metro area population" },
+          "dma_rank": { "type": "integer", "description": "DMA rank" },
+          "notes": { "type": "string", "description": "Additional notes" }
+        },
+        "required": ["organization_id", "name"]
+      },
+      "MarketUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Market name" },
+          "state": { "type": "string", "nullable": true, "description": "State abbreviation" },
+          "metro_population": { "type": "integer", "nullable": true, "description": "Metro area population" },
+          "dma_rank": { "type": "integer", "nullable": true, "description": "DMA rank" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Contact UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "company_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Company UUID" },
+          "first_name": { "type": "string", "description": "First name", "example": "John" },
+          "last_name": { "type": "string", "description": "Last name", "example": "Smith" },
+          "email": { "type": "string", "format": "email", "nullable": true, "description": "Email address" },
+          "phone": { "type": "string", "nullable": true, "description": "Phone number" },
+          "title": { "type": "string", "nullable": true, "description": "Job title" },
+          "role": { "type": "string", "nullable": true, "description": "Contact role" },
+          "linkedin_url": { "type": "string", "format": "uri", "nullable": true, "description": "LinkedIn profile URL" },
+          "relationship_status": { "type": "string", "nullable": true, "description": "Relationship status" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+          "deleted_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Deletion timestamp" }
+        },
+        "required": ["id", "organization_id", "first_name", "last_name"]
+      },
+      "ContactWithRelations": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Contact" },
+          {
+            "type": "object",
+            "properties": {
+              "companies": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "name": { "type": "string", "example": "Acme HVAC" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ContactCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "company_id": { "type": "string", "format": "uuid", "description": "Company UUID" },
+          "first_name": { "type": "string", "description": "First name" },
+          "last_name": { "type": "string", "description": "Last name" },
+          "email": { "type": "string", "format": "email", "description": "Email address" },
+          "phone": { "type": "string", "description": "Phone number" },
+          "title": { "type": "string", "description": "Job title" },
+          "role": { "type": "string", "description": "Contact role" },
+          "linkedin_url": { "type": "string", "format": "uri", "description": "LinkedIn profile URL" },
+          "relationship_status": { "type": "string", "description": "Relationship status" },
+          "notes": { "type": "string", "description": "Additional notes" }
+        },
+        "required": ["organization_id", "first_name", "last_name"]
+      },
+      "ContactUpdate": {
+        "type": "object",
+        "properties": {
+          "company_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Company UUID" },
+          "first_name": { "type": "string", "description": "First name" },
+          "last_name": { "type": "string", "description": "Last name" },
+          "email": { "type": "string", "format": "email", "nullable": true, "description": "Email address" },
+          "phone": { "type": "string", "nullable": true, "description": "Phone number" },
+          "title": { "type": "string", "nullable": true, "description": "Job title" },
+          "role": { "type": "string", "nullable": true, "description": "Contact role" },
+          "linkedin_url": { "type": "string", "format": "uri", "nullable": true, "description": "LinkedIn profile URL" },
+          "relationship_status": { "type": "string", "nullable": true, "description": "Relationship status" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" }
+        }
+      },
+      "Activity": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Activity UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "campaign_id": { "type": "string", "format": "uuid", "description": "Campaign UUID" },
+          "playbook_step_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Playbook step UUID" },
+          "contact_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Contact UUID" },
+          "activity_type": { "type": "string", "description": "Activity type" },
+          "channel": { "type": "string", "nullable": true, "description": "Communication channel" },
+          "scheduled_date": { "type": "string", "format": "date-time", "nullable": true, "description": "Scheduled date" },
+          "completed_date": { "type": "string", "format": "date-time", "nullable": true, "description": "Completed date" },
+          "status": { "type": "string", "nullable": true, "description": "Activity status" },
+          "outcome": { "type": "string", "nullable": true, "description": "Activity outcome" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+        },
+        "required": ["id", "organization_id", "campaign_id", "activity_type"]
+      },
+      "ActivityWithRelations": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Activity" },
+          {
+            "type": "object",
+            "properties": {
+              "campaigns": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "name": { "type": "string" }
+                }
+              },
+              "contacts": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "first_name": { "type": "string" },
+                  "last_name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" }
+                }
+              },
+              "playbook_steps": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "step_number": { "type": "integer" },
+                  "title": { "type": "string" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ActivityCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "campaign_id": { "type": "string", "format": "uuid", "description": "Campaign UUID" },
+          "activity_type": { "type": "string", "description": "Activity type" },
+          "playbook_step_id": { "type": "string", "format": "uuid", "description": "Playbook step UUID" },
+          "contact_id": { "type": "string", "format": "uuid", "description": "Contact UUID" },
+          "channel": { "type": "string", "description": "Communication channel" },
+          "scheduled_date": { "type": "string", "format": "date-time", "description": "Scheduled date" },
+          "completed_date": { "type": "string", "format": "date-time", "description": "Completed date" },
+          "status": { "type": "string", "description": "Activity status" },
+          "outcome": { "type": "string", "description": "Activity outcome" },
+          "notes": { "type": "string", "description": "Additional notes" }
+        },
+        "required": ["organization_id", "campaign_id", "activity_type"]
+      },
+      "ActivityUpdate": {
+        "type": "object",
+        "properties": {
+          "campaign_id": { "type": "string", "format": "uuid", "description": "Campaign UUID" },
+          "playbook_step_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Playbook step UUID" },
+          "contact_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Contact UUID" },
+          "activity_type": { "type": "string", "description": "Activity type" },
+          "channel": { "type": "string", "nullable": true, "description": "Communication channel" },
+          "scheduled_date": { "type": "string", "format": "date-time", "nullable": true, "description": "Scheduled date" },
+          "completed_date": { "type": "string", "format": "date-time", "nullable": true, "description": "Completed date" },
+          "status": { "type": "string", "nullable": true, "description": "Activity status" },
+          "outcome": { "type": "string", "nullable": true, "description": "Activity outcome" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" }
+        }
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Asset UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "campaign_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Campaign UUID" },
+          "company_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Company UUID" },
+          "asset_type": { "type": "string", "description": "Asset type" },
+          "title": { "type": "string", "description": "Asset title" },
+          "description": { "type": "string", "nullable": true, "description": "Asset description" },
+          "file_url": { "type": "string", "format": "uri", "nullable": true, "description": "File URL" },
+          "landing_page_url": { "type": "string", "format": "uri", "nullable": true, "description": "Landing page URL" },
+          "status": { "type": "string", "nullable": true, "description": "Asset status" },
+          "delivered_date": { "type": "string", "format": "date", "nullable": true, "description": "Delivery date" },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+          "deleted_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Deletion timestamp" }
+        },
+        "required": ["id", "organization_id", "asset_type", "title"]
+      },
+      "AssetWithRelations": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Asset" },
+          {
+            "type": "object",
+            "properties": {
+              "campaigns": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "name": { "type": "string" }
+                }
+              },
+              "companies": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "name": { "type": "string" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "AssetCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "asset_type": { "type": "string", "description": "Asset type" },
+          "title": { "type": "string", "description": "Asset title" },
+          "campaign_id": { "type": "string", "format": "uuid", "description": "Campaign UUID" },
+          "company_id": { "type": "string", "format": "uuid", "description": "Company UUID" },
+          "description": { "type": "string", "description": "Asset description" },
+          "file_url": { "type": "string", "format": "uri", "description": "File URL" },
+          "landing_page_url": { "type": "string", "format": "uri", "description": "Landing page URL" },
+          "status": { "type": "string", "description": "Asset status" },
+          "delivered_date": { "type": "string", "format": "date", "description": "Delivery date" }
+        },
+        "required": ["organization_id", "asset_type", "title"]
+      },
+      "AssetUpdate": {
+        "type": "object",
+        "properties": {
+          "campaign_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Campaign UUID" },
+          "company_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Company UUID" },
+          "asset_type": { "type": "string", "description": "Asset type" },
+          "title": { "type": "string", "description": "Asset title" },
+          "description": { "type": "string", "nullable": true, "description": "Asset description" },
+          "file_url": { "type": "string", "format": "uri", "nullable": true, "description": "File URL" },
+          "landing_page_url": { "type": "string", "format": "uri", "nullable": true, "description": "Landing page URL" },
+          "status": { "type": "string", "nullable": true, "description": "Asset status" },
+          "delivered_date": { "type": "string", "format": "date", "nullable": true, "description": "Delivery date" }
+        }
+      },
+      "Result": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Result UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "campaign_id": { "type": "string", "format": "uuid", "description": "Campaign UUID" },
+          "result_type": { "type": "string", "description": "Result type" },
+          "result_date": { "type": "string", "format": "date", "description": "Result date" },
+          "contract_value_monthly": { "type": "number", "nullable": true, "description": "Monthly contract value" },
+          "contract_term_months": { "type": "integer", "nullable": true, "description": "Contract term in months" },
+          "total_contract_value": { "type": "number", "nullable": true, "description": "Total contract value" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+        },
+        "required": ["id", "organization_id", "campaign_id", "result_type", "result_date"]
+      },
+      "ResultWithRelations": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Result" },
+          {
+            "type": "object",
+            "properties": {
+              "campaigns": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "name": { "type": "string" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ResultCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "campaign_id": { "type": "string", "format": "uuid", "description": "Campaign UUID" },
+          "result_type": { "type": "string", "description": "Result type" },
+          "result_date": { "type": "string", "format": "date", "description": "Result date" },
+          "contract_value_monthly": { "type": "number", "description": "Monthly contract value" },
+          "contract_term_months": { "type": "integer", "description": "Contract term in months" },
+          "total_contract_value": { "type": "number", "description": "Total contract value" },
+          "notes": { "type": "string", "description": "Additional notes" }
+        },
+        "required": ["organization_id", "campaign_id", "result_type", "result_date"]
+      },
+      "ResultUpdate": {
+        "type": "object",
+        "properties": {
+          "campaign_id": { "type": "string", "format": "uuid", "description": "Campaign UUID" },
+          "result_type": { "type": "string", "description": "Result type" },
+          "result_date": { "type": "string", "format": "date", "description": "Result date" },
+          "contract_value_monthly": { "type": "number", "nullable": true, "description": "Monthly contract value" },
+          "contract_term_months": { "type": "integer", "nullable": true, "description": "Contract term in months" },
+          "total_contract_value": { "type": "number", "nullable": true, "description": "Total contract value" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" }
+        }
+      },
+      "PlaybookTemplate": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Playbook template UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "name": { "type": "string", "description": "Template name", "example": "Standard HVAC Outreach" },
+          "vertical_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Vertical UUID" },
+          "description": { "type": "string", "nullable": true, "description": "Template description" },
+          "total_duration_days": { "type": "integer", "nullable": true, "description": "Total duration in days", "example": 45 },
+          "is_active": { "type": "boolean", "description": "Whether template is active", "example": true },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+          "deleted_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Deletion timestamp" }
+        },
+        "required": ["id", "organization_id", "name"]
+      },
+      "PlaybookTemplateWithRelations": {
+        "allOf": [
+          { "$ref": "#/components/schemas/PlaybookTemplate" },
+          {
+            "type": "object",
+            "properties": {
+              "verticals": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "name": { "type": "string" }
+                }
+              },
+              "playbook_steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "format": "uuid" },
+                    "step_number": { "type": "integer" },
+                    "channel": { "type": "string" },
+                    "title": { "type": "string" },
+                    "day_offset": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PlaybookTemplateDetailed": {
+        "allOf": [
+          { "$ref": "#/components/schemas/PlaybookTemplate" },
+          {
+            "type": "object",
+            "properties": {
+              "verticals": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "name": { "type": "string" }
+                }
+              },
+              "playbook_steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "format": "uuid" },
+                    "step_number": { "type": "integer" },
+                    "channel": { "type": "string" },
+                    "title": { "type": "string" },
+                    "day_offset": { "type": "integer" },
+                    "description": { "type": "string", "nullable": true },
+                    "asset_type_required": { "type": "string", "nullable": true },
+                    "is_pivot_trigger": { "type": "boolean", "nullable": true }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PlaybookTemplateCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "name": { "type": "string", "description": "Template name" },
+          "vertical_id": { "type": "string", "format": "uuid", "description": "Vertical UUID" },
+          "description": { "type": "string", "description": "Template description" },
+          "total_duration_days": { "type": "integer", "description": "Total duration in days" },
+          "is_active": { "type": "boolean", "description": "Whether template is active" }
+        },
+        "required": ["organization_id", "name"]
+      },
+      "PlaybookTemplateUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Template name" },
+          "vertical_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Vertical UUID" },
+          "description": { "type": "string", "nullable": true, "description": "Template description" },
+          "total_duration_days": { "type": "integer", "nullable": true, "description": "Total duration in days" },
+          "is_active": { "type": "boolean", "description": "Whether template is active" }
+        }
+      },
+      "PlaybookStep": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Playbook step UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "playbook_template_id": { "type": "string", "format": "uuid", "description": "Playbook template UUID" },
+          "step_number": { "type": "integer", "description": "Step number", "example": 1 },
+          "day_offset": { "type": "integer", "description": "Day offset from campaign start", "example": 0 },
+          "channel": { "type": "string", "description": "Communication channel", "example": "email" },
+          "title": { "type": "string", "description": "Step title", "example": "Initial Outreach Email" },
+          "description": { "type": "string", "nullable": true, "description": "Step description" },
+          "asset_type_required": { "type": "string", "nullable": true, "description": "Required asset type" },
+          "is_pivot_trigger": { "type": "boolean", "nullable": true, "description": "Whether this step is a pivot trigger" },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+        },
+        "required": ["id", "organization_id", "playbook_template_id", "step_number", "day_offset", "channel", "title"]
+      },
+      "PlaybookStepWithRelations": {
+        "allOf": [
+          { "$ref": "#/components/schemas/PlaybookStep" },
+          {
+            "type": "object",
+            "properties": {
+              "playbook_templates": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "name": { "type": "string" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PlaybookStepCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "playbook_template_id": { "type": "string", "format": "uuid", "description": "Playbook template UUID" },
+          "step_number": { "type": "integer", "description": "Step number" },
+          "day_offset": { "type": "integer", "description": "Day offset from campaign start" },
+          "channel": { "type": "string", "description": "Communication channel" },
+          "title": { "type": "string", "description": "Step title" },
+          "description": { "type": "string", "description": "Step description" },
+          "asset_type_required": { "type": "string", "description": "Required asset type" },
+          "is_pivot_trigger": { "type": "boolean", "description": "Whether this step is a pivot trigger" }
+        },
+        "required": ["organization_id", "playbook_template_id", "step_number", "day_offset", "channel", "title"]
+      },
+      "PlaybookStepUpdate": {
+        "type": "object",
+        "properties": {
+          "playbook_template_id": { "type": "string", "format": "uuid", "description": "Playbook template UUID" },
+          "step_number": { "type": "integer", "description": "Step number" },
+          "day_offset": { "type": "integer", "description": "Day offset from campaign start" },
+          "channel": { "type": "string", "description": "Communication channel" },
+          "title": { "type": "string", "description": "Step title" },
+          "description": { "type": "string", "nullable": true, "description": "Step description" },
+          "asset_type_required": { "type": "string", "nullable": true, "description": "Required asset type" },
+          "is_pivot_trigger": { "type": "boolean", "nullable": true, "description": "Whether this step is a pivot trigger" }
         }
       },
       "Error": {
