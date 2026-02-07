@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Badge, StatusBadge, SlideOver } from '@/components/ui'
-import { 
-  ExternalLink, 
-  Edit, 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  Trophy, 
-  X, 
+import {
+  ExternalLink,
+  Edit,
+  Play,
+  Pause,
+  RotateCcw,
+  Trophy,
+  X,
   ArrowRight,
   Plus,
   CheckCircle,
@@ -23,7 +23,8 @@ import {
   Phone,
   Users,
   MoreHorizontal,
-  Target
+  Target,
+  FileText
 } from 'lucide-react'
 import { useOrg } from '@/lib/context/OrgContext'
 import type { 
@@ -459,6 +460,13 @@ export default function CampaignDetailPage() {
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-3">
+              <a
+                href={`/campaigns/${campaignId}/sequence`}
+                className="flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Build Sequence
+              </a>
               <button className="flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200">
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Campaign
