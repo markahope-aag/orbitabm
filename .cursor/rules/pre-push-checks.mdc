@@ -1,0 +1,73 @@
+---
+description: Run TypeScript, lint, and build checks before all git pushes
+alwaysApply: true
+---
+
+# Pre-Push Quality Checks
+
+Always run TypeScript type checking, linting, and build verification before pushing code to ensure code quality and prevent broken deployments.
+
+## Required Checks Before Git Push
+
+1. **TypeScript Type Checking**:
+   ```bash
+   npx tsc --noEmit
+   ```
+
+2. **ESLint Code Quality**:
+   ```bash
+   npm run lint
+   ```
+
+3. **Build Verification**:
+   ```bash
+   npm run build
+   ```
+
+## Workflow Order
+
+```bash
+# 1. Stage changes
+git add .
+
+# 2. Run quality checks
+npx tsc --noEmit
+npm run lint
+npm run build
+
+# 3. Only commit and push if all checks pass
+git commit -m "Your commit message"
+git push origin main
+```
+
+## Error Handling
+
+- **If TypeScript errors**: Fix type issues before proceeding
+- **If lint errors**: Fix code quality issues or use `npm run lint -- --fix` for auto-fixable issues
+- **If build fails**: Resolve build errors before pushing
+
+## Benefits
+
+- ✅ Prevents broken code from reaching production
+- ✅ Maintains consistent code quality
+- ✅ Catches type errors early
+- ✅ Ensures deployable code
+- ✅ Follows user's explicit requirement for TS and RLS checks
+
+## Example Output
+
+```bash
+$ npx tsc --noEmit
+✓ No TypeScript errors
+
+$ npm run lint
+✓ No linting errors
+
+$ npm run build
+✓ Build completed successfully
+
+$ git push origin main
+✓ Code pushed successfully
+```
+
+This ensures all code meets quality standards before being pushed to the repository.
