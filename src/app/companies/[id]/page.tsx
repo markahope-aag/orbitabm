@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Badge, StatusBadge, Tabs, SlideOver, DataTable } from '@/components/ui'
-import { ExternalLink, Edit, Plus, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { ExternalLink, Edit, Plus, TrendingUp, TrendingDown, Minus, FileText } from 'lucide-react'
 import type { 
   CompanyRow, 
   ContactRow, 
@@ -738,14 +738,23 @@ export default function CompanyDetailPage() {
               </div>
             </div>
 
-            {/* Edit Button */}
-            <button
-              onClick={() => setEditModalOpen(true)}
-              className="flex items-center px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </button>
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-3">
+              <a
+                href={`/companies/${companyId}/research`}
+                className="flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Research
+              </a>
+              <button
+                onClick={() => setEditModalOpen(true)}
+                className="flex items-center px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </button>
+            </div>
           </div>
         </div>
       </div>
