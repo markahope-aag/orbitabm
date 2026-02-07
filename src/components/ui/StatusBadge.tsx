@@ -8,17 +8,17 @@ function getStatusColor(status: string): 'green' | 'yellow' | 'red' | 'blue' | '
   const normalizedStatus = status.toLowerCase()
 
   // Green statuses - positive/active states
-  if (['active', 'client', 'completed', 'won', 'connected'].includes(normalizedStatus)) {
+  if (['active', 'client', 'completed', 'won', 'connected', 'approved', 'delivered'].includes(normalizedStatus)) {
     return 'green'
   }
 
   // Blue statuses - planned/in-progress states
-  if (['planned', 'scheduled', 'prospect', 'identified'].includes(normalizedStatus)) {
+  if (['planned', 'scheduled', 'prospect', 'identified', 'draft'].includes(normalizedStatus)) {
     return 'blue'
   }
 
   // Yellow statuses - caution/pending states
-  if (['paused', 'borderline', 'overdue'].includes(normalizedStatus)) {
+  if (['paused', 'borderline', 'overdue', 'in_review'].includes(normalizedStatus)) {
     return 'yellow'
   }
 

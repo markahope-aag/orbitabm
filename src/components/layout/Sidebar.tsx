@@ -21,6 +21,8 @@ import {
   Users,
   Building,
   Upload,
+  FileSearch,
+  LayoutTemplate,
   Menu,
   X,
   ChevronDown,
@@ -44,6 +46,7 @@ const navigation = [
       { name: 'Markets', href: '/markets', icon: MapPin },
       { name: 'Competitors', href: '/competitors', icon: Swords },
       { name: 'PE Tracker', href: '/pe-tracker', icon: TrendingUp },
+      { name: 'Documents', href: '/documents', icon: FileSearch },
     ]
   },
   {
@@ -62,6 +65,7 @@ const navigation = [
       { name: 'Contacts', href: '/contacts', icon: Users },
       { name: 'Import Data', href: '/import', icon: Upload },
       { name: 'Organizations', href: '/organizations', icon: Building },
+      { name: 'Templates', href: '/settings/templates', icon: LayoutTemplate },
     ]
   }
 ]

@@ -27,8 +27,8 @@ import {
   FileText
 } from 'lucide-react'
 import { useOrg } from '@/lib/context/OrgContext'
-import type { 
-  CampaignRow, 
+import type {
+  CampaignRow,
   CompanyRow,
   ContactRow,
   MarketRow,
@@ -39,7 +39,8 @@ import type {
   CampaignCompetitorRow,
   ResultRow,
   AssetRow,
-  DigitalSnapshotRow
+  DigitalSnapshotRow,
+  GeneratedDocumentRow
 } from '@/lib/types/database'
 
 interface CampaignWithRelations extends CampaignRow {
@@ -93,6 +94,7 @@ export default function CampaignDetailPage() {
   const [results, setResults] = useState<ResultRow[]>([])
   const [assets, setAssets] = useState<AssetWithCompany[]>([])
   const [latestSnapshot, setLatestSnapshot] = useState<DigitalSnapshotRow | null>(null)
+  const [sequenceDoc, setSequenceDoc] = useState<GeneratedDocumentRow | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -232,6 +234,19 @@ export default function CampaignDetailPage() {
 
       if (assetsError) throw assetsError
       setAssets(assetsData as AssetWithCompany[] || [])
+
+      // Fetch sequence document
+      const { data: seqData } = await supabase
+        .from('generated_documents')
+        .select('*')
+        .eq('campaign_id', campaignId)
+        .eq('document_type', 'campaign_sequence')
+        .is('deleted_at', null)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      setSequenceDoc(seqData as GeneratedDocumentRow | null)
 
     } catch (err) {
       console.error('Error fetching campaign data:', err)
@@ -815,6 +830,44 @@ export default function CampaignDetailPage() {
                   </div>
                 ) : (
                   <p className="text-slate-500 text-sm">No assets created yet.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Sequence Card */}
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+              <div className="p-6 border-b border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900">Sequence</h3>
+              </div>
+              <div className="p-6">
+                {sequenceDoc ? (
+                  <div className="space-y-3">
+                    <div className="font-medium text-slate-900">{sequenceDoc.title}</div>
+                    <div className="flex items-center space-x-3">
+                      <StatusBadge status={sequenceDoc.status} />
+                      <span className="text-sm text-slate-500">
+                        Updated {new Date(sequenceDoc.updated_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <a
+                      href={`/campaigns/${campaignId}/sequence`}
+                      className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 mt-2"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Open Sequence Builder
+                    </a>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-slate-500 text-sm mb-3">No sequence created yet.</p>
+                    <a
+                      href={`/campaigns/${campaignId}/sequence`}
+                      className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Build Sequence
+                    </a>
+                  </div>
                 )}
               </div>
             </div>

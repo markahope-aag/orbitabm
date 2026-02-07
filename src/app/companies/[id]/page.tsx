@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Badge, StatusBadge, Tabs, SlideOver, DataTable } from '@/components/ui'
-import { ExternalLink, Edit, Plus, TrendingUp, TrendingDown, Minus, FileText } from 'lucide-react'
-import type { 
-  CompanyRow, 
-  ContactRow, 
-  CampaignRow, 
-  DigitalSnapshotRow, 
+import { ExternalLink, Edit, Plus, TrendingUp, TrendingDown, Minus, FileText, BookOpen } from 'lucide-react'
+import type {
+  CompanyRow,
+  ContactRow,
+  CampaignRow,
+  DigitalSnapshotRow,
   AssetRow,
   MarketRow,
-  VerticalRow
+  VerticalRow,
+  GeneratedDocumentRow
 } from '@/lib/types/database'
 
 interface CompanyWithRelations extends CompanyRow {
@@ -45,6 +46,7 @@ export default function CompanyDetailPage() {
   const [digitalSnapshots, setDigitalSnapshots] = useState<DigitalSnapshotRow[]>([])
   const [assets, setAssets] = useState<AssetWithCompany[]>([])
   const [competitors, setCompetitors] = useState<CompanyWithRelations[]>([])
+  const [researchDoc, setResearchDoc] = useState<GeneratedDocumentRow | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -151,6 +153,19 @@ export default function CompanyDetailPage() {
         if (competitorsError) throw competitorsError
         setCompetitors(competitorsData as CompanyWithRelations[] || [])
       }
+
+      // Fetch research document
+      const { data: researchData } = await supabase
+        .from('generated_documents')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('document_type', 'prospect_research')
+        .is('deleted_at', null)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      setResearchDoc(researchData as GeneratedDocumentRow | null)
 
     } catch (err) {
       console.error('Error fetching company data:', err)
@@ -676,6 +691,55 @@ export default function CompanyDetailPage() {
           ) : (
             <div className="p-8 text-center text-slate-500">
               No assets found for this company.
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      id: 'research',
+      label: 'Research',
+      content: (
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
+          {researchDoc ? (
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">{researchDoc.title}</h3>
+                  <div className="flex items-center space-x-3 mt-2">
+                    <StatusBadge status={researchDoc.status} />
+                    {researchDoc.readiness_score != null && (
+                      <span className={`text-sm font-medium ${
+                        researchDoc.readiness_score >= 7 ? 'text-emerald-600' : researchDoc.readiness_score >= 4 ? 'text-amber-600' : 'text-red-600'
+                      }`}>
+                        Readiness: {researchDoc.readiness_score}/10
+                      </span>
+                    )}
+                    <span className="text-sm text-slate-500">
+                      Updated {new Date(researchDoc.updated_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <a
+                  href={`/companies/${companyId}/research`}
+                  className="flex items-center px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Open Research Doc
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <BookOpen className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+              <p className="text-slate-500 mb-4">No research document found for this company.</p>
+              <a
+                href={`/companies/${companyId}/research`}
+                className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Build Research Doc
+              </a>
             </div>
           )}
         </div>
