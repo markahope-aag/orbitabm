@@ -1,0 +1,66 @@
+---
+description: Automatically handle database migrations using Supabase CLI
+alwaysApply: true
+---
+
+# Database Migration Automation
+
+When creating or modifying database schemas, always execute migrations automatically using the Supabase CLI without requiring manual user intervention.
+
+## Required Actions
+
+1. **Install Supabase CLI** if not already installed:
+   ```bash
+   npm install --save-dev supabase
+   ```
+
+2. **Initialize Supabase project** if not already done:
+   ```bash
+   npx supabase init
+   ```
+
+3. **Link to remote project** using project reference from environment variables:
+   ```bash
+   npx supabase link --project-ref [project-ref]
+   ```
+
+4. **Execute migrations automatically**:
+   ```bash
+   npx supabase db push
+   ```
+
+5. **Verify migration success**:
+   ```bash
+   npx supabase migration list
+   ```
+
+## Key Points
+
+- Never ask the user to manually run migrations in the Supabase dashboard
+- Extract project reference from NEXT_PUBLIC_SUPABASE_URL in .env.local
+- Handle authentication issues gracefully (project linking usually works without explicit login)
+- Always verify migration was applied successfully
+- Commit migration files to git repository after successful execution
+
+## Example Workflow
+
+```bash
+# 1. Create migration file
+echo "CREATE TABLE..." > supabase/migrations/001_feature.sql
+
+# 2. Link project (extract ref from .env.local)
+npx supabase link --project-ref mpktcabncjodpmyfqeht
+
+# 3. Push migration
+npx supabase db push
+
+# 4. Verify
+npx supabase migration list
+
+# 5. Commit
+git add supabase/migrations/001_feature.sql
+git commit -m "Add feature migration"
+git push
+```
+
+This ensures a seamless development experience where database changes are immediately applied and ready for use.
