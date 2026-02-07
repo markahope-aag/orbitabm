@@ -10,7 +10,7 @@ interface ColumnMapping {
 interface ColumnMapperProps {
   csvHeaders: string[]
   dbFields: { key: string; label: string; required?: boolean }[]
-  data: any[]
+  data: Record<string, unknown>[]
   onMappingChange: (mappings: ColumnMapping[]) => void
 }
 
@@ -40,8 +40,11 @@ export function ColumnMapper({ csvHeaders, dbFields, data, onMappingChange }: Co
       }
     })
 
-    setMappings(initialMappings)
-    onMappingChange(initialMappings)
+    // Use setTimeout to avoid synchronous setState in effect
+    setTimeout(() => {
+      setMappings(initialMappings)
+      onMappingChange(initialMappings)
+    }, 0)
   }, [csvHeaders, dbFields, onMappingChange])
 
   const handleMappingChange = (csvHeader: string, dbField: string | null) => {
@@ -141,7 +144,7 @@ export function ColumnMapper({ csvHeaders, dbFields, data, onMappingChange }: Co
                   {csvHeaders.map((header, colIndex) => (
                     <td key={colIndex} className="px-3 py-2 text-sm text-slate-900">
                       <div className="max-w-xs truncate">
-                        {row[header] || ''}
+                        {String(row[header] || '')}
                       </div>
                     </td>
                   ))}

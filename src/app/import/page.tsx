@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useOrg } from '@/lib/context/OrgContext'
 import { CsvUploader } from '@/components/import/CsvUploader'
 import { ColumnMapper } from '@/components/import/ColumnMapper'
 import { ImportPreview } from '@/components/import/ImportPreview'
 import { downloadTemplate } from '@/lib/utils/csvExport'
+import { showErrorToast, showSuccessToast, toastPromise } from '@/lib/utils/toast'
 import { 
   Upload, 
   Download, 
@@ -22,9 +22,17 @@ type ImportStep = 'select' | 'upload' | 'map' | 'preview' | 'import' | 'complete
 
 interface ProcessedRow {
   originalIndex: number
-  data: Record<string, any>
-  issues: any[]
+  data: Record<string, unknown>
+  issues: ValidationIssue[]
   status: 'valid' | 'warning' | 'error'
+}
+
+interface ValidationIssue {
+  row: number
+  field: string
+  issue: 'missing_required' | 'invalid_lookup' | 'duplicate' | 'invalid_format'
+  message: string
+  suggestion?: string
 }
 
 const entityTypes = [
@@ -115,12 +123,11 @@ const entityFields = {
 
 export default function ImportPage() {
   const { currentOrgId } = useOrg()
-  const supabase = createClient()
 
   // State
   const [currentStep, setCurrentStep] = useState<ImportStep>('select')
   const [selectedEntity, setSelectedEntity] = useState<EntityType>('companies')
-  const [csvData, setCsvData] = useState<any[]>([])
+  const [csvData, setCsvData] = useState<Record<string, unknown>[]>([])
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
   const [columnMappings, setColumnMappings] = useState<Array<{ csvHeader: string; dbField: string | null }>>([])
   const [processedRows, setProcessedRows] = useState<ProcessedRow[]>([])
@@ -134,15 +141,36 @@ export default function ImportPage() {
     setError(null)
   }
 
-  const handleDataParsed = (data: any[], headers: string[]) => {
-    setCsvData(data)
-    setCsvHeaders(headers)
-    setCurrentStep('map')
-    setError(null)
+  const handleDataParsed = (data: Record<string, unknown>[], headers: string[]) => {
+    try {
+      if (!data || data.length === 0) {
+        showErrorToast('CSV file is empty or contains no valid data')
+        return
+      }
+      
+      if (!headers || headers.length === 0) {
+        showErrorToast('CSV file must contain column headers')
+        return
+      }
+
+      setCsvData(data)
+      setCsvHeaders(headers)
+      setCurrentStep('map')
+      setError(null)
+      showSuccessToast(`Successfully parsed ${data.length} rows from CSV`)
+    } catch (err) {
+      showErrorToast('Failed to parse CSV file')
+      console.error('CSV parsing error:', err)
+    }
   }
 
   const handleMappingChange = (mappings: Array<{ csvHeader: string; dbField: string | null }>) => {
     setColumnMappings(mappings)
+  }
+
+  const handleCsvError = (error: string) => {
+    showErrorToast(error)
+    setError(error)
   }
 
   const handleValidationComplete = (processed: ProcessedRow[]) => {
@@ -151,7 +179,7 @@ export default function ImportPage() {
 
   const handleImport = async () => {
     if (!currentOrgId) {
-      setError('No organization selected')
+      showErrorToast('No organization selected')
       return
     }
 
@@ -166,30 +194,44 @@ export default function ImportPage() {
         throw new Error('No valid rows to import')
       }
 
-      // Prepare data for import
-      const importData = validRows.map(row => ({
-        ...row.data,
-        organization_id: currentOrgId
-      }))
+      const results = await toastPromise(
+        (async () => {
+          // Prepare data for import
+          const importData = validRows.map(row => ({
+            ...row.data,
+            organization_id: currentOrgId
+          }))
 
-      // Import via API route
-      const response = await fetch(`/api/${selectedEntity}/import`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          data: importData,
-          organization_id: currentOrgId
-        })
-      })
+          // Import via API route
+          const response = await fetch(`/api/${selectedEntity}/import`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              data: importData,
+              organization_id: currentOrgId
+            })
+          })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Import failed')
-      }
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Import failed')
+          }
 
-      const results = await response.json()
+          return await response.json()
+        })(),
+        {
+          loading: `Importing ${validRows.length} ${selectedEntity}...`,
+          success: (results) => {
+            const created = results.created || validRows.length
+            const skipped = processedRows.length - validRows.length
+            return `Successfully imported ${created} ${selectedEntity}${skipped > 0 ? ` (${skipped} skipped)` : ''}`
+          },
+          error: 'Failed to import data'
+        }
+      )
+
       setImportResults({
         created: results.created || validRows.length,
         skipped: processedRows.length - validRows.length,
@@ -325,15 +367,15 @@ export default function ImportPage() {
                       Download CSV templates with the correct headers and example data:
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {entityTypes.map((entity) => (
-                        <button
-                          key={entity.key}
-                          onClick={() => downloadTemplate(entity.key as keyof typeof downloadTemplate)}
-                          className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
-                        >
-                          {entity.label} Template
-                        </button>
-                      ))}
+                {entityTypes.map((entity) => (
+                  <button
+                    key={entity.key}
+                    onClick={() => downloadTemplate(entity.key as EntityType)}
+                    className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+                  >
+                    {entity.label} Template
+                  </button>
+                ))}
                     </div>
                   </div>
                 </div>
@@ -363,7 +405,7 @@ export default function ImportPage() {
 
               <CsvUploader
                 onDataParsed={handleDataParsed}
-                onError={setError}
+                onError={handleCsvError}
               />
 
               <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">

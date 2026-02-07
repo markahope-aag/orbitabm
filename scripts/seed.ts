@@ -42,21 +42,21 @@ interface SeedData {
   markets: Array<{
     name: string
     state: string
-    population: number
+    metro_population: number
   }>
   verticals: Array<{
     name: string
     sector: string
-    b2b_b2c: 'b2b' | 'b2c' | 'both'
+    b2b_b2c: 'B2B' | 'B2C' | 'Both'
     naics_code: string
     revenue_floor: number
     tier: 'tier_1' | 'tier_2' | 'tier_3'
   }>
   pePlatforms: Array<{
     name: string
-    parent_company?: string
+    parent_firm?: string
     estimated_valuation?: number
-    brand_count?: string
+    brand_count?: number
   }>
   playbookSteps: Array<{
     step_number: number
@@ -77,54 +77,54 @@ const seedData: SeedData = {
   ],
 
   markets: [
-    { name: 'Madison', state: 'WI', population: 285300 },
-    { name: 'Fort Wayne', state: 'IN', population: 273203 },
-    { name: 'Des Moines', state: 'IA', population: 213096 },
-    { name: 'Grand Rapids', state: 'MI', population: 200117 },
-    { name: 'Chicago', state: 'IL', population: 2721308 },
-    { name: 'Indianapolis', state: 'IN', population: 891484 },
-    { name: 'Detroit', state: 'MI', population: 645705 },
-    { name: 'Milwaukee', state: 'WI', population: 563531 },
-    { name: 'Kansas City', state: 'MO', population: 516032 },
-    { name: 'Minneapolis', state: 'MN', population: 428579 },
-    { name: 'St. Paul', state: 'MN', population: 307465 },
-    { name: 'St. Louis', state: 'MO', population: 279695 }
+    { name: 'Madison', state: 'WI', metro_population: 285300 },
+    { name: 'Fort Wayne', state: 'IN', metro_population: 273203 },
+    { name: 'Des Moines', state: 'IA', metro_population: 213096 },
+    { name: 'Grand Rapids', state: 'MI', metro_population: 200117 },
+    { name: 'Chicago', state: 'IL', metro_population: 2721308 },
+    { name: 'Indianapolis', state: 'IN', metro_population: 891484 },
+    { name: 'Detroit', state: 'MI', metro_population: 645705 },
+    { name: 'Milwaukee', state: 'WI', metro_population: 563531 },
+    { name: 'Kansas City', state: 'MO', metro_population: 516032 },
+    { name: 'Minneapolis', state: 'MN', metro_population: 428579 },
+    { name: 'St. Paul', state: 'MN', metro_population: 307465 },
+    { name: 'St. Louis', state: 'MO', metro_population: 279695 }
   ],
 
   verticals: [
     // Tier 1
-    { name: 'HVAC Companies', sector: 'Home Services', b2b_b2c: 'b2c', naics_code: '238220', revenue_floor: 2000000, tier: 'tier_1' },
-    { name: 'Auto Dealerships', sector: 'Retail', b2b_b2c: 'b2c', naics_code: '441110', revenue_floor: 2000000, tier: 'tier_1' },
-    { name: 'Small/Mid Manufacturers', sector: 'Manufacturing', b2b_b2c: 'b2b', naics_code: '31-33', revenue_floor: 3000000, tier: 'tier_1' },
-    { name: 'Law Firms', sector: 'Professional Services', b2b_b2c: 'both', naics_code: '5411', revenue_floor: 3000000, tier: 'tier_1' },
-    { name: 'General Contractors', sector: 'Construction', b2b_b2c: 'b2b', naics_code: '236220', revenue_floor: 3000000, tier: 'tier_1' },
+    { name: 'HVAC Companies', sector: 'Home Services', b2b_b2c: 'B2C', naics_code: '238220', revenue_floor: 2000000, tier: 'tier_1' },
+    { name: 'Auto Dealerships', sector: 'Retail', b2b_b2c: 'B2C', naics_code: '441110', revenue_floor: 2000000, tier: 'tier_1' },
+    { name: 'Small/Mid Manufacturers', sector: 'Manufacturing', b2b_b2c: 'B2B', naics_code: '31-33', revenue_floor: 3000000, tier: 'tier_1' },
+    { name: 'Law Firms', sector: 'Professional Services', b2b_b2c: 'Both', naics_code: '5411', revenue_floor: 3000000, tier: 'tier_1' },
+    { name: 'General Contractors', sector: 'Construction', b2b_b2c: 'B2B', naics_code: '236220', revenue_floor: 3000000, tier: 'tier_1' },
 
     // Tier 2
-    { name: 'Plumbing Companies', sector: 'Home Services', b2b_b2c: 'b2c', naics_code: '238220', revenue_floor: 2000000, tier: 'tier_2' },
-    { name: 'Electrical Contractors', sector: 'Home Services', b2b_b2c: 'both', naics_code: '238210', revenue_floor: 2000000, tier: 'tier_2' },
-    { name: 'Restaurant Groups', sector: 'Hospitality', b2b_b2c: 'b2c', naics_code: '722511', revenue_floor: 2000000, tier: 'tier_2' },
-    { name: 'Wholesale Distributors', sector: 'Distribution', b2b_b2c: 'b2b', naics_code: '42', revenue_floor: 3000000, tier: 'tier_2' },
-    { name: 'CPA / Accounting Firms', sector: 'Professional Services', b2b_b2c: 'b2b', naics_code: '5412', revenue_floor: 3000000, tier: 'tier_2' },
-    { name: 'Senior Living Facilities', sector: 'Healthcare', b2b_b2c: 'b2c', naics_code: '623110', revenue_floor: 2000000, tier: 'tier_2' },
+    { name: 'Plumbing Companies', sector: 'Home Services', b2b_b2c: 'B2C', naics_code: '238220', revenue_floor: 2000000, tier: 'tier_2' },
+    { name: 'Electrical Contractors', sector: 'Home Services', b2b_b2c: 'Both', naics_code: '238210', revenue_floor: 2000000, tier: 'tier_2' },
+    { name: 'Restaurant Groups', sector: 'Hospitality', b2b_b2c: 'B2C', naics_code: '722511', revenue_floor: 2000000, tier: 'tier_2' },
+    { name: 'Wholesale Distributors', sector: 'Distribution', b2b_b2c: 'B2B', naics_code: '42', revenue_floor: 3000000, tier: 'tier_2' },
+    { name: 'CPA / Accounting Firms', sector: 'Professional Services', b2b_b2c: 'B2B', naics_code: '5412', revenue_floor: 3000000, tier: 'tier_2' },
+    { name: 'Senior Living Facilities', sector: 'Healthcare', b2b_b2c: 'B2C', naics_code: '623110', revenue_floor: 2000000, tier: 'tier_2' },
 
     // Tier 3
-    { name: 'Community Banks / CUs', sector: 'Financial Services', b2b_b2c: 'both', naics_code: '522110', revenue_floor: 3000000, tier: 'tier_3' },
-    { name: 'Property Management', sector: 'Real Estate', b2b_b2c: 'both', naics_code: '531311', revenue_floor: 3000000, tier: 'tier_3' },
-    { name: 'Architecture & Engineering', sector: 'Professional Services', b2b_b2c: 'b2b', naics_code: '5413', revenue_floor: 3000000, tier: 'tier_3' },
-    { name: 'Specialty Subcontractors', sector: 'Construction', b2b_b2c: 'b2b', naics_code: '238xxx', revenue_floor: 3000000, tier: 'tier_3' },
-    { name: 'Private Schools', sector: 'Education', b2b_b2c: 'b2c', naics_code: '611110', revenue_floor: 2000000, tier: 'tier_3' }
+    { name: 'Community Banks / CUs', sector: 'Financial Services', b2b_b2c: 'Both', naics_code: '522110', revenue_floor: 3000000, tier: 'tier_3' },
+    { name: 'Property Management', sector: 'Real Estate', b2b_b2c: 'Both', naics_code: '531311', revenue_floor: 3000000, tier: 'tier_3' },
+    { name: 'Architecture & Engineering', sector: 'Professional Services', b2b_b2c: 'B2B', naics_code: '5413', revenue_floor: 3000000, tier: 'tier_3' },
+    { name: 'Specialty Subcontractors', sector: 'Construction', b2b_b2c: 'B2B', naics_code: '238xxx', revenue_floor: 3000000, tier: 'tier_3' },
+    { name: 'Private Schools', sector: 'Education', b2b_b2c: 'B2C', naics_code: '611110', revenue_floor: 2000000, tier: 'tier_3' }
   ],
 
   pePlatforms: [
     { 
       name: 'TurnPoint Services', 
-      parent_company: 'OMERS Private Equity', 
+      parent_firm: 'OMERS Private Equity', 
       estimated_valuation: 2000000000, 
-      brand_count: '40+' 
+      brand_count: 40 
     },
     { 
       name: 'Heartland Home Services', 
-      parent_company: 'North Branch Capital' 
+      parent_firm: 'North Branch Capital' 
     }
   ],
 
@@ -173,9 +173,10 @@ async function seedMarkets(asymmetricOrgId: string) {
       seedData.markets.map(market => ({
         organization_id: asymmetricOrgId,
         name: `${market.name}, ${market.state}`,
-        population: market.population
+        state: market.state,
+        metro_population: market.metro_population
       })),
-      { onConflict: 'organization_id,name' }
+      { onConflict: 'organization_id,name,state' }
     )
     .select()
 
@@ -221,15 +222,14 @@ async function seedPEPlatforms(asymmetricOrgId: string) {
   
   const { data, error } = await supabase
     .from('pe_platforms')
-    .upsert(
+    .insert(
       seedData.pePlatforms.map(platform => ({
         organization_id: asymmetricOrgId,
         name: platform.name,
-        parent_company: platform.parent_company || null,
+        parent_firm: platform.parent_firm || null,
         estimated_valuation: platform.estimated_valuation || null,
         brand_count: platform.brand_count || null
-      })),
-      { onConflict: 'organization_id,name' }
+      }))
     )
     .select()
 
@@ -248,13 +248,13 @@ async function seedHVACPlaybook(asymmetricOrgId: string, hvacVerticalId: string)
   // Create the playbook template
   const { data: playbook, error: playbookError } = await supabase
     .from('playbook_templates')
-    .upsert([{
+    .insert([{
       organization_id: asymmetricOrgId,
       name: 'HVAC ABM — 35-Day Sequence',
       description: 'Comprehensive 35-day outbound sequence for HVAC companies',
       vertical_id: hvacVerticalId,
       is_active: true
-    }], { onConflict: 'organization_id,name' })
+    }])
     .select()
     .single()
 
@@ -268,7 +268,7 @@ async function seedHVACPlaybook(asymmetricOrgId: string, hvacVerticalId: string)
   // Create the playbook steps
   const { data: steps, error: stepsError } = await supabase
     .from('playbook_steps')
-    .upsert(
+    .insert(
       seedData.playbookSteps.map(step => ({
         organization_id: asymmetricOrgId,
         playbook_template_id: playbook.id,
@@ -279,8 +279,7 @@ async function seedHVACPlaybook(asymmetricOrgId: string, hvacVerticalId: string)
         description: `Step ${step.step_number} of the HVAC ABM sequence`,
         asset_type_required: step.asset_type_required,
         is_pivot_trigger: step.is_pivot_trigger || false
-      })),
-      { onConflict: 'playbook_template_id,step_number' }
+      }))
     )
     .select()
 

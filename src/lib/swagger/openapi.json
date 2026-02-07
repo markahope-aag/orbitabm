@@ -1,0 +1,3972 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OrbitABM API",
+    "description": "RESTful API for OrbitABM - Account-Based Marketing Campaign Intelligence Platform",
+    "version": "1.0.0",
+    "contact": {
+      "name": "OrbitABM Support",
+      "email": "support@orbitabm.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://orbitabm.com/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    },
+    {
+      "url": "https://your-domain.com/api",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Companies",
+      "description": "Company management endpoints"
+    },
+    {
+      "name": "Contacts",
+      "description": "Contact management endpoints"
+    },
+    {
+      "name": "Markets",
+      "description": "Market management endpoints"
+    },
+    {
+      "name": "Verticals",
+      "description": "Industry vertical management endpoints"
+    },
+    {
+      "name": "Campaigns",
+      "description": "Campaign management endpoints"
+    },
+    {
+      "name": "Digital Snapshots",
+      "description": "Digital presence tracking endpoints"
+    },
+    {
+      "name": "Document Templates",
+      "description": "Document template management endpoints"
+    },
+    {
+      "name": "Generated Documents",
+      "description": "Generated document management endpoints"
+    },
+    {
+      "name": "Email Templates",
+      "description": "Email template management endpoints"
+    }
+  ],
+  "paths": {
+    "/companies": {
+      "get": {
+        "tags": ["Companies"],
+        "summary": "List companies",
+        "description": "Retrieve a list of companies with optional filtering and pagination",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "query",
+            "required": true,
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "market_id",
+            "in": "query",
+            "description": "Filter by market UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "vertical_id",
+            "in": "query",
+            "description": "Filter by vertical UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by company status",
+            "schema": {
+              "type": "string",
+              "enum": ["prospect", "target", "client", "competitor", "lost"]
+            }
+          },
+          {
+            "name": "ownership_type",
+            "in": "query",
+            "description": "Filter by ownership type",
+            "schema": {
+              "type": "string",
+              "enum": ["independent", "franchise", "corporate", "private_equity"]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of results per page",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CompanyWithRelations"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Companies"],
+        "summary": "Create company",
+        "description": "Create a new company",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Company created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Company"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/companies/{id}": {
+      "get": {
+        "tags": ["Companies"],
+        "summary": "Get company by ID",
+        "description": "Retrieve a single company by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Company UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Company"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Companies"],
+        "summary": "Update company",
+        "description": "Update an existing company (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Company UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Company updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Company"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Companies"],
+        "summary": "Delete company",
+        "description": "Soft delete a company (sets deleted_at timestamp)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Company UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "deleted": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/companies/import": {
+      "post": {
+        "tags": ["Companies"],
+        "summary": "Bulk import companies",
+        "description": "Import multiple companies from CSV data",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyBulkImport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "created": {
+                          "type": "integer",
+                          "description": "Number of companies created"
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "integer"
+                              },
+                              "error": {
+                                "type": "string"
+                              },
+                              "data": {
+                                "type": "object"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/verticals": {
+      "get": {
+        "tags": ["Verticals"],
+        "summary": "List verticals",
+        "description": "Retrieve a list of industry verticals with optional filtering",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "query",
+            "required": true,
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sector",
+            "in": "query",
+            "description": "Filter by sector",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tier",
+            "in": "query",
+            "description": "Filter by tier",
+            "schema": {
+              "type": "string",
+              "enum": ["tier_1", "tier_2", "tier_3", "borderline", "eliminated"]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of results per page",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Vertical"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Verticals"],
+        "summary": "Create vertical",
+        "description": "Create a new industry vertical",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerticalCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vertical created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Vertical"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/verticals/{id}": {
+      "get": {
+        "tags": ["Verticals"],
+        "summary": "Get vertical by ID",
+        "description": "Retrieve a single vertical by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Vertical UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Vertical"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Verticals"],
+        "summary": "Update vertical",
+        "description": "Update an existing vertical (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Vertical UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerticalUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vertical updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Vertical"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Verticals"],
+        "summary": "Delete vertical",
+        "description": "Soft delete a vertical (cannot delete if in use by companies)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Vertical UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vertical deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "deleted": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Conflict - vertical is in use",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "tags": ["Campaigns"],
+        "summary": "List campaigns",
+        "description": "Retrieve a list of campaigns with optional filtering and pagination",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "query",
+            "required": true,
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by campaign status",
+            "schema": {
+              "type": "string",
+              "enum": ["planned", "active", "paused", "completed", "won", "lost", "pivoted"]
+            }
+          },
+          {
+            "name": "market_id",
+            "in": "query",
+            "description": "Filter by market UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "vertical_id",
+            "in": "query",
+            "description": "Filter by vertical UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "assigned_to",
+            "in": "query",
+            "description": "Filter by assigned user UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "description": "Filter by company UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of results per page",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CampaignWithRelations"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Campaigns"],
+        "summary": "Create campaign",
+        "description": "Create a new campaign",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Campaign created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CampaignWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/campaigns/{id}": {
+      "get": {
+        "tags": ["Campaigns"],
+        "summary": "Get campaign by ID",
+        "description": "Retrieve a single campaign with full details including playbook steps",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Campaign UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CampaignDetailed"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Campaigns"],
+        "summary": "Update campaign",
+        "description": "Update an existing campaign (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Campaign UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Campaign updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CampaignWithRelations"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Campaigns"],
+        "summary": "Delete campaign",
+        "description": "Soft delete a campaign (cannot delete if has activities or results)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Campaign UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "deleted": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Conflict - campaign has data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/digital-snapshots": {
+      "get": {
+        "tags": ["Digital Snapshots"],
+        "summary": "List digital snapshots",
+        "description": "Retrieve a list of digital presence snapshots with optional filtering",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "query",
+            "required": true,
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "description": "Filter by company UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "snapshot_date",
+            "in": "query",
+            "description": "Filter by specific date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "description": "Filter from date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "description": "Filter to date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of results per page",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DigitalSnapshotWithCompany"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Digital Snapshots"],
+        "summary": "Create digital snapshot",
+        "description": "Create a new digital presence snapshot",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DigitalSnapshotCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Digital snapshot created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DigitalSnapshotWithCompany"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/digital-snapshots/{id}": {
+      "get": {
+        "tags": ["Digital Snapshots"],
+        "summary": "Get digital snapshot by ID",
+        "description": "Retrieve a single digital snapshot by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Digital snapshot UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DigitalSnapshotWithCompany"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Digital Snapshots"],
+        "summary": "Update digital snapshot",
+        "description": "Update an existing digital snapshot (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Digital snapshot UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DigitalSnapshotUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Digital snapshot updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DigitalSnapshotWithCompany"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Digital Snapshots"],
+        "summary": "Delete digital snapshot",
+        "description": "Hard delete a digital snapshot (historical data)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Digital snapshot UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Digital snapshot deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "deleted": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/document-templates": {
+      "get": {
+        "tags": ["Document Templates"],
+        "summary": "List document templates",
+        "description": "Retrieve a list of document templates with optional filtering and pagination",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrganizationId"
+          },
+          {
+            "name": "document_type",
+            "in": "query",
+            "description": "Filter by document type",
+            "schema": {
+              "type": "string",
+              "enum": ["prospect_research", "campaign_sequence", "competitive_analysis", "audit_report", "proposal"]
+            }
+          },
+          {
+            "name": "vertical_id",
+            "in": "query",
+            "description": "Filter by vertical UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "description": "Filter by active status",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DocumentTemplate"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Document Templates"],
+        "summary": "Create document template",
+        "description": "Create a new document template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentTemplateCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DocumentTemplate"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/document-templates/{id}": {
+      "get": {
+        "tags": ["Document Templates"],
+        "summary": "Get document template by ID",
+        "description": "Retrieve a single document template by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Document template UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DocumentTemplate"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Document Templates"],
+        "summary": "Update document template",
+        "description": "Update an existing document template (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Document template UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentTemplateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document template updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DocumentTemplate"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Document Templates"],
+        "summary": "Delete document template",
+        "description": "Soft delete a document template (sets deleted_at timestamp)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Document template UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document template deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "deleted": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/generated-documents": {
+      "get": {
+        "tags": ["Generated Documents"],
+        "summary": "List generated documents",
+        "description": "Retrieve a list of generated documents with optional filtering and pagination",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrganizationId"
+          },
+          {
+            "name": "document_type",
+            "in": "query",
+            "description": "Filter by document type",
+            "schema": {
+              "type": "string",
+              "enum": ["prospect_research", "campaign_sequence", "competitive_analysis", "audit_report", "proposal"]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by document status",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "in_review", "approved", "delivered", "archived"]
+            }
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "description": "Filter by company UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "campaign_id",
+            "in": "query",
+            "description": "Filter by campaign UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GeneratedDocument"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Generated Documents"],
+        "summary": "Create generated document",
+        "description": "Create a new generated document",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneratedDocumentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Generated document created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GeneratedDocument"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/generated-documents/{id}": {
+      "get": {
+        "tags": ["Generated Documents"],
+        "summary": "Get generated document by ID",
+        "description": "Retrieve a single generated document by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Generated document UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GeneratedDocument"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Generated Documents"],
+        "summary": "Update generated document",
+        "description": "Update an existing generated document (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Generated document UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneratedDocumentUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated document updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GeneratedDocument"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Generated Documents"],
+        "summary": "Delete generated document",
+        "description": "Soft delete a generated document (sets deleted_at timestamp)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Generated document UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated document deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "deleted": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/email-templates": {
+      "get": {
+        "tags": ["Email Templates"],
+        "summary": "List email templates",
+        "description": "Retrieve a list of email templates with optional filtering and pagination",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrganizationId"
+          },
+          {
+            "name": "playbook_step_id",
+            "in": "query",
+            "description": "Filter by playbook step UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "target_contact_role",
+            "in": "query",
+            "description": "Filter by target contact role",
+            "schema": {
+              "type": "string",
+              "enum": ["economic_buyer", "technical_buyer", "brand_buyer", "champion", "any"]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EmailTemplate"
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Email Templates"],
+        "summary": "Create email template",
+        "description": "Create a new email template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailTemplateCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Email template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/EmailTemplate"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/email-templates/{id}": {
+      "get": {
+        "tags": ["Email Templates"],
+        "summary": "Get email template by ID",
+        "description": "Retrieve a single email template by its UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Email template UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/EmailTemplate"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Email Templates"],
+        "summary": "Update email template",
+        "description": "Update an existing email template (partial update)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Email template UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailTemplateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email template updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/EmailTemplate"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Email Templates"],
+        "summary": "Delete email template",
+        "description": "Hard delete an email template",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Email template UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Email template deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "deleted": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Company": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Company UUID"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Company name",
+            "example": "Acme HVAC"
+          },
+          "market_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Market UUID"
+          },
+          "vertical_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Vertical UUID"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Company website URL",
+            "example": "https://acmehvac.com"
+          },
+          "estimated_revenue": {
+            "type": "number",
+            "nullable": true,
+            "description": "Estimated annual revenue",
+            "example": 2500000
+          },
+          "employee_count": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of employees",
+            "example": 25
+          },
+          "status": {
+            "type": "string",
+            "enum": ["prospect", "target", "client", "competitor", "lost"],
+            "description": "Company status",
+            "example": "prospect"
+          },
+          "qualifying_tier": {
+            "type": "string",
+            "enum": ["unqualified", "qualified", "top"],
+            "nullable": true,
+            "description": "Qualifying tier",
+            "example": "top"
+          },
+          "ownership_type": {
+            "type": "string",
+            "enum": ["independent", "franchise", "corporate", "private_equity"],
+            "nullable": true,
+            "description": "Ownership type",
+            "example": "independent"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes"
+          },
+          "readiness_score": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "nullable": true,
+            "description": "Company readiness score (1-10)"
+          },
+          "last_researched_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last research timestamp"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Deletion timestamp"
+          }
+        },
+        "required": ["id", "organization_id", "name", "market_id", "vertical_id", "status"]
+      },
+      "CompanyWithRelations": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Company"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "markets": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Fort Wayne, IN"
+                  }
+                }
+              },
+              "verticals": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "HVAC Companies"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CompanyCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Company name",
+            "example": "Acme HVAC"
+          },
+          "market_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Market UUID"
+          },
+          "vertical_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Vertical UUID"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "description": "Company website URL",
+            "example": "https://acmehvac.com"
+          },
+          "estimated_revenue": {
+            "type": "number",
+            "description": "Estimated annual revenue",
+            "example": 2500000
+          },
+          "employee_count": {
+            "type": "integer",
+            "description": "Number of employees",
+            "example": 25
+          },
+          "status": {
+            "type": "string",
+            "enum": ["prospect", "target", "client", "competitor", "lost"],
+            "default": "prospect",
+            "description": "Company status"
+          },
+          "qualifying_tier": {
+            "type": "string",
+            "enum": ["unqualified", "qualified", "top"],
+            "description": "Qualifying tier"
+          },
+          "ownership_type": {
+            "type": "string",
+            "enum": ["independent", "franchise", "corporate", "private_equity"],
+            "description": "Ownership type"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes"
+          },
+          "readiness_score": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Company readiness score (1-10)"
+          }
+        },
+        "required": ["organization_id", "name", "market_id", "vertical_id"]
+      },
+      "CompanyUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Company name"
+          },
+          "market_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Market UUID"
+          },
+          "vertical_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Vertical UUID"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Company website URL"
+          },
+          "estimated_revenue": {
+            "type": "number",
+            "nullable": true,
+            "description": "Estimated annual revenue"
+          },
+          "employee_count": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of employees"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["prospect", "target", "client", "competitor", "lost"],
+            "description": "Company status"
+          },
+          "qualifying_tier": {
+            "type": "string",
+            "enum": ["unqualified", "qualified", "top"],
+            "nullable": true,
+            "description": "Qualifying tier"
+          },
+          "ownership_type": {
+            "type": "string",
+            "enum": ["independent", "franchise", "corporate", "private_equity"],
+            "nullable": true,
+            "description": "Ownership type"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes"
+          },
+          "readiness_score": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "nullable": true,
+            "description": "Company readiness score (1-10)"
+          },
+          "last_researched_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last research timestamp"
+          }
+        }
+      },
+      "CompanyBulkImport": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Company name"
+                },
+                "market": {
+                  "type": "string",
+                  "description": "Market name (will be created if doesn't exist)"
+                },
+                "vertical": {
+                  "type": "string",
+                  "description": "Vertical name (will be created if doesn't exist)"
+                },
+                "website": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "Company website URL"
+                },
+                "estimated_revenue": {
+                  "type": "number",
+                  "description": "Estimated annual revenue"
+                },
+                "employee_count": {
+                  "type": "integer",
+                  "description": "Number of employees"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["prospect", "target", "client", "competitor", "lost"],
+                  "description": "Company status"
+                },
+                "qualifying_tier": {
+                  "type": "string",
+                  "enum": ["unqualified", "qualified", "top"],
+                  "description": "Qualifying tier"
+                },
+                "ownership_type": {
+                  "type": "string",
+                  "enum": ["independent", "franchise", "corporate", "private_equity"],
+                  "description": "Ownership type"
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Additional notes"
+                }
+              },
+              "required": ["name", "market", "vertical"]
+            }
+          }
+        },
+        "required": ["organization_id", "data"]
+      },
+      "Vertical": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Vertical UUID"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Vertical name",
+            "example": "HVAC Companies"
+          },
+          "sector": {
+            "type": "string",
+            "nullable": true,
+            "description": "Industry sector",
+            "example": "Home Services"
+          },
+          "b2b_b2c": {
+            "type": "string",
+            "enum": ["B2B", "B2C", "Both"],
+            "nullable": true,
+            "description": "Business model",
+            "example": "B2C"
+          },
+          "naics_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "NAICS industry code",
+            "example": "238220"
+          },
+          "revenue_floor": {
+            "type": "number",
+            "nullable": true,
+            "description": "Minimum revenue threshold",
+            "example": 2000000
+          },
+          "typical_revenue_range": {
+            "type": "string",
+            "nullable": true,
+            "description": "Typical revenue range",
+            "example": "$2M - $10M"
+          },
+          "typical_marketing_budget_pct": {
+            "type": "string",
+            "nullable": true,
+            "description": "Typical marketing budget percentage",
+            "example": "3-5%"
+          },
+          "key_decision_maker_title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Key decision maker title",
+            "example": "Owner/CEO"
+          },
+          "tier": {
+            "type": "string",
+            "enum": ["tier_1", "tier_2", "tier_3", "borderline", "eliminated"],
+            "nullable": true,
+            "description": "Vertical tier",
+            "example": "tier_1"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Deletion timestamp"
+          }
+        },
+        "required": ["id", "organization_id", "name"]
+      },
+      "VerticalCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Vertical name",
+            "example": "HVAC Companies"
+          },
+          "sector": {
+            "type": "string",
+            "description": "Industry sector",
+            "example": "Home Services"
+          },
+          "b2b_b2c": {
+            "type": "string",
+            "enum": ["B2B", "B2C", "Both"],
+            "description": "Business model"
+          },
+          "naics_code": {
+            "type": "string",
+            "description": "NAICS industry code"
+          },
+          "revenue_floor": {
+            "type": "number",
+            "description": "Minimum revenue threshold"
+          },
+          "typical_revenue_range": {
+            "type": "string",
+            "description": "Typical revenue range"
+          },
+          "typical_marketing_budget_pct": {
+            "type": "string",
+            "description": "Typical marketing budget percentage"
+          },
+          "key_decision_maker_title": {
+            "type": "string",
+            "description": "Key decision maker title"
+          },
+          "tier": {
+            "type": "string",
+            "enum": ["tier_1", "tier_2", "tier_3", "borderline", "eliminated"],
+            "description": "Vertical tier"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes"
+          }
+        },
+        "required": ["organization_id", "name"]
+      },
+      "VerticalUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Vertical name"
+          },
+          "sector": {
+            "type": "string",
+            "nullable": true,
+            "description": "Industry sector"
+          },
+          "b2b_b2c": {
+            "type": "string",
+            "enum": ["B2B", "B2C", "Both"],
+            "nullable": true,
+            "description": "Business model"
+          },
+          "naics_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "NAICS industry code"
+          },
+          "revenue_floor": {
+            "type": "number",
+            "nullable": true,
+            "description": "Minimum revenue threshold"
+          },
+          "typical_revenue_range": {
+            "type": "string",
+            "nullable": true,
+            "description": "Typical revenue range"
+          },
+          "typical_marketing_budget_pct": {
+            "type": "string",
+            "nullable": true,
+            "description": "Typical marketing budget percentage"
+          },
+          "key_decision_maker_title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Key decision maker title"
+          },
+          "tier": {
+            "type": "string",
+            "enum": ["tier_1", "tier_2", "tier_3", "borderline", "eliminated"],
+            "nullable": true,
+            "description": "Vertical tier"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes"
+          }
+        }
+      },
+      "Campaign": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campaign UUID"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Campaign name",
+            "example": "Acme HVAC Q1 Campaign"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target company UUID"
+          },
+          "playbook_template_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Playbook template UUID"
+          },
+          "market_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Market UUID"
+          },
+          "vertical_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Vertical UUID"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "active", "paused", "completed", "won", "lost", "pivoted"],
+            "description": "Campaign status",
+            "example": "active"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Campaign start date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Campaign end date"
+          },
+          "current_step": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Current playbook step",
+            "example": 3
+          },
+          "pivot_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for pivot"
+          },
+          "pivot_to_campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Pivot target campaign UUID"
+          },
+          "assigned_to": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Assigned user UUID"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes"
+          },
+          "value_proposition": {
+            "type": "string",
+            "nullable": true,
+            "description": "Value proposition for the campaign"
+          },
+          "primary_wedge": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary wedge/entry point"
+          },
+          "backup_trigger": {
+            "type": "string",
+            "nullable": true,
+            "description": "Backup trigger for follow-up"
+          },
+          "success_criteria": {
+            "type": "string",
+            "nullable": true,
+            "description": "Success criteria for the campaign"
+          },
+          "research_doc_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Research document UUID"
+          },
+          "sequence_doc_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Sequence document UUID"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Deletion timestamp"
+          }
+        },
+        "required": ["id", "organization_id", "name", "company_id", "market_id", "vertical_id", "status"]
+      },
+      "CampaignWithRelations": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Campaign"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "companies": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Acme HVAC"
+                  },
+                  "website": {
+                    "type": "string",
+                    "format": "uri",
+                    "example": "https://acmehvac.com"
+                  },
+                  "estimated_revenue": {
+                    "type": "number",
+                    "example": 2500000
+                  }
+                }
+              },
+              "markets": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Fort Wayne, IN"
+                  },
+                  "state": {
+                    "type": "string",
+                    "example": "IN"
+                  }
+                }
+              },
+              "verticals": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "HVAC Companies"
+                  },
+                  "sector": {
+                    "type": "string",
+                    "example": "Home Services"
+                  }
+                }
+              },
+              "playbook_templates": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Standard HVAC Outreach"
+                  },
+                  "total_duration_days": {
+                    "type": "integer",
+                    "example": 45
+                  }
+                }
+              },
+              "profiles": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "full_name": {
+                    "type": "string",
+                    "example": "John Smith"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "john@company.com"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CampaignDetailed": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CampaignWithRelations"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "playbook_templates": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "total_duration_days": {
+                    "type": "integer"
+                  },
+                  "playbook_steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "step_number": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "string",
+                          "enum": ["mail", "email", "linkedin", "phone", "in_person", "other"]
+                        },
+                        "action_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "subject_line": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message_template": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "delay_days": {
+                          "type": "integer",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CampaignCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Campaign name",
+            "example": "Acme HVAC Q1 Campaign"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target company UUID"
+          },
+          "playbook_template_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Playbook template UUID"
+          },
+          "market_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Market UUID"
+          },
+          "vertical_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Vertical UUID"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "active", "paused", "completed", "won", "lost", "pivoted"],
+            "default": "planned",
+            "description": "Campaign status"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Campaign start date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Campaign end date"
+          },
+          "current_step": {
+            "type": "integer",
+            "default": 0,
+            "description": "Current playbook step"
+          },
+          "assigned_to": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Assigned user UUID"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes"
+          },
+          "value_proposition": {
+            "type": "string",
+            "description": "Value proposition for the campaign"
+          },
+          "primary_wedge": {
+            "type": "string",
+            "description": "Primary wedge/entry point"
+          },
+          "backup_trigger": {
+            "type": "string",
+            "description": "Backup trigger for follow-up"
+          },
+          "success_criteria": {
+            "type": "string",
+            "description": "Success criteria for the campaign"
+          },
+          "research_doc_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Research document UUID"
+          },
+          "sequence_doc_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Sequence document UUID"
+          }
+        },
+        "required": ["organization_id", "name", "company_id", "market_id", "vertical_id"]
+      },
+      "CampaignUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Campaign name"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target company UUID"
+          },
+          "playbook_template_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Playbook template UUID"
+          },
+          "market_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Market UUID"
+          },
+          "vertical_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Vertical UUID"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "active", "paused", "completed", "won", "lost", "pivoted"],
+            "description": "Campaign status"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Campaign start date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Campaign end date"
+          },
+          "current_step": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Current playbook step"
+          },
+          "pivot_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for pivot"
+          },
+          "pivot_to_campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Pivot target campaign UUID"
+          },
+          "assigned_to": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Assigned user UUID"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes"
+          },
+          "value_proposition": {
+            "type": "string",
+            "nullable": true,
+            "description": "Value proposition for the campaign"
+          },
+          "primary_wedge": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary wedge/entry point"
+          },
+          "backup_trigger": {
+            "type": "string",
+            "nullable": true,
+            "description": "Backup trigger for follow-up"
+          },
+          "success_criteria": {
+            "type": "string",
+            "nullable": true,
+            "description": "Success criteria for the campaign"
+          },
+          "research_doc_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Research document UUID"
+          },
+          "sequence_doc_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Sequence document UUID"
+          }
+        }
+      },
+      "DigitalSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Digital snapshot UUID"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Company UUID"
+          },
+          "snapshot_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Snapshot date",
+            "example": "2024-02-07"
+          },
+          "google_rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "nullable": true,
+            "description": "Google rating (0-5)",
+            "example": 4.5
+          },
+          "google_review_count": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of Google reviews",
+            "example": 127
+          },
+          "yelp_rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "nullable": true,
+            "description": "Yelp rating (0-5)",
+            "example": 4.2
+          },
+          "yelp_review_count": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of Yelp reviews",
+            "example": 45
+          },
+          "bbb_rating": {
+            "type": "string",
+            "nullable": true,
+            "description": "Better Business Bureau rating",
+            "example": "A+"
+          },
+          "facebook_followers": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Facebook followers count",
+            "example": 1250
+          },
+          "instagram_followers": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Instagram followers count",
+            "example": 890
+          },
+          "linkedin_followers": {
+            "type": "integer",
+            "nullable": true,
+            "description": "LinkedIn followers count",
+            "example": 340
+          },
+          "domain_authority": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Domain authority score",
+            "example": 35
+          },
+          "page_speed_mobile": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Mobile page speed score (0-100)",
+            "example": 78
+          },
+          "page_speed_desktop": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Desktop page speed score (0-100)",
+            "example": 85
+          },
+          "organic_keywords": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of organic keywords",
+            "example": 245
+          },
+          "monthly_organic_traffic_est": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Estimated monthly organic traffic",
+            "example": 1200
+          },
+          "website_has_ssl": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Website has SSL certificate"
+          },
+          "website_is_mobile_responsive": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Website is mobile responsive"
+          },
+          "has_online_booking": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Has online booking system"
+          },
+          "has_live_chat": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Has live chat feature"
+          },
+          "has_blog": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Has blog/content section"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": ["id", "organization_id", "company_id", "snapshot_date"]
+      },
+      "DigitalSnapshotWithCompany": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DigitalSnapshot"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "companies": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Acme HVAC"
+                  },
+                  "website": {
+                    "type": "string",
+                    "format": "uri",
+                    "example": "https://acmehvac.com"
+                  },
+                  "status": {
+                    "type": "string",
+                    "example": "prospect"
+                  },
+                  "estimated_revenue": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "employee_count": {
+                    "type": "integer",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DigitalSnapshotCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Company UUID"
+          },
+          "snapshot_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Snapshot date (defaults to today)",
+            "example": "2024-02-07"
+          },
+          "google_rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "description": "Google rating (0-5)"
+          },
+          "google_review_count": {
+            "type": "integer",
+            "description": "Number of Google reviews"
+          },
+          "yelp_rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "description": "Yelp rating (0-5)"
+          },
+          "yelp_review_count": {
+            "type": "integer",
+            "description": "Number of Yelp reviews"
+          },
+          "bbb_rating": {
+            "type": "string",
+            "description": "Better Business Bureau rating"
+          },
+          "facebook_followers": {
+            "type": "integer",
+            "description": "Facebook followers count"
+          },
+          "instagram_followers": {
+            "type": "integer",
+            "description": "Instagram followers count"
+          },
+          "linkedin_followers": {
+            "type": "integer",
+            "description": "LinkedIn followers count"
+          },
+          "domain_authority": {
+            "type": "integer",
+            "description": "Domain authority score"
+          },
+          "page_speed_mobile": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Mobile page speed score (0-100)"
+          },
+          "page_speed_desktop": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Desktop page speed score (0-100)"
+          },
+          "organic_keywords": {
+            "type": "integer",
+            "description": "Number of organic keywords"
+          },
+          "monthly_organic_traffic_est": {
+            "type": "integer",
+            "description": "Estimated monthly organic traffic"
+          },
+          "website_has_ssl": {
+            "type": "boolean",
+            "description": "Website has SSL certificate"
+          },
+          "website_is_mobile_responsive": {
+            "type": "boolean",
+            "description": "Website is mobile responsive"
+          },
+          "has_online_booking": {
+            "type": "boolean",
+            "description": "Has online booking system"
+          },
+          "has_live_chat": {
+            "type": "boolean",
+            "description": "Has live chat feature"
+          },
+          "has_blog": {
+            "type": "boolean",
+            "description": "Has blog/content section"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes"
+          }
+        },
+        "required": ["organization_id", "company_id"]
+      },
+      "DigitalSnapshotUpdate": {
+        "type": "object",
+        "properties": {
+          "snapshot_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Snapshot date"
+          },
+          "google_rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "nullable": true,
+            "description": "Google rating (0-5)"
+          },
+          "google_review_count": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of Google reviews"
+          },
+          "yelp_rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "nullable": true,
+            "description": "Yelp rating (0-5)"
+          },
+          "yelp_review_count": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of Yelp reviews"
+          },
+          "bbb_rating": {
+            "type": "string",
+            "nullable": true,
+            "description": "Better Business Bureau rating"
+          },
+          "facebook_followers": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Facebook followers count"
+          },
+          "instagram_followers": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Instagram followers count"
+          },
+          "linkedin_followers": {
+            "type": "integer",
+            "nullable": true,
+            "description": "LinkedIn followers count"
+          },
+          "domain_authority": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Domain authority score"
+          },
+          "page_speed_mobile": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Mobile page speed score (0-100)"
+          },
+          "page_speed_desktop": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Desktop page speed score (0-100)"
+          },
+          "organic_keywords": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of organic keywords"
+          },
+          "monthly_organic_traffic_est": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Estimated monthly organic traffic"
+          },
+          "website_has_ssl": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Website has SSL certificate"
+          },
+          "website_is_mobile_responsive": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Website is mobile responsive"
+          },
+          "has_online_booking": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Has online booking system"
+          },
+          "has_live_chat": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Has live chat feature"
+          },
+          "has_blog": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Has blog/content section"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes"
+          }
+        }
+      },
+      "DocumentTemplate": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Document template UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "name": { "type": "string", "description": "Template name", "example": "HVAC Prospect Research" },
+          "document_type": { "type": "string", "enum": ["prospect_research", "campaign_sequence", "competitive_analysis", "audit_report", "proposal"], "description": "Document type" },
+          "vertical_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Vertical UUID" },
+          "template_structure": { "type": "object", "description": "Template structure definition (JSON)" },
+          "version": { "type": "integer", "description": "Template version", "example": 1 },
+          "is_active": { "type": "boolean", "description": "Whether template is active", "example": true },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+          "deleted_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Deletion timestamp" }
+        },
+        "required": ["id", "organization_id", "name", "document_type", "template_structure"]
+      },
+      "DocumentTemplateCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "name": { "type": "string", "description": "Template name", "example": "HVAC Prospect Research" },
+          "document_type": { "type": "string", "enum": ["prospect_research", "campaign_sequence", "competitive_analysis", "audit_report", "proposal"], "description": "Document type" },
+          "vertical_id": { "type": "string", "format": "uuid", "description": "Vertical UUID" },
+          "template_structure": { "type": "object", "description": "Template structure definition (JSON)" },
+          "version": { "type": "integer", "default": 1, "description": "Template version" },
+          "is_active": { "type": "boolean", "default": true, "description": "Whether template is active" }
+        },
+        "required": ["organization_id", "name", "document_type", "template_structure"]
+      },
+      "DocumentTemplateUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Template name" },
+          "document_type": { "type": "string", "enum": ["prospect_research", "campaign_sequence", "competitive_analysis", "audit_report", "proposal"], "description": "Document type" },
+          "vertical_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Vertical UUID" },
+          "template_structure": { "type": "object", "description": "Template structure definition (JSON)" },
+          "version": { "type": "integer", "description": "Template version" },
+          "is_active": { "type": "boolean", "description": "Whether template is active" }
+        }
+      },
+      "GeneratedDocument": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Generated document UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "document_template_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Document template UUID" },
+          "company_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Company UUID" },
+          "campaign_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Campaign UUID" },
+          "title": { "type": "string", "description": "Document title", "example": "Acme HVAC - Prospect Research" },
+          "document_type": { "type": "string", "enum": ["prospect_research", "campaign_sequence", "competitive_analysis", "audit_report", "proposal"], "description": "Document type" },
+          "status": { "type": "string", "enum": ["draft", "in_review", "approved", "delivered", "archived"], "description": "Document status", "example": "draft" },
+          "content": { "type": "object", "description": "Document content (JSON)" },
+          "readiness_score": { "type": "integer", "minimum": 1, "maximum": 10, "nullable": true, "description": "Readiness score (1-10)" },
+          "version": { "type": "integer", "description": "Document version", "example": 1 },
+          "approved_by": { "type": "string", "format": "uuid", "nullable": true, "description": "Approver profile UUID" },
+          "approved_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Approval timestamp" },
+          "last_generated_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Last generation timestamp" },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+          "deleted_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Deletion timestamp" }
+        },
+        "required": ["id", "organization_id", "title", "document_type", "status"]
+      },
+      "GeneratedDocumentCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "document_template_id": { "type": "string", "format": "uuid", "description": "Document template UUID" },
+          "company_id": { "type": "string", "format": "uuid", "description": "Company UUID" },
+          "campaign_id": { "type": "string", "format": "uuid", "description": "Campaign UUID" },
+          "title": { "type": "string", "description": "Document title", "example": "Acme HVAC - Prospect Research" },
+          "document_type": { "type": "string", "enum": ["prospect_research", "campaign_sequence", "competitive_analysis", "audit_report", "proposal"], "description": "Document type" },
+          "status": { "type": "string", "enum": ["draft", "in_review", "approved", "delivered", "archived"], "default": "draft", "description": "Document status" },
+          "content": { "type": "object", "description": "Document content (JSON)" },
+          "readiness_score": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Readiness score (1-10)" },
+          "version": { "type": "integer", "default": 1, "description": "Document version" }
+        },
+        "required": ["organization_id", "title", "document_type"]
+      },
+      "GeneratedDocumentUpdate": {
+        "type": "object",
+        "properties": {
+          "document_template_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Document template UUID" },
+          "company_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Company UUID" },
+          "campaign_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Campaign UUID" },
+          "title": { "type": "string", "description": "Document title" },
+          "document_type": { "type": "string", "enum": ["prospect_research", "campaign_sequence", "competitive_analysis", "audit_report", "proposal"], "description": "Document type" },
+          "status": { "type": "string", "enum": ["draft", "in_review", "approved", "delivered", "archived"], "description": "Document status" },
+          "content": { "type": "object", "description": "Document content (JSON)" },
+          "readiness_score": { "type": "integer", "minimum": 1, "maximum": 10, "nullable": true, "description": "Readiness score (1-10)" },
+          "version": { "type": "integer", "description": "Document version" },
+          "approved_by": { "type": "string", "format": "uuid", "nullable": true, "description": "Approver profile UUID" },
+          "approved_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Approval timestamp" },
+          "last_generated_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Last generation timestamp" }
+        }
+      },
+      "EmailTemplate": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Email template UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "playbook_step_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Playbook step UUID" },
+          "name": { "type": "string", "description": "Template name", "example": "Initial Outreach - Owner" },
+          "subject_line": { "type": "string", "description": "Email subject line", "example": "Quick question about your marketing" },
+          "subject_line_alt": { "type": "string", "nullable": true, "description": "Alternative subject line" },
+          "body": { "type": "string", "description": "Email body content" },
+          "target_contact_role": { "type": "string", "enum": ["economic_buyer", "technical_buyer", "brand_buyer", "champion", "any"], "nullable": true, "description": "Target contact role" },
+          "merge_fields_required": { "type": "array", "items": { "type": "string" }, "nullable": true, "description": "Required merge fields" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" },
+          "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+        },
+        "required": ["id", "organization_id", "name", "subject_line", "body"]
+      },
+      "EmailTemplateCreate": {
+        "type": "object",
+        "properties": {
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" },
+          "playbook_step_id": { "type": "string", "format": "uuid", "description": "Playbook step UUID" },
+          "name": { "type": "string", "description": "Template name", "example": "Initial Outreach - Owner" },
+          "subject_line": { "type": "string", "description": "Email subject line" },
+          "subject_line_alt": { "type": "string", "description": "Alternative subject line" },
+          "body": { "type": "string", "description": "Email body content" },
+          "target_contact_role": { "type": "string", "enum": ["economic_buyer", "technical_buyer", "brand_buyer", "champion", "any"], "description": "Target contact role" },
+          "merge_fields_required": { "type": "array", "items": { "type": "string" }, "description": "Required merge fields" },
+          "notes": { "type": "string", "description": "Additional notes" }
+        },
+        "required": ["organization_id", "name", "subject_line", "body"]
+      },
+      "EmailTemplateUpdate": {
+        "type": "object",
+        "properties": {
+          "playbook_step_id": { "type": "string", "format": "uuid", "nullable": true, "description": "Playbook step UUID" },
+          "name": { "type": "string", "description": "Template name" },
+          "subject_line": { "type": "string", "description": "Email subject line" },
+          "subject_line_alt": { "type": "string", "nullable": true, "description": "Alternative subject line" },
+          "body": { "type": "string", "description": "Email body content" },
+          "target_contact_role": { "type": "string", "enum": ["economic_buyer", "technical_buyer", "brand_buyer", "champion", "any"], "nullable": true, "description": "Target contact role" },
+          "merge_fields_required": { "type": "array", "items": { "type": "string" }, "nullable": true, "description": "Required merge fields" },
+          "notes": { "type": "string", "nullable": true, "description": "Additional notes" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Human-readable error message",
+            "example": "Company with this name already exists"
+          },
+          "code": {
+            "type": "string",
+            "description": "Error code",
+            "enum": ["VALIDATION_ERROR", "NOT_FOUND", "DUPLICATE_ENTRY", "FORBIDDEN", "DATABASE_ERROR", "SERVER_ERROR", "NETWORK_ERROR"],
+            "example": "DUPLICATE_ENTRY"
+          },
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "details": {
+            "type": "object",
+            "nullable": true,
+            "description": "Additional error details",
+            "example": {
+              "field": "name",
+              "value": "Acme HVAC"
+            }
+          }
+        },
+        "required": ["error", "code", "success"]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request - Invalid input data",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Organization ID is required",
+              "code": "VALIDATION_ERROR",
+              "success": false
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not Found - Resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Company not found",
+              "code": "NOT_FOUND",
+              "success": false
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict - Resource already exists or constraint violation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Company with this name already exists",
+              "code": "DUPLICATE_ENTRY",
+              "success": false,
+              "details": {
+                "field": "name",
+                "value": "Acme HVAC"
+              }
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error - Unexpected server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Internal server error",
+              "code": "SERVER_ERROR",
+              "success": false
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "OrganizationId": {
+        "name": "organization_id",
+        "in": "query",
+        "required": true,
+        "description": "Organization UUID",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Number of results per page",
+        "schema": {
+          "type": "integer",
+          "default": 100,
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "Offset": {
+        "name": "offset",
+        "in": "query",
+        "description": "Number of results to skip",
+        "schema": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

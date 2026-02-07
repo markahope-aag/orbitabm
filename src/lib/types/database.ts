@@ -25,6 +25,12 @@ export type AssetType = 'blueprint' | 'website_audit' | 'market_report' | 'landi
 export type AssetStatus = 'draft' | 'ready' | 'delivered' | 'viewed'
 export type ResultType = 'meeting_scheduled' | 'proposal_sent' | 'proposal_accepted' | 'contract_signed' | 'contract_lost' | 'no_response' | 'declined' | 'breakup_sent' | 'referral_received' | 'other'
 
+// Document Intelligence types
+export type DocumentType = 'prospect_research' | 'campaign_sequence' | 'competitive_analysis' | 'audit_report' | 'proposal'
+export type DocumentStatus = 'draft' | 'in_review' | 'approved' | 'delivered' | 'archived'
+export type TargetContactRole = 'economic_buyer' | 'technical_buyer' | 'brand_buyer' | 'champion' | 'any'
+export type DMURole = 'economic_buyer' | 'technical_buyer' | 'brand_buyer' | 'champion' | 'blocker' | 'influencer' | 'unknown'
+
 // =====================================================
 // TABLE TYPES
 // =====================================================
@@ -265,6 +271,8 @@ export interface CompanyRow {
   manufacturer_affiliations: string | null
   certifications: string | null
   awards: string | null
+  readiness_score: number | null
+  last_researched_at: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -294,6 +302,8 @@ export interface CompanyInsert {
   manufacturer_affiliations?: string | null
   certifications?: string | null
   awards?: string | null
+  readiness_score?: number | null
+  last_researched_at?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -323,6 +333,8 @@ export interface CompanyUpdate {
   manufacturer_affiliations?: string | null
   certifications?: string | null
   awards?: string | null
+  readiness_score?: number | null
+  last_researched_at?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -342,6 +354,9 @@ export interface ContactRow {
   linkedin_url: string | null
   is_primary: boolean
   relationship_status: RelationshipStatus | null
+  dmu_role: DMURole | null
+  email_verified: boolean
+  email_verification_date: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -360,6 +375,9 @@ export interface ContactInsert {
   linkedin_url?: string | null
   is_primary?: boolean
   relationship_status?: RelationshipStatus | null
+  dmu_role?: DMURole | null
+  email_verified?: boolean
+  email_verification_date?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -378,6 +396,9 @@ export interface ContactUpdate {
   linkedin_url?: string | null
   is_primary?: boolean
   relationship_status?: RelationshipStatus | null
+  dmu_role?: DMURole | null
+  email_verified?: boolean
+  email_verification_date?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -602,6 +623,12 @@ export interface CampaignRow {
   pivot_reason: string | null
   pivot_to_campaign_id: string | null
   assigned_to: string | null
+  value_proposition: string | null
+  primary_wedge: string | null
+  backup_trigger: string | null
+  success_criteria: string | null
+  research_doc_id: string | null
+  sequence_doc_id: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -623,6 +650,12 @@ export interface CampaignInsert {
   pivot_reason?: string | null
   pivot_to_campaign_id?: string | null
   assigned_to?: string | null
+  value_proposition?: string | null
+  primary_wedge?: string | null
+  backup_trigger?: string | null
+  success_criteria?: string | null
+  research_doc_id?: string | null
+  sequence_doc_id?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -644,6 +677,12 @@ export interface CampaignUpdate {
   pivot_reason?: string | null
   pivot_to_campaign_id?: string | null
   assigned_to?: string | null
+  value_proposition?: string | null
+  primary_wedge?: string | null
+  backup_trigger?: string | null
+  success_criteria?: string | null
+  research_doc_id?: string | null
+  sequence_doc_id?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -829,6 +868,160 @@ export interface ResultUpdate {
 }
 
 // =====================================================
+// DOCUMENT INTELLIGENCE TABLES
+// =====================================================
+
+// Document Templates
+export interface DocumentTemplateRow {
+  id: string
+  organization_id: string
+  name: string
+  document_type: DocumentType
+  vertical_id: string | null
+  template_structure: Record<string, unknown>
+  version: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export interface DocumentTemplateInsert {
+  id?: string
+  organization_id: string
+  name: string
+  document_type: DocumentType
+  vertical_id?: string | null
+  template_structure: Record<string, unknown>
+  version?: number
+  is_active?: boolean
+  created_at?: string
+  updated_at?: string
+  deleted_at?: string | null
+}
+
+export interface DocumentTemplateUpdate {
+  id?: string
+  organization_id?: string
+  name?: string
+  document_type?: DocumentType
+  vertical_id?: string | null
+  template_structure?: Record<string, unknown>
+  version?: number
+  is_active?: boolean
+  created_at?: string
+  updated_at?: string
+  deleted_at?: string | null
+}
+
+// Generated Documents
+export interface GeneratedDocumentRow {
+  id: string
+  organization_id: string
+  document_template_id: string | null
+  company_id: string | null
+  campaign_id: string | null
+  title: string
+  document_type: DocumentType
+  status: DocumentStatus
+  content: Record<string, unknown>
+  readiness_score: number | null
+  version: number
+  approved_by: string | null
+  approved_at: string | null
+  last_generated_at: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export interface GeneratedDocumentInsert {
+  id?: string
+  organization_id: string
+  document_template_id?: string | null
+  company_id?: string | null
+  campaign_id?: string | null
+  title: string
+  document_type: DocumentType
+  status?: DocumentStatus
+  content?: Record<string, unknown>
+  readiness_score?: number | null
+  version?: number
+  approved_by?: string | null
+  approved_at?: string | null
+  last_generated_at?: string | null
+  created_at?: string
+  updated_at?: string
+  deleted_at?: string | null
+}
+
+export interface GeneratedDocumentUpdate {
+  id?: string
+  organization_id?: string
+  document_template_id?: string | null
+  company_id?: string | null
+  campaign_id?: string | null
+  title?: string
+  document_type?: DocumentType
+  status?: DocumentStatus
+  content?: Record<string, unknown>
+  readiness_score?: number | null
+  version?: number
+  approved_by?: string | null
+  approved_at?: string | null
+  last_generated_at?: string | null
+  created_at?: string
+  updated_at?: string
+  deleted_at?: string | null
+}
+
+// Email Templates
+export interface EmailTemplateRow {
+  id: string
+  organization_id: string
+  playbook_step_id: string | null
+  name: string
+  subject_line: string
+  subject_line_alt: string | null
+  body: string
+  target_contact_role: TargetContactRole | null
+  merge_fields_required: string[] | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface EmailTemplateInsert {
+  id?: string
+  organization_id: string
+  playbook_step_id?: string | null
+  name: string
+  subject_line: string
+  subject_line_alt?: string | null
+  body: string
+  target_contact_role?: TargetContactRole | null
+  merge_fields_required?: string[] | null
+  notes?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface EmailTemplateUpdate {
+  id?: string
+  organization_id?: string
+  playbook_step_id?: string | null
+  name?: string
+  subject_line?: string
+  subject_line_alt?: string | null
+  body?: string
+  target_contact_role?: TargetContactRole | null
+  merge_fields_required?: string[] | null
+  notes?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+// =====================================================
 // DATABASE TYPE MAP
 // =====================================================
 
@@ -914,6 +1107,21 @@ export interface Database {
         Row: ResultRow
         Insert: ResultInsert
         Update: ResultUpdate
+      }
+      document_templates: {
+        Row: DocumentTemplateRow
+        Insert: DocumentTemplateInsert
+        Update: DocumentTemplateUpdate
+      }
+      generated_documents: {
+        Row: GeneratedDocumentRow
+        Insert: GeneratedDocumentInsert
+        Update: GeneratedDocumentUpdate
+      }
+      email_templates: {
+        Row: EmailTemplateRow
+        Insert: EmailTemplateInsert
+        Update: EmailTemplateUpdate
       }
     }
     Views: {

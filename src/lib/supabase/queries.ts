@@ -18,7 +18,10 @@ import type {
   CampaignCompetitorInsert,
   ActivityInsert, ActivityUpdate,
   AssetInsert, AssetUpdate,
-  ResultInsert, ResultUpdate
+  ResultInsert, ResultUpdate,
+  DocumentTemplateInsert, DocumentTemplateUpdate,
+  GeneratedDocumentInsert, GeneratedDocumentUpdate,
+  EmailTemplateInsert, EmailTemplateUpdate
 } from '@/lib/types/database'
 
 // =====================================================
@@ -887,6 +890,200 @@ export async function updateResult(id: string, data: ResultUpdate) {
   const supabase = await createClient()
   return supabase
     .from('results')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single()
+}
+
+// =====================================================
+// DOCUMENT TEMPLATES
+// =====================================================
+
+export async function getAllDocumentTemplates(orgId: string, filters?: {
+  document_type?: string
+  vertical_id?: string
+  is_active?: boolean
+}) {
+  const supabase = await createClient()
+  let query = supabase
+    .from('document_templates')
+    .select(`
+      *,
+      verticals:vertical_id(name)
+    `)
+    .eq('organization_id', orgId)
+    .is('deleted_at', null)
+
+  if (filters?.document_type) query = query.eq('document_type', filters.document_type)
+  if (filters?.vertical_id) query = query.eq('vertical_id', filters.vertical_id)
+  if (filters?.is_active !== undefined) query = query.eq('is_active', filters.is_active)
+
+  return query.order('name')
+}
+
+export async function getDocumentTemplateById(id: string) {
+  const supabase = await createClient()
+  return supabase
+    .from('document_templates')
+    .select(`
+      *,
+      verticals:vertical_id(name)
+    `)
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single()
+}
+
+export async function createDocumentTemplate(data: DocumentTemplateInsert) {
+  const supabase = await createClient()
+  return supabase
+    .from('document_templates')
+    .insert(data)
+    .select()
+    .single()
+}
+
+export async function updateDocumentTemplate(id: string, data: DocumentTemplateUpdate) {
+  const supabase = await createClient()
+  return supabase
+    .from('document_templates')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single()
+}
+
+export async function softDeleteDocumentTemplate(id: string) {
+  const supabase = await createClient()
+  return supabase
+    .from('document_templates')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+}
+
+// =====================================================
+// GENERATED DOCUMENTS
+// =====================================================
+
+export async function getAllGeneratedDocuments(orgId: string, filters?: {
+  document_type?: string
+  status?: string
+  company_id?: string
+  campaign_id?: string
+}) {
+  const supabase = await createClient()
+  let query = supabase
+    .from('generated_documents')
+    .select(`
+      *,
+      document_templates:document_template_id(name),
+      companies:company_id(name),
+      campaigns:campaign_id(name),
+      profiles:approved_by(full_name)
+    `)
+    .eq('organization_id', orgId)
+    .is('deleted_at', null)
+
+  if (filters?.document_type) query = query.eq('document_type', filters.document_type)
+  if (filters?.status) query = query.eq('status', filters.status)
+  if (filters?.company_id) query = query.eq('company_id', filters.company_id)
+  if (filters?.campaign_id) query = query.eq('campaign_id', filters.campaign_id)
+
+  return query.order('created_at', { ascending: false })
+}
+
+export async function getGeneratedDocumentById(id: string) {
+  const supabase = await createClient()
+  return supabase
+    .from('generated_documents')
+    .select(`
+      *,
+      document_templates:document_template_id(name, template_structure),
+      companies:company_id(name, website, estimated_revenue),
+      campaigns:campaign_id(name),
+      profiles:approved_by(full_name)
+    `)
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single()
+}
+
+export async function createGeneratedDocument(data: GeneratedDocumentInsert) {
+  const supabase = await createClient()
+  return supabase
+    .from('generated_documents')
+    .insert(data)
+    .select()
+    .single()
+}
+
+export async function updateGeneratedDocument(id: string, data: GeneratedDocumentUpdate) {
+  const supabase = await createClient()
+  return supabase
+    .from('generated_documents')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single()
+}
+
+export async function softDeleteGeneratedDocument(id: string) {
+  const supabase = await createClient()
+  return supabase
+    .from('generated_documents')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+}
+
+// =====================================================
+// EMAIL TEMPLATES
+// =====================================================
+
+export async function getAllEmailTemplates(orgId: string, filters?: {
+  playbook_step_id?: string
+  target_contact_role?: string
+}) {
+  const supabase = await createClient()
+  let query = supabase
+    .from('email_templates')
+    .select(`
+      *,
+      playbook_steps:playbook_step_id(title, step_number, playbook_template_id)
+    `)
+    .eq('organization_id', orgId)
+
+  if (filters?.playbook_step_id) query = query.eq('playbook_step_id', filters.playbook_step_id)
+  if (filters?.target_contact_role) query = query.eq('target_contact_role', filters.target_contact_role)
+
+  return query.order('name')
+}
+
+export async function getEmailTemplateById(id: string) {
+  const supabase = await createClient()
+  return supabase
+    .from('email_templates')
+    .select(`
+      *,
+      playbook_steps:playbook_step_id(title, step_number, playbook_template_id)
+    `)
+    .eq('id', id)
+    .single()
+}
+
+export async function createEmailTemplate(data: EmailTemplateInsert) {
+  const supabase = await createClient()
+  return supabase
+    .from('email_templates')
+    .insert(data)
+    .select()
+    .single()
+}
+
+export async function updateEmailTemplate(id: string, data: EmailTemplateUpdate) {
+  const supabase = await createClient()
+  return supabase
+    .from('email_templates')
     .update(data)
     .eq('id', id)
     .select()

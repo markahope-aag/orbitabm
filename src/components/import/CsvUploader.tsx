@@ -5,7 +5,7 @@ import Papa from 'papaparse'
 import { Upload, FileText, X } from 'lucide-react'
 
 interface CsvUploaderProps {
-  onDataParsed: (data: any[], headers: string[]) => void
+  onDataParsed: (data: Record<string, unknown>[], headers: string[]) => void
   onError: (error: string) => void
 }
 
@@ -42,7 +42,7 @@ export function CsvUploader({ onDataParsed, onError }: CsvUploaderProps) {
         }
 
         const headers = results.meta.fields || []
-        onDataParsed(results.data, headers)
+        onDataParsed(results.data as Record<string, unknown>[], headers)
       },
       error: (error) => {
         setIsProcessing(false)

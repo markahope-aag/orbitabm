@@ -6,6 +6,7 @@ import { useOrg } from '@/lib/context/OrgContext'
 import { useCompanies, useMarkets, useVerticals, usePEPlatforms } from '@/lib/supabase/hooks'
 import { createClient } from '@/lib/supabase/client'
 import { DataTable, SlideOver, ConfirmDialog, StatusBadge } from '@/components/ui'
+import { toastPromise } from '@/lib/utils/toast'
 import type { CompanyRow, CompanyInsert, CompanyUpdate } from '@/lib/types/database'
 
 interface CompanyFilters {
@@ -99,76 +100,93 @@ export default function Companies() {
     if (!currentOrgId || !formData.name.trim()) return
 
     setSaving(true)
+    
     try {
-      const supabase = createClient()
-      
-      if (editingCompany) {
-        // Update existing company
-        const updateData: CompanyUpdate = {
-          name: formData.name.trim(),
-          market_id: formData.market_id || null,
-          vertical_id: formData.vertical_id || null,
-          website: formData.website.trim() || null,
-          phone: formData.phone.trim() || null,
-          address_line1: formData.address_line1.trim() || null,
-          address_line2: formData.address_line2.trim() || null,
-          city: formData.city.trim() || null,
-          state: formData.state.trim() || null,
-          zip: formData.zip.trim() || null,
-          estimated_revenue: formData.estimated_revenue,
-          employee_count: formData.employee_count,
-          year_founded: formData.year_founded,
-          ownership_type: formData.ownership_type,
-          pe_platform_id: formData.ownership_type === 'pe_backed' ? formData.pe_platform_id || null : null,
-          manufacturer_affiliations: formData.manufacturer_affiliations.trim() || null,
-          certifications: formData.certifications.trim() || null,
-          awards: formData.awards.trim() || null,
-          qualifying_tier: formData.qualifying_tier,
-          status: formData.status,
-          notes: formData.notes.trim() || null
+      await toastPromise(
+        (async () => {
+          const supabase = createClient()
+          
+          if (editingCompany) {
+            // Update existing company
+            const updateData: CompanyUpdate = {
+              name: formData.name.trim(),
+              market_id: formData.market_id || null,
+              vertical_id: formData.vertical_id || null,
+              website: formData.website.trim() || null,
+              phone: formData.phone.trim() || null,
+              address_line1: formData.address_line1.trim() || null,
+              address_line2: formData.address_line2.trim() || null,
+              city: formData.city.trim() || null,
+              state: formData.state.trim() || null,
+              zip: formData.zip.trim() || null,
+              estimated_revenue: formData.estimated_revenue,
+              employee_count: formData.employee_count,
+              year_founded: formData.year_founded,
+              ownership_type: formData.ownership_type,
+              pe_platform_id: formData.ownership_type === 'pe_backed' ? formData.pe_platform_id || null : null,
+              manufacturer_affiliations: formData.manufacturer_affiliations.trim() || null,
+              certifications: formData.certifications.trim() || null,
+              awards: formData.awards.trim() || null,
+              qualifying_tier: formData.qualifying_tier,
+              status: formData.status,
+              notes: formData.notes.trim() || null
+            }
+            const { error } = await supabase
+              .from('companies')
+              .update(updateData)
+              .eq('id', editingCompany.id)
+            
+            if (error) throw error
+            return { name: formData.name.trim() }
+          } else {
+            // Create new company
+            const insertData: CompanyInsert = {
+              organization_id: currentOrgId,
+              name: formData.name.trim(),
+              market_id: formData.market_id || null,
+              vertical_id: formData.vertical_id || null,
+              website: formData.website.trim() || null,
+              phone: formData.phone.trim() || null,
+              address_line1: formData.address_line1.trim() || null,
+              address_line2: formData.address_line2.trim() || null,
+              city: formData.city.trim() || null,
+              state: formData.state.trim() || null,
+              zip: formData.zip.trim() || null,
+              estimated_revenue: formData.estimated_revenue,
+              employee_count: formData.employee_count,
+              year_founded: formData.year_founded,
+              ownership_type: formData.ownership_type,
+              pe_platform_id: formData.ownership_type === 'pe_backed' ? formData.pe_platform_id || null : null,
+              manufacturer_affiliations: formData.manufacturer_affiliations.trim() || null,
+              certifications: formData.certifications.trim() || null,
+              awards: formData.awards.trim() || null,
+              qualifying_tier: formData.qualifying_tier,
+              status: formData.status,
+              notes: formData.notes.trim() || null
+            }
+            const { error } = await supabase
+              .from('companies')
+              .insert(insertData)
+            
+            if (error) throw error
+            return { name: formData.name.trim() }
+          }
+        })(),
+        {
+          loading: editingCompany ? 'Updating company...' : 'Creating company...',
+          success: (data) => editingCompany 
+            ? `Company "${data.name}" updated successfully`
+            : `Company "${data.name}" created successfully`,
+          error: editingCompany 
+            ? 'Failed to update company'
+            : 'Failed to create company'
         }
-        const { error } = await supabase
-          .from('companies')
-          .update(updateData)
-          .eq('id', editingCompany.id)
-        
-        if (error) throw error
-      } else {
-        // Create new company
-        const insertData: CompanyInsert = {
-          organization_id: currentOrgId,
-          name: formData.name.trim(),
-          market_id: formData.market_id || null,
-          vertical_id: formData.vertical_id || null,
-          website: formData.website.trim() || null,
-          phone: formData.phone.trim() || null,
-          address_line1: formData.address_line1.trim() || null,
-          address_line2: formData.address_line2.trim() || null,
-          city: formData.city.trim() || null,
-          state: formData.state.trim() || null,
-          zip: formData.zip.trim() || null,
-          estimated_revenue: formData.estimated_revenue,
-          employee_count: formData.employee_count,
-          year_founded: formData.year_founded,
-          ownership_type: formData.ownership_type,
-          pe_platform_id: formData.ownership_type === 'pe_backed' ? formData.pe_platform_id || null : null,
-          manufacturer_affiliations: formData.manufacturer_affiliations.trim() || null,
-          certifications: formData.certifications.trim() || null,
-          awards: formData.awards.trim() || null,
-          qualifying_tier: formData.qualifying_tier,
-          status: formData.status,
-          notes: formData.notes.trim() || null
-        }
-        const { error } = await supabase
-          .from('companies')
-          .insert(insertData)
-        
-        if (error) throw error
-      }
+      )
       
       setSlideOverOpen(false)
       refetch()
     } catch (err) {
+      // Error is already handled by toastPromise
       console.error('Error saving company:', err)
     } finally {
       setSaving(false)

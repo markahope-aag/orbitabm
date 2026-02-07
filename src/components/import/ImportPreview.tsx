@@ -13,25 +13,101 @@ interface ValidationIssue {
 
 interface ProcessedRow {
   originalIndex: number
-  data: Record<string, any>
+  data: Record<string, unknown>
   issues: ValidationIssue[]
   status: 'valid' | 'warning' | 'error'
 }
 
 interface ImportPreviewProps {
-  data: any[]
+  data: Record<string, unknown>[]
   mappings: Array<{ csvHeader: string; dbField: string | null }>
   entityType: string
   onValidationComplete: (processedRows: ProcessedRow[]) => void
 }
 
+// Helper functions defined outside component to avoid hoisting issues
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+
+const isValidDate = (date: string): boolean => {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+  return dateRegex.test(date) && !isNaN(Date.parse(date))
+}
+
+const getRequiredFields = (entityType: string): string[] => {
+  const requiredFieldsMap: Record<string, string[]> = {
+    companies: ['name'],
+    contacts: ['first_name', 'last_name'],
+    markets: ['name'],
+    verticals: ['name'],
+    digital_snapshots: ['company', 'snapshot_date']
+  }
+  return requiredFieldsMap[entityType] || []
+}
+
+const validateDataFormats = (data: Record<string, unknown>, issues: ValidationIssue[], rowNumber: number) => {
+  // Email validation
+  if (data.email && typeof data.email === 'string' && data.email.trim() && !isValidEmail(data.email)) {
+    issues.push({
+      row: rowNumber,
+      field: 'email',
+      issue: 'invalid_format',
+      message: 'Invalid email format',
+      suggestion: 'Use format: user@domain.com'
+    })
+  }
+
+  // URL validation
+  if (data.website && typeof data.website === 'string' && data.website.trim() && !isValidUrl(data.website)) {
+    issues.push({
+      row: rowNumber,
+      field: 'website',
+      issue: 'invalid_format',
+      message: 'Invalid website URL format',
+      suggestion: 'Use format: https://domain.com'
+    })
+  }
+
+  // Date validation
+  if (data.snapshot_date && typeof data.snapshot_date === 'string' && data.snapshot_date.trim() && !isValidDate(data.snapshot_date)) {
+    issues.push({
+      row: rowNumber,
+      field: 'snapshot_date',
+      issue: 'invalid_format',
+      message: 'Invalid date format',
+      suggestion: 'Use format: YYYY-MM-DD'
+    })
+  }
+
+  // Number validation
+  const numberFields = ['estimated_revenue', 'employee_count', 'year_founded', 'google_rating', 'domain_authority']
+  numberFields.forEach(field => {
+    if (data[field] && typeof data[field] === 'string' && data[field] && isNaN(Number(data[field]))) {
+      issues.push({
+        row: rowNumber,
+        field,
+        issue: 'invalid_format',
+        message: `Invalid number format for ${field}`,
+        suggestion: 'Use numeric values only'
+      })
+    }
+  })
+}
+
 export function ImportPreview({ data, mappings, entityType, onValidationComplete }: ImportPreviewProps) {
   const [processedRows, setProcessedRows] = useState<ProcessedRow[]>([])
   const [isValidating, setIsValidating] = useState(false)
-
-  useEffect(() => {
-    validateData()
-  }, [data, mappings, entityType])
 
   const validateData = async () => {
     setIsValidating(true)
@@ -50,7 +126,7 @@ export function ImportPreview({ data, mappings, entityType, onValidationComplete
     // Process each row
     const processed: ProcessedRow[] = data.map((row, index) => {
       const issues: ValidationIssue[] = []
-      const mappedData: Record<string, any> = {}
+      const mappedData: Record<string, unknown> = {}
 
       // Map CSV data to database fields
       Object.entries(fieldMappings).forEach(([csvHeader, dbField]) => {
@@ -76,10 +152,11 @@ export function ImportPreview({ data, mappings, entityType, onValidationComplete
 
       // Check for duplicates (by name field)
       if (mappedData.name) {
-        const duplicateIndex = data.findIndex((otherRow, otherIndex) => 
+        const nameField = Object.keys(fieldMappings).find(k => fieldMappings[k] === 'name') || ''
+        const duplicateIndex = data.findIndex((otherRow: Record<string, unknown>, otherIndex: number) => 
           otherIndex !== index && 
-          otherRow[Object.keys(fieldMappings).find(k => fieldMappings[k] === 'name') || '']?.toLowerCase() === 
-          mappedData.name.toLowerCase()
+          String(otherRow[nameField] || '').toLowerCase() === 
+          String(mappedData.name || '').toLowerCase()
         )
         
         if (duplicateIndex !== -1) {
@@ -114,84 +191,10 @@ export function ImportPreview({ data, mappings, entityType, onValidationComplete
     setIsValidating(false)
   }
 
-  const getRequiredFields = (entityType: string): string[] => {
-    const requiredFieldsMap: Record<string, string[]> = {
-      companies: ['name'],
-      contacts: ['first_name', 'last_name'],
-      markets: ['name'],
-      verticals: ['name'],
-      digital_snapshots: ['company', 'snapshot_date']
-    }
-    return requiredFieldsMap[entityType] || []
-  }
-
-  const validateDataFormats = (data: Record<string, any>, issues: ValidationIssue[], rowNumber: number) => {
-    // Email validation
-    if (data.email && data.email.trim() && !isValidEmail(data.email)) {
-      issues.push({
-        row: rowNumber,
-        field: 'email',
-        issue: 'invalid_format',
-        message: 'Invalid email format',
-        suggestion: 'Use format: user@domain.com'
-      })
-    }
-
-    // URL validation
-    if (data.website && data.website.trim() && !isValidUrl(data.website)) {
-      issues.push({
-        row: rowNumber,
-        field: 'website',
-        issue: 'invalid_format',
-        message: 'Invalid website URL format',
-        suggestion: 'Use format: https://domain.com'
-      })
-    }
-
-    // Date validation
-    if (data.snapshot_date && data.snapshot_date.trim() && !isValidDate(data.snapshot_date)) {
-      issues.push({
-        row: rowNumber,
-        field: 'snapshot_date',
-        issue: 'invalid_format',
-        message: 'Invalid date format',
-        suggestion: 'Use format: YYYY-MM-DD'
-      })
-    }
-
-    // Number validation
-    const numberFields = ['estimated_revenue', 'employee_count', 'year_founded', 'google_rating', 'domain_authority']
-    numberFields.forEach(field => {
-      if (data[field] && data[field].trim() && isNaN(Number(data[field]))) {
-        issues.push({
-          row: rowNumber,
-          field,
-          issue: 'invalid_format',
-          message: `Invalid number format for ${field}`,
-          suggestion: 'Use numeric values only'
-        })
-      }
-    })
-  }
-
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-  }
-
-  const isValidUrl = (url: string): boolean => {
-    try {
-      new URL(url)
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  const isValidDate = (date: string): boolean => {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
-    return dateRegex.test(date) && !isNaN(Date.parse(date))
-  }
+  useEffect(() => {
+    // Use setTimeout to avoid synchronous setState in effect
+    setTimeout(() => validateData(), 0)
+  }, [data, mappings, entityType]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const getStatusIcon = (status: 'valid' | 'warning' | 'error') => {
     switch (status) {
@@ -285,13 +288,13 @@ export function ImportPreview({ data, mappings, entityType, onValidationComplete
               .slice(0, 20) // Show first 20 rows with issues
               .map((row, index) => (
                 <div key={index} className={`border rounded-lg p-3 ${getStatusColor(row.status)}`}>
-                  <div className="flex items-start space-x-3">
-                    {getStatusIcon(row.status)}
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">
-                        Row {row.originalIndex + 1}
-                        {row.data.name && ` - ${row.data.name}`}
-                      </div>
+                      <div className="flex items-start space-x-3">
+                        {getStatusIcon(row.status)}
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">
+                            Row {row.originalIndex + 1}
+                            {row.data.name ? <span> - {String(row.data.name)}</span> : null}
+                          </div>
                       <div className="space-y-1 mt-1">
                         {row.issues.map((issue, issueIndex) => (
                           <div key={issueIndex} className="text-sm">

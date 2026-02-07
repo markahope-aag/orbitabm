@@ -102,8 +102,8 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
       columns.map(col => ({
         key: col.key,
         header: col.header,
-        render: col.render ? (row: any) => {
-          const rendered = col.render!(row)
+        render: col.render ? (row: Record<string, unknown>) => {
+          const rendered = col.render!(row as T)
           // Convert React nodes to strings for CSV
           if (typeof rendered === 'string' || typeof rendered === 'number') {
             return rendered

@@ -21,7 +21,10 @@ import type {
   CampaignRow,
   ActivityRow,
   AssetRow,
-  ResultRow
+  ResultRow,
+  DocumentTemplateRow,
+  GeneratedDocumentRow,
+  EmailTemplateRow
 } from '@/lib/types/database'
 
 // Hook return type
@@ -814,6 +817,206 @@ export function useResults(orgId: string, filters?: {
       fetchData()
     }
   }, [orgId, filters?.campaign_id, filters?.result_type])
+
+  return { data, loading, error, refetch: fetchData }
+}
+
+// =====================================================
+// DOCUMENT TEMPLATES
+// =====================================================
+
+export function useDocumentTemplates(orgId: string, filters?: {
+  document_type?: string
+  vertical_id?: string
+  is_active?: boolean
+}): UseDataResult<DocumentTemplateRow> {
+  const [data, setData] = useState<DocumentTemplateRow[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const supabase = createClient()
+      let query = supabase
+        .from('document_templates')
+        .select(`
+          *,
+          verticals:vertical_id(name)
+        `)
+        .eq('organization_id', orgId)
+        .is('deleted_at', null)
+
+      if (filters?.document_type) query = query.eq('document_type', filters.document_type)
+      if (filters?.vertical_id) query = query.eq('vertical_id', filters.vertical_id)
+      if (filters?.is_active !== undefined) query = query.eq('is_active', filters.is_active)
+
+      const { data: templates, error } = await query.order('name')
+
+      if (error) throw error
+      setData(templates as DocumentTemplateRow[])
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (orgId) {
+      fetchData()
+    }
+  }, [orgId, filters?.document_type, filters?.vertical_id, filters?.is_active])
+
+  return { data, loading, error, refetch: fetchData }
+}
+
+// =====================================================
+// GENERATED DOCUMENTS
+// =====================================================
+
+export function useGeneratedDocuments(orgId: string, filters?: {
+  document_type?: string
+  status?: string
+  company_id?: string
+  campaign_id?: string
+}): UseDataResult<GeneratedDocumentRow> {
+  const [data, setData] = useState<GeneratedDocumentRow[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const supabase = createClient()
+      let query = supabase
+        .from('generated_documents')
+        .select(`
+          *,
+          document_templates:document_template_id(name),
+          companies:company_id(name),
+          campaigns:campaign_id(name),
+          profiles:approved_by(full_name)
+        `)
+        .eq('organization_id', orgId)
+        .is('deleted_at', null)
+
+      if (filters?.document_type) query = query.eq('document_type', filters.document_type)
+      if (filters?.status) query = query.eq('status', filters.status)
+      if (filters?.company_id) query = query.eq('company_id', filters.company_id)
+      if (filters?.campaign_id) query = query.eq('campaign_id', filters.campaign_id)
+
+      const { data: documents, error } = await query.order('created_at', { ascending: false })
+
+      if (error) throw error
+      setData(documents as GeneratedDocumentRow[])
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (orgId) {
+      fetchData()
+    }
+  }, [orgId, filters?.document_type, filters?.status, filters?.company_id, filters?.campaign_id])
+
+  return { data, loading, error, refetch: fetchData }
+}
+
+export function useGeneratedDocument(id: string): UseDataSingleResult<GeneratedDocumentRow> {
+  const [data, setData] = useState<GeneratedDocumentRow | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const supabase = createClient()
+      const { data: document, error } = await supabase
+        .from('generated_documents')
+        .select(`
+          *,
+          document_templates:document_template_id(name, template_structure),
+          companies:company_id(name, website, estimated_revenue),
+          campaigns:campaign_id(name),
+          profiles:approved_by(full_name)
+        `)
+        .eq('id', id)
+        .is('deleted_at', null)
+        .single()
+
+      if (error) throw error
+      setData(document as GeneratedDocumentRow)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (id) {
+      fetchData()
+    }
+  }, [id])
+
+  return { data, loading, error, refetch: fetchData }
+}
+
+// =====================================================
+// EMAIL TEMPLATES
+// =====================================================
+
+export function useEmailTemplates(orgId: string, filters?: {
+  playbook_step_id?: string
+  target_contact_role?: string
+}): UseDataResult<EmailTemplateRow> {
+  const [data, setData] = useState<EmailTemplateRow[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const supabase = createClient()
+      let query = supabase
+        .from('email_templates')
+        .select(`
+          *,
+          playbook_steps:playbook_step_id(title, step_number, playbook_template_id)
+        `)
+        .eq('organization_id', orgId)
+
+      if (filters?.playbook_step_id) query = query.eq('playbook_step_id', filters.playbook_step_id)
+      if (filters?.target_contact_role) query = query.eq('target_contact_role', filters.target_contact_role)
+
+      const { data: templates, error } = await query.order('name')
+
+      if (error) throw error
+      setData(templates as EmailTemplateRow[])
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (orgId) {
+      fetchData()
+    }
+  }, [orgId, filters?.playbook_step_id, filters?.target_contact_role])
 
   return { data, loading, error, refetch: fetchData }
 }

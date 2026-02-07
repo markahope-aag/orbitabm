@@ -8,7 +8,7 @@
 interface Column {
   key: string
   header: string
-  render?: (row: any) => string | number | null
+  render?: (row: Record<string, unknown>) => string | number | null
 }
 
 interface ExportOptions {
@@ -16,7 +16,7 @@ interface ExportOptions {
   orgSlug?: string
 }
 
-export function exportToCSV<T extends Record<string, any>>(
+export function exportToCSV<T extends Record<string, unknown>>(
   data: T[],
   columns: Column[],
   entityName: string,
@@ -38,12 +38,12 @@ export function exportToCSV<T extends Record<string, any>>(
   // Create CSV rows
   const rows = data.map(row => {
     return columns.map(col => {
-      let value: any
+      let value: string | number | null
       
       if (col.render) {
         value = col.render(row)
       } else {
-        value = row[col.key]
+        value = row[col.key] as string | number | null
       }
       
       // Handle null/undefined values
@@ -184,7 +184,7 @@ export function downloadTemplate(entityType: keyof typeof csvTemplates) {
   }))
   
   exportToCSV(
-    template as any,
+    template as Record<string, unknown>[],
     columns,
     entityType,
     { filename: `${entityType}_template.csv` }

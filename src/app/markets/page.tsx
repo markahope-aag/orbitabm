@@ -5,6 +5,7 @@ import { useOrg } from '@/lib/context/OrgContext'
 import { useMarkets } from '@/lib/supabase/hooks'
 import { createClient } from '@/lib/supabase/client'
 import { DataTable, SlideOver, ConfirmDialog, StatusBadge } from '@/components/ui'
+import { toastPromise } from '@/lib/utils/toast'
 import type { MarketRow, MarketInsert, MarketUpdate } from '@/lib/types/database'
 
 interface MarketFormData {
@@ -58,46 +59,63 @@ export default function Markets() {
     if (!currentOrgId || !formData.name.trim() || !formData.state.trim()) return
 
     setSaving(true)
+    
     try {
-      const supabase = createClient()
-      
-      if (editingMarket) {
-        // Update existing market
-        const updateData: MarketUpdate = {
-          name: formData.name.trim(),
-          state: formData.state.trim(),
-          metro_population: formData.metro_population,
-          market_size_estimate: formData.market_size_estimate,
-          pe_activity_level: formData.pe_activity_level,
-          notes: formData.notes.trim() || null
+      await toastPromise(
+        (async () => {
+          const supabase = createClient()
+          
+          if (editingMarket) {
+            // Update existing market
+            const updateData: MarketUpdate = {
+              name: formData.name.trim(),
+              state: formData.state.trim(),
+              metro_population: formData.metro_population,
+              market_size_estimate: formData.market_size_estimate,
+              pe_activity_level: formData.pe_activity_level,
+              notes: formData.notes.trim() || null
+            }
+            const { error } = await supabase
+              .from('markets')
+              .update(updateData)
+              .eq('id', editingMarket.id)
+            
+            if (error) throw error
+            return { name: formData.name.trim() }
+          } else {
+            // Create new market
+            const insertData: MarketInsert = {
+              organization_id: currentOrgId,
+              name: formData.name.trim(),
+              state: formData.state.trim(),
+              metro_population: formData.metro_population,
+              market_size_estimate: formData.market_size_estimate,
+              pe_activity_level: formData.pe_activity_level,
+              notes: formData.notes.trim() || null
+            }
+            const { error } = await supabase
+              .from('markets')
+              .insert(insertData)
+            
+            if (error) throw error
+            return { name: formData.name.trim() }
+          }
+        })(),
+        {
+          loading: editingMarket ? 'Updating market...' : 'Creating market...',
+          success: (data) => editingMarket 
+            ? `Market "${data.name}" updated successfully`
+            : `Market "${data.name}" created successfully`,
+          error: editingMarket 
+            ? 'Failed to update market'
+            : 'Failed to create market'
         }
-        const { error } = await supabase
-          .from('markets')
-          .update(updateData)
-          .eq('id', editingMarket.id)
-        
-        if (error) throw error
-      } else {
-        // Create new market
-        const insertData: MarketInsert = {
-          organization_id: currentOrgId,
-          name: formData.name.trim(),
-          state: formData.state.trim(),
-          metro_population: formData.metro_population,
-          market_size_estimate: formData.market_size_estimate,
-          pe_activity_level: formData.pe_activity_level,
-          notes: formData.notes.trim() || null
-        }
-        const { error } = await supabase
-          .from('markets')
-          .insert(insertData)
-        
-        if (error) throw error
-      }
+      )
       
       setSlideOverOpen(false)
       refetch()
     } catch (err) {
+      // Error is already handled by toastPromise
       console.error('Error saving market:', err)
     } finally {
       setSaving(false)
@@ -108,19 +126,32 @@ export default function Markets() {
     if (!editingMarket) return
 
     setSaving(true)
+    const marketName = editingMarket.name
+    
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('markets')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', editingMarket.id)
-      
-      if (error) throw error
+      await toastPromise(
+        (async () => {
+          const supabase = createClient()
+          const { error } = await supabase
+            .from('markets')
+            .update({ deleted_at: new Date().toISOString() })
+            .eq('id', editingMarket.id)
+          
+          if (error) throw error
+          return { name: marketName }
+        })(),
+        {
+          loading: 'Deleting market...',
+          success: (data) => `Market "${data.name}" deleted successfully`,
+          error: 'Failed to delete market'
+        }
+      )
       
       setConfirmDeleteOpen(false)
       setSlideOverOpen(false)
       refetch()
     } catch (err) {
+      // Error is already handled by toastPromise
       console.error('Error deleting market:', err)
     } finally {
       setSaving(false)
