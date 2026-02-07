@@ -2,6 +2,7 @@
 
 // OrbitABM React Hooks for Data Fetching
 // Simple hooks using useState + useEffect for MVP approach
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
