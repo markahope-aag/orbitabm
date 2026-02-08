@@ -96,13 +96,27 @@ function validateEnv() {
     const isServer = typeof window === 'undefined'
     // Check if we're in build mode
     const isBuild = process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === undefined && !process.env.SUPABASE_SERVICE_ROLE_KEY
-    
+
+    // Next.js only inlines individual process.env.NEXT_PUBLIC_* references at compile time.
+    // Passing process.env as an object doesn't work client-side, so we must explicitly reference each var.
+    const explicitEnv = {
+      NODE_ENV: process.env.NODE_ENV,
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      NEXT_TELEMETRY_DISABLED: process.env.NEXT_TELEMETRY_DISABLED,
+      FEATURE_AUDIT_LOGS: process.env.FEATURE_AUDIT_LOGS,
+      FEATURE_DOCUMENT_INTELLIGENCE: process.env.FEATURE_DOCUMENT_INTELLIGENCE,
+      FEATURE_EMAIL_TEMPLATES: process.env.FEATURE_EMAIL_TEMPLATES,
+      DEBUG: process.env.DEBUG,
+    }
+
     if (isServer && !isBuild) {
       // Server-side validation (includes service role key) - skip during build
-      return serverEnvSchema.parse(process.env)
+      return serverEnvSchema.parse(explicitEnv)
     } else {
       // Client-side validation (only public variables) or build-time
-      return clientEnvSchema.parse(process.env)
+      return clientEnvSchema.parse(explicitEnv)
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
