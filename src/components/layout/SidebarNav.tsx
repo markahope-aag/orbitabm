@@ -7,6 +7,7 @@ import {
   Swords,
   TrendingUp,
   Target,
+  Crosshair,
   BookOpen,
   CheckSquare,
   FileText,
@@ -41,6 +42,7 @@ const navigation = [
     section: 'OPERATIONS',
     items: [
       { name: 'Campaigns', href: '/campaigns', icon: Target },
+      { name: 'Targets', href: '/targets', icon: Crosshair },
       { name: 'Playbooks', href: '/playbooks', icon: BookOpen },
       { name: 'Activities', href: '/activities', icon: CheckSquare },
       { name: 'Assets', href: '/assets', icon: FileText },

@@ -8,12 +8,12 @@ function getStatusColor(status: string): 'green' | 'yellow' | 'red' | 'blue' | '
   const normalizedStatus = status.toLowerCase()
 
   // Green statuses - positive/active/top-tier states
-  if (['active', 'client', 'completed', 'won', 'connected', 'approved', 'delivered', 'top'].includes(normalizedStatus)) {
+  if (['active', 'active_campaign', 'client', 'completed', 'won', 'connected', 'approved', 'delivered', 'top'].includes(normalizedStatus)) {
     return 'green'
   }
 
   // Blue statuses - planned/in-progress/qualified states
-  if (['planned', 'scheduled', 'prospect', 'identified', 'draft', 'qualified'].includes(normalizedStatus)) {
+  if (['planned', 'scheduled', 'prospect', 'target', 'identified', 'draft', 'qualified'].includes(normalizedStatus)) {
     return 'blue'
   }
 
