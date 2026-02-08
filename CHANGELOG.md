@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Minor UI/UX improvements
 
+### Security
+- Fixed overly permissive RLS policy for audit_logs table INSERT operations
+- Restricted audit log creation to user's organization context
+
 ## [2.1.0] - 2026-02-07
 
 ### Added

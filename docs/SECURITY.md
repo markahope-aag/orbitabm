@@ -97,7 +97,7 @@ WITH CHECK (organization_id = get_user_organization_id());
 - **email_templates**: Email templates scoped to organization
 
 #### Audit System (1 table)
-- **audit_logs**: Comprehensive audit trail scoped to organization
+- **audit_logs**: Comprehensive audit trail scoped to organization with secure RLS policies
 
 ### Shared Reference Tables
 
