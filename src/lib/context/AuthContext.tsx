@@ -49,10 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
         setLoading(false)
 
-        // Handle auth events
-        if (event === 'SIGNED_IN') {
-          router.push('/dashboard')
-        } else if (event === 'SIGNED_OUT') {
+        // SIGNED_IN navigation is handled by LoginForm (respects redirectTo
+        // query param). Navigating here would race and always win with /dashboard.
+        if (event === 'SIGNED_OUT') {
           router.push('/auth/login')
         }
       }
