@@ -124,7 +124,7 @@ const createCompanyFields = {
   manufacturer_affiliations: optionalText,
   certifications: optionalText,
   awards: optionalText,
-  readiness_score: z.number().min(0).max(100).nullable().optional(),
+  readiness_score: z.number().min(0).max(10).nullable().optional(),
   last_researched_at: dateStr.nullable().optional(),
   notes: optionalText,
 }
@@ -348,7 +348,7 @@ const createGeneratedDocumentFields = {
   document_type: documentTypeSchema,
   status: documentStatusSchema.optional(),
   content: z.record(z.string(), z.unknown()).optional(),
-  readiness_score: z.number().min(0).max(100).nullable().optional(),
+  readiness_score: z.number().min(0).max(10).nullable().optional(),
   version: positiveInt.optional(),
   approved_by: uuid.nullable().optional(),
   approved_at: dateStr.nullable().optional(),
