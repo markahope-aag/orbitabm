@@ -4,13 +4,17 @@ import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
 import { createCampaignSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
+import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
     
-    const organizationId = searchParams.get('organization_id')
+    const organizationId = await resolveUserOrgId(supabase)
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     const status = searchParams.get('status')
     const marketId = searchParams.get('market_id')
     const verticalId = searchParams.get('vertical_id')
@@ -18,14 +22,6 @@ export async function GET(request: NextRequest) {
     const companyId = searchParams.get('company_id')
     const limit = parseInt(searchParams.get('limit') || '100')
     const offset = parseInt(searchParams.get('offset') || '0')
-
-    if (!organizationId) {
-      throw new ApiError(
-        'Organization ID is required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
 
     let query = supabase
       .from('campaigns')
@@ -120,14 +116,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validation = validateRequest(createCampaignSchema, body)
     if (!validation.success) return validation.response
-    const { organization_id, name, company_id, playbook_template_id, market_id, vertical_id } = validation.data
+
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { name, company_id, playbook_template_id, market_id, vertical_id } = validation.data
 
     // Verify that the company, market, and vertical exist and belong to the organization
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .select('id, name')
       .eq('id', company_id)
-      .eq('organization_id', organization_id)
+      .eq('organization_id', userOrgId)
       .is('deleted_at', null)
       .single()
 
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
       .from('markets')
       .select('id')
       .eq('id', market_id)
-      .eq('organization_id', organization_id)
+      .eq('organization_id', userOrgId)
       .is('deleted_at', null)
       .single()
 
@@ -159,7 +161,7 @@ export async function POST(request: NextRequest) {
       .from('verticals')
       .select('id')
       .eq('id', vertical_id)
-      .eq('organization_id', organization_id)
+      .eq('organization_id', userOrgId)
       .is('deleted_at', null)
       .single()
 
@@ -177,7 +179,7 @@ export async function POST(request: NextRequest) {
         .from('playbook_templates')
         .select('id')
         .eq('id', playbook_template_id)
-        .eq('organization_id', organization_id)
+        .eq('organization_id', userOrgId)
         .is('deleted_at', null)
         .single()
 
@@ -194,7 +196,7 @@ export async function POST(request: NextRequest) {
     const { data: existing, error: checkError } = await supabase
       .from('campaigns')
       .select('id')
-      .eq('organization_id', organization_id)
+      .eq('organization_id', userOrgId)
       .eq('name', name)
       .is('deleted_at', null)
       .single()
@@ -220,7 +222,7 @@ export async function POST(request: NextRequest) {
     // Insert new campaign
     const { data, error } = await supabase
       .from('campaigns')
-      .insert(validation.data)
+      .insert({ ...validation.data, organization_id: userOrgId })
       .select(`
         *,
         companies (

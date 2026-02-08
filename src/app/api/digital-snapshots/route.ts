@@ -4,27 +4,24 @@ import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
 import { createDigitalSnapshotSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
+import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
     
-    const organizationId = searchParams.get('organization_id')
+    const organizationId = await resolveUserOrgId(supabase)
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const companyId = searchParams.get('company_id')
     const snapshotDate = searchParams.get('snapshot_date')
     const fromDate = searchParams.get('from_date')
     const toDate = searchParams.get('to_date')
     const limit = parseInt(searchParams.get('limit') || '100')
     const offset = parseInt(searchParams.get('offset') || '0')
-
-    if (!organizationId) {
-      throw new ApiError(
-        'Organization ID is required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
 
     let query = supabase
       .from('digital_snapshots')
@@ -98,7 +95,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validation = validateRequest(createDigitalSnapshotSchema, body)
     if (!validation.success) return validation.response
-    const { organization_id, company_id } = validation.data
+
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { company_id } = validation.data
     const snapshot_date = validation.data.snapshot_date ?? new Date().toISOString().split('T')[0]
 
     // Verify that the company exists and belongs to the organization
@@ -106,7 +109,7 @@ export async function POST(request: NextRequest) {
       .from('companies')
       .select('id, name')
       .eq('id', company_id)
-      .eq('organization_id', organization_id)
+      .eq('organization_id', userOrgId)
       .is('deleted_at', null)
       .single()
 
@@ -122,7 +125,7 @@ export async function POST(request: NextRequest) {
     const { data: existing, error: checkError } = await supabase
       .from('digital_snapshots')
       .select('id')
-      .eq('organization_id', organization_id)
+      .eq('organization_id', userOrgId)
       .eq('company_id', company_id)
       .eq('snapshot_date', snapshot_date)
       .single()
@@ -152,7 +155,7 @@ export async function POST(request: NextRequest) {
     // Insert new digital snapshot
     const { data, error } = await supabase
       .from('digital_snapshots')
-      .insert({ ...validation.data, snapshot_date })
+      .insert({ ...validation.data, snapshot_date, organization_id: userOrgId })
       .select(`
         *,
         companies (

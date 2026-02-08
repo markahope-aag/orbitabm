@@ -4,13 +4,17 @@ import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
 import { createActivitySchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
+import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
 
-    const organizationId = searchParams.get('organization_id')
+    const organizationId = await resolveUserOrgId(supabase)
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     const campaignId = searchParams.get('campaign_id')
     const contactId = searchParams.get('contact_id')
     const activityType = searchParams.get('activity_type')
@@ -18,14 +22,6 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const limit = parseInt(searchParams.get('limit') || '100')
     const offset = parseInt(searchParams.get('offset') || '0')
-
-    if (!organizationId) {
-      throw new ApiError(
-        'Organization ID is required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
 
     let query = supabase
       .from('activities')
@@ -96,9 +92,14 @@ export async function POST(request: NextRequest) {
     const validation = validateRequest(createActivitySchema, body)
     if (!validation.success) return validation.response
 
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { data, error } = await supabase
       .from('activities')
-      .insert(validation.data)
+      .insert({ ...validation.data, organization_id: userOrgId })
       .select(`
         *,
         campaigns (id, name),

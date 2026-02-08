@@ -1,12 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
 
-    const organizationId = searchParams.get('organization_id')
+    const organizationId = await resolveUserOrgId(supabase)
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const entityType = searchParams.get('entity_type')
     const entityId = searchParams.get('entity_id')
     const action = searchParams.get('action')
@@ -15,13 +20,6 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('end_date')
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
-
-    if (!organizationId) {
-      return NextResponse.json(
-        { error: 'organization_id is required' },
-        { status: 400 }
-      )
-    }
 
     let query = supabase
       .from('audit_logs')

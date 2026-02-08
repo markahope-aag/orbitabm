@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { importCompaniesSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
+import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +11,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validation = validateRequest(importCompaniesSchema, body)
     if (!validation.success) return validation.response
-    const { data: importData, organization_id } = validation.data
+    const { data: importData } = validation.data
+
+    const organization_id = await resolveUserOrgId(supabase)
+    if (!organization_id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     // Fetch markets and verticals for lookup
     const [marketsResult, verticalsResult] = await Promise.all([

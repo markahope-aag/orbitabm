@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { updateCompanySchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logUpdate, logDelete } from '@/lib/audit'
+import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 
 export async function GET(
   request: NextRequest,

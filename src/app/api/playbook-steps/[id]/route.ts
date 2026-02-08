@@ -4,6 +4,7 @@ import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
 import { updatePlaybookStepSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logUpdate, logDelete } from '@/lib/audit'
+import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 
 export async function GET(
   request: NextRequest,
@@ -36,6 +37,11 @@ export async function GET(
         500,
         error
       )
+    }
+
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId || data.organization_id !== userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     return NextResponse.json({
@@ -79,6 +85,11 @@ export async function PATCH(
     if (!validation.success) return validation.response
 
     const { data: oldData } = await supabase.from('playbook_steps').select('*').eq('id', id).single()
+
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId || !oldData || oldData.organization_id !== userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const { data, error } = await supabase
       .from('playbook_steps')
@@ -151,6 +162,11 @@ export async function DELETE(
       .select('*')
       .eq('id', id)
       .single()
+
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId || !stepData || stepData.organization_id !== userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const { error } = await supabase
       .from('playbook_steps')

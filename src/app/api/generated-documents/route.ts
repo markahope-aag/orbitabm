@@ -3,26 +3,24 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createGeneratedDocumentSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
+import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
 
-    const organizationId = searchParams.get('organization_id')
+    const organizationId = await resolveUserOrgId(supabase)
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const documentType = searchParams.get('document_type')
     const status = searchParams.get('status')
     const companyId = searchParams.get('company_id')
     const campaignId = searchParams.get('campaign_id')
     const limit = parseInt(searchParams.get('limit') || '100')
     const offset = parseInt(searchParams.get('offset') || '0')
-
-    if (!organizationId) {
-      return NextResponse.json(
-        { error: 'organization_id is required' },
-        { status: 400 }
-      )
-    }
 
     let query = supabase
       .from('generated_documents')
@@ -72,9 +70,14 @@ export async function POST(request: NextRequest) {
     const validation = validateRequest(createGeneratedDocumentSchema, body)
     if (!validation.success) return validation.response
 
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { data, error } = await supabase
       .from('generated_documents')
-      .insert([validation.data])
+      .insert([{ ...validation.data, organization_id: userOrgId }])
       .select()
       .single()
 

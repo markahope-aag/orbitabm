@@ -15,6 +15,7 @@ Welcome to the OrbitABM documentation hub. This directory contains comprehensive
 - **[Component Library](COMPONENTS.md)** - UI component reference
 - **[Configuration Guide](CONFIGURATION.md)** - Environment and feature configuration
 - **[Environment Validation](ENVIRONMENT_VALIDATION.md)** - Environment variable validation and troubleshooting
+- **[Query Performance](QUERY_PERFORMANCE.md)** - N+1 query prevention and caching optimization
 - **[Testing Guide](TESTING.md)** - Comprehensive testing procedures
 
 ### 🔒 Security & Operations
@@ -79,6 +80,7 @@ Welcome to the OrbitABM documentation hub. This directory contains comprehensive
 - ✅ Updated [Security Model](SECURITY.md) with latest policies
 - ✅ Added [Environment Validation](ENVIRONMENT_VALIDATION.md) for configuration management
 - ✅ Implemented [Security Headers](SECURITY_HEADERS.md) with XSS, CSRF, and rate limiting protection
+- ✅ Added [Query Performance](QUERY_PERFORMANCE.md) optimization with N+1 prevention and caching
 
 ### Maintenance Schedule
 - **Weekly**: Review and update based on code changes
