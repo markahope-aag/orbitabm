@@ -84,6 +84,21 @@ const createMarketFields = {
 export const createMarketSchema = z.object(createMarketFields).strict()
 export const updateMarketSchema = z.object(createMarketFields).partial().strip()
 
+// Markets import — passthrough allows extra CSV fields
+const marketImportItemSchema = z.object({
+  name: shortText,
+  state: z.string().max(2).nullable().optional(),
+  metro_population: z.union([z.number(), z.string()]).nullable().optional(),
+  market_size_estimate: z.union([z.number(), z.string()]).nullable().optional(),
+  pe_activity_level: z.string().nullable().optional(),
+  notes: z.string().max(5000).nullable().optional(),
+}).passthrough()
+export const importMarketsSchema = z.object({
+  organization_id: uuid,
+  data: z.array(marketImportItemSchema).min(1),
+  mode: z.enum(['append', 'overwrite']).optional().default('append'),
+}).strict()
+
 // --- Verticals ---
 const createVerticalFields = {
   organization_id: uuid,
@@ -100,6 +115,25 @@ const createVerticalFields = {
 }
 export const createVerticalSchema = z.object(createVerticalFields).strict()
 export const updateVerticalSchema = z.object(createVerticalFields).partial().strip()
+
+// Verticals import
+const verticalImportItemSchema = z.object({
+  name: shortText,
+  sector: z.string().max(255).nullable().optional(),
+  b2b_b2c: z.string().nullable().optional(),
+  naics_code: z.string().max(20).nullable().optional(),
+  revenue_floor: z.union([z.number(), z.string()]).nullable().optional(),
+  typical_revenue_range: z.string().max(255).nullable().optional(),
+  typical_marketing_budget_pct: z.string().max(50).nullable().optional(),
+  key_decision_maker_title: z.string().max(255).nullable().optional(),
+  tier: z.string().nullable().optional(),
+  notes: z.string().max(5000).nullable().optional(),
+}).passthrough()
+export const importVerticalsSchema = z.object({
+  organization_id: uuid,
+  data: z.array(verticalImportItemSchema).min(1),
+  mode: z.enum(['append', 'overwrite']).optional().default('append'),
+}).strict()
 
 // --- Companies ---
 const createCompanyFields = {
@@ -181,6 +215,25 @@ const createContactFields = {
 }
 export const createContactSchema = z.object(createContactFields).strict()
 export const updateContactSchema = z.object(createContactFields).partial().strip()
+
+// Contacts import
+const contactImportItemSchema = z.object({
+  first_name: shortText,
+  last_name: shortText,
+  company: z.string().nullable().optional(),
+  title: z.string().max(255).nullable().optional(),
+  email: z.string().max(255).nullable().optional(),
+  phone: z.string().max(50).nullable().optional(),
+  linkedin_url: z.string().max(500).nullable().optional(),
+  is_primary: z.union([z.boolean(), z.string()]).nullable().optional(),
+  relationship_status: z.string().nullable().optional(),
+  notes: z.string().max(5000).nullable().optional(),
+}).passthrough()
+export const importContactsSchema = z.object({
+  organization_id: uuid,
+  data: z.array(contactImportItemSchema).min(1),
+  mode: z.enum(['append', 'overwrite']).optional().default('append'),
+}).strict()
 
 // --- Campaigns ---
 const createCampaignFields = {
@@ -309,6 +362,34 @@ const createDigitalSnapshotFields = {
 }
 export const createDigitalSnapshotSchema = z.object(createDigitalSnapshotFields).strict()
 export const updateDigitalSnapshotSchema = z.object(createDigitalSnapshotFields).partial().strip()
+
+// Digital snapshots import
+const digitalSnapshotImportItemSchema = z.object({
+  company: z.string(),
+  snapshot_date: z.string().optional(),
+  google_rating: z.union([z.number(), z.string()]).nullable().optional(),
+  google_review_count: z.union([z.number(), z.string()]).nullable().optional(),
+  yelp_rating: z.union([z.number(), z.string()]).nullable().optional(),
+  yelp_review_count: z.union([z.number(), z.string()]).nullable().optional(),
+  bbb_rating: z.string().max(10).nullable().optional(),
+  facebook_followers: z.union([z.number(), z.string()]).nullable().optional(),
+  instagram_followers: z.union([z.number(), z.string()]).nullable().optional(),
+  linkedin_followers: z.union([z.number(), z.string()]).nullable().optional(),
+  domain_authority: z.union([z.number(), z.string()]).nullable().optional(),
+  page_speed_mobile: z.union([z.number(), z.string()]).nullable().optional(),
+  page_speed_desktop: z.union([z.number(), z.string()]).nullable().optional(),
+  organic_keywords: z.union([z.number(), z.string()]).nullable().optional(),
+  monthly_organic_traffic_est: z.union([z.number(), z.string()]).nullable().optional(),
+  has_blog: z.union([z.boolean(), z.string()]).nullable().optional(),
+  has_online_booking: z.union([z.boolean(), z.string()]).nullable().optional(),
+  has_live_chat: z.union([z.boolean(), z.string()]).nullable().optional(),
+  notes: z.string().max(5000).nullable().optional(),
+}).passthrough()
+export const importDigitalSnapshotsSchema = z.object({
+  organization_id: uuid,
+  data: z.array(digitalSnapshotImportItemSchema).min(1),
+  mode: z.enum(['append', 'overwrite']).optional().default('append'),
+}).strict()
 
 // --- Email Templates ---
 const createEmailTemplateFields = {

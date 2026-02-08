@@ -29,9 +29,14 @@ export function CsvUploader({ onDataParsed, onError }: CsvUploaderProps) {
       transformHeader: (header: string) => header.trim(),
       complete: (results) => {
         setIsProcessing(false)
-        
-        if (results.errors.length > 0) {
-          const errorMessages = results.errors.map(err => err.message).join(', ')
+
+        // Separate fatal errors from recoverable ones (unquoted commas in last field)
+        const fatalErrors = results.errors.filter(
+          err => err.type !== 'FieldMismatch'
+        )
+
+        if (fatalErrors.length > 0) {
+          const errorMessages = fatalErrors.map(err => err.message).join(', ')
           onError(`CSV parsing errors: ${errorMessages}`)
           return
         }
@@ -42,7 +47,20 @@ export function CsvUploader({ onDataParsed, onError }: CsvUploaderProps) {
         }
 
         const headers = results.meta.fields || []
-        onDataParsed(results.data as Record<string, unknown>[], headers)
+        const lastHeader = headers[headers.length - 1]
+
+        // Merge __parsed_extra back into the last column for rows with unquoted commas
+        const data = (results.data as Record<string, unknown>[]).map(row => {
+          const extra = (row as Record<string, unknown>).__parsed_extra as string[] | undefined
+          if (extra && extra.length > 0 && lastHeader) {
+            const current = (row[lastHeader] as string) ?? ''
+            row[lastHeader] = [current, ...extra].join(', ')
+            delete (row as Record<string, unknown>).__parsed_extra
+          }
+          return row
+        })
+
+        onDataParsed(data, headers)
       },
       error: (error) => {
         setIsProcessing(false)
