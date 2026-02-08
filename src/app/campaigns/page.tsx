@@ -445,6 +445,7 @@ export default function CampaignsPage() {
           <DataTable
             data={filteredCampaigns as unknown as Record<string, unknown>[]}
             loading={loading}
+            entityName="campaigns"
             columns={[
               {
                 key: 'name',

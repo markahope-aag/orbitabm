@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { createDigitalSnapshotSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -93,40 +96,10 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-
-    const {
-      organization_id,
-      company_id,
-      snapshot_date = new Date().toISOString().split('T')[0], // Default to today
-      google_rating,
-      google_review_count,
-      yelp_rating,
-      yelp_review_count,
-      bbb_rating,
-      facebook_followers,
-      instagram_followers,
-      linkedin_followers,
-      domain_authority,
-      page_speed_mobile,
-      page_speed_desktop,
-      organic_keywords,
-      monthly_organic_traffic_est,
-      website_has_ssl,
-      website_is_mobile_responsive,
-      has_online_booking,
-      has_live_chat,
-      has_blog,
-      notes
-    } = body
-
-    // Validation
-    if (!organization_id || !company_id) {
-      throw new ApiError(
-        'Organization ID and company ID are required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
+    const validation = validateRequest(createDigitalSnapshotSchema, body)
+    if (!validation.success) return validation.response
+    const { organization_id, company_id } = validation.data
+    const snapshot_date = validation.data.snapshot_date ?? new Date().toISOString().split('T')[0]
 
     // Verify that the company exists and belongs to the organization
     const { data: company, error: companyError } = await supabase
@@ -142,43 +115,6 @@ export async function POST(request: NextRequest) {
         'Company not found or does not belong to organization',
         ERROR_CODES.NOT_FOUND,
         404
-      )
-    }
-
-    // Validate numeric ranges
-    if (google_rating !== null && google_rating !== undefined && (google_rating < 0 || google_rating > 5)) {
-      throw new ApiError(
-        'Google rating must be between 0 and 5',
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        { field: 'google_rating', value: google_rating }
-      )
-    }
-
-    if (yelp_rating !== null && yelp_rating !== undefined && (yelp_rating < 0 || yelp_rating > 5)) {
-      throw new ApiError(
-        'Yelp rating must be between 0 and 5',
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        { field: 'yelp_rating', value: yelp_rating }
-      )
-    }
-
-    if (page_speed_mobile !== null && page_speed_mobile !== undefined && (page_speed_mobile < 0 || page_speed_mobile > 100)) {
-      throw new ApiError(
-        'Page speed mobile must be between 0 and 100',
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        { field: 'page_speed_mobile', value: page_speed_mobile }
-      )
-    }
-
-    if (page_speed_desktop !== null && page_speed_desktop !== undefined && (page_speed_desktop < 0 || page_speed_desktop > 100)) {
-      throw new ApiError(
-        'Page speed desktop must be between 0 and 100',
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        { field: 'page_speed_desktop', value: page_speed_desktop }
       )
     }
 
@@ -216,30 +152,7 @@ export async function POST(request: NextRequest) {
     // Insert new digital snapshot
     const { data, error } = await supabase
       .from('digital_snapshots')
-      .insert({
-        organization_id,
-        company_id,
-        snapshot_date,
-        google_rating,
-        google_review_count,
-        yelp_rating,
-        yelp_review_count,
-        bbb_rating,
-        facebook_followers,
-        instagram_followers,
-        linkedin_followers,
-        domain_authority,
-        page_speed_mobile,
-        page_speed_desktop,
-        organic_keywords,
-        monthly_organic_traffic_est,
-        website_has_ssl,
-        website_is_mobile_responsive,
-        has_online_booking,
-        has_live_chat,
-        has_blog,
-        notes
-      })
+      .insert({ ...validation.data, snapshot_date })
       .select(`
         *,
         companies (
@@ -258,6 +171,8 @@ export async function POST(request: NextRequest) {
         error
       )
     }
+
+    logCreate({ supabase, request }, 'digital_snapshot', data)
 
     return NextResponse.json({
       data,

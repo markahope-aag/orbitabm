@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { createEmailTemplateSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,6 +11,7 @@ export async function GET(request: NextRequest) {
 
     const organizationId = searchParams.get('organization_id')
     const playbookStepId = searchParams.get('playbook_step_id')
+    const campaignId = searchParams.get('campaign_id')
     const targetContactRole = searchParams.get('target_contact_role')
     const limit = parseInt(searchParams.get('limit') || '100')
     const offset = parseInt(searchParams.get('offset') || '0')
@@ -29,6 +33,7 @@ export async function GET(request: NextRequest) {
       .range(offset, offset + limit - 1)
 
     if (playbookStepId) query = query.eq('playbook_step_id', playbookStepId)
+    if (campaignId) query = query.eq('campaign_id', campaignId)
     if (targetContactRole) query = query.eq('target_contact_role', targetContactRole)
 
     const { data, error, count } = await query.order('name')
@@ -58,10 +63,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
+    const validation = validateRequest(createEmailTemplateSchema, body)
+    if (!validation.success) return validation.response
 
     const { data, error } = await supabase
       .from('email_templates')
-      .insert([body])
+      .insert([validation.data])
       .select()
       .single()
 
@@ -71,6 +78,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    logCreate({ supabase, request }, 'email_template', data)
 
     return NextResponse.json({
       data,

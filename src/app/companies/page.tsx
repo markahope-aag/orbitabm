@@ -413,6 +413,7 @@ export default function Companies() {
           columns={columns}
           data={(companies as unknown as Record<string, unknown>[]) || []}
           loading={loading}
+          entityName="companies"
           onRowClick={(row) => handleRowClick(row as unknown as CompanyRow)}
           onAdd={handleAdd}
           addLabel="Add Company"

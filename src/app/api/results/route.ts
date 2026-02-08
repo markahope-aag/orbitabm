@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { createResultSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,38 +84,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-
-    const {
-      organization_id,
-      campaign_id,
-      result_type,
-      result_date,
-      contract_value_monthly,
-      contract_term_months,
-      total_contract_value,
-      notes
-    } = body
-
-    if (!organization_id || !campaign_id || !result_type || !result_date) {
-      throw new ApiError(
-        'Organization ID, campaign ID, result type, and result date are required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
+    const validation = validateRequest(createResultSchema, body)
+    if (!validation.success) return validation.response
 
     const { data, error } = await supabase
       .from('results')
-      .insert({
-        organization_id,
-        campaign_id,
-        result_type,
-        result_date,
-        contract_value_monthly,
-        contract_term_months,
-        total_contract_value,
-        notes
-      })
+      .insert(validation.data)
       .select(`
         *,
         campaigns (id, name)
@@ -127,6 +104,8 @@ export async function POST(request: NextRequest) {
         error
       )
     }
+
+    logCreate({ supabase, request }, 'result', data)
 
     return NextResponse.json({
       data,

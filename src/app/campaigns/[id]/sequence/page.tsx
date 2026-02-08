@@ -142,34 +142,62 @@ export default function SequencePage() {
       setPrimaryContactId(primary?.id || fetchedContacts[0]?.id || null)
 
       // 3. Load email templates for each activity's playbook_step_id
+      //    Prefer campaign-scoped templates; fall back to org-level defaults.
       const stepIds = fetchedActivities
         .map((a) => a.playbook_step_id)
         .filter((id): id is string => !!id)
       const uniqueStepIds = [...new Set(stepIds)]
 
-      const emailTemplateMap = new Map<string, { subject_line: string; subject_line_alt: string | null; body: string; target_contact_role: string | null; notes: string | null; id: string }>()
+      type TemplateEntry = { subject_line: string; subject_line_alt: string | null; body: string; target_contact_role: string | null; notes: string | null; id: string; campaign_id: string | null }
+      const emailTemplateMap = new Map<string, TemplateEntry>()
+
       if (uniqueStepIds.length > 0) {
-        const { data: templates } = await supabase
+        // Fetch campaign-scoped templates first
+        const { data: campaignTemplates } = await supabase
           .from('email_templates')
           .select('*')
           .eq('organization_id', currentOrgId)
+          .eq('campaign_id', campaignId)
           .in('playbook_step_id', uniqueStepIds)
 
-        if (templates) {
-          for (const t of templates) {
-            emailTemplateMap.set(t.playbook_step_id!, t)
-          }
+        const coveredStepIds = new Set(
+          (campaignTemplates || []).map((t: TemplateEntry) => (t as Record<string, unknown>).playbook_step_id as string)
+        )
+        const uncoveredStepIds = uniqueStepIds.filter((id) => !coveredStepIds.has(id))
+
+        // For uncovered steps, fetch org-level defaults (campaign_id IS NULL)
+        let orgTemplates: TemplateEntry[] = []
+        if (uncoveredStepIds.length > 0) {
+          const { data } = await supabase
+            .from('email_templates')
+            .select('*')
+            .eq('organization_id', currentOrgId)
+            .is('campaign_id', null)
+            .in('playbook_step_id', uncoveredStepIds)
+          orgTemplates = (data as TemplateEntry[]) || []
+        }
+
+        // Org defaults first (will be overwritten by campaign-specific)
+        for (const t of orgTemplates) {
+          emailTemplateMap.set((t as unknown as Record<string, string>).playbook_step_id, t)
+        }
+        // Campaign-specific templates take priority
+        for (const t of (campaignTemplates as TemplateEntry[] || [])) {
+          emailTemplateMap.set((t as unknown as Record<string, string>).playbook_step_id, t)
         }
       }
 
       // Build drafts from activities + templates
+      // Only set emailTemplateId for campaign-scoped templates (safe to update in-place).
+      // Org-level defaults are treated as read-only seeds — first edit creates a campaign copy.
       const newDrafts = new Map<string, EmailDraft>()
       for (const act of fetchedActivities) {
         const tmpl = act.playbook_step_id ? emailTemplateMap.get(act.playbook_step_id) : undefined
+        const isCampaignScoped = tmpl?.campaign_id === campaignId
         newDrafts.set(act.id, {
           activityId: act.id,
           playbookStepId: act.playbook_step_id,
-          emailTemplateId: tmpl?.id || null,
+          emailTemplateId: isCampaignScoped ? (tmpl?.id || null) : null,
           subjectLine: tmpl?.subject_line || '',
           subjectLineAlt: tmpl?.subject_line_alt || '',
           body: tmpl?.body || '',
@@ -230,7 +258,7 @@ export default function SequencePage() {
     if (!currentOrgId || !campaign) return
     try {
       if (draft.emailTemplateId) {
-        // Update existing template
+        // Update existing campaign-scoped template
         await supabase
           .from('email_templates')
           .update({
@@ -241,11 +269,12 @@ export default function SequencePage() {
           })
           .eq('id', draft.emailTemplateId)
       } else if (draft.playbookStepId) {
-        // Create new template
+        // Create campaign-scoped template (copy-on-write from org default)
         const { data, error } = await supabase
           .from('email_templates')
           .insert({
             organization_id: currentOrgId,
+            campaign_id: campaignId,
             playbook_step_id: draft.playbookStepId,
             name: draft.subjectLine || 'Untitled',
             subject_line: draft.subjectLine,

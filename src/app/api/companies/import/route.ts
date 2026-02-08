@@ -1,18 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { importCompaniesSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-    const { data: importData, organization_id } = body
-
-    if (!Array.isArray(importData) || !organization_id) {
-      return NextResponse.json(
-        { error: 'Invalid request body. Expected { data: Array, organization_id: string }' },
-        { status: 400 }
-      )
-    }
+    const validation = validateRequest(importCompaniesSchema, body)
+    if (!validation.success) return validation.response
+    const { data: importData, organization_id } = validation.data
 
     // Fetch markets and verticals for lookup
     const [marketsResult, verticalsResult] = await Promise.all([
@@ -49,9 +47,9 @@ export async function POST(request: NextRequest) {
           city: record.city || null,
           state: record.state || null,
           zip: record.zip || null,
-          estimated_revenue: record.estimated_revenue ? parseInt(record.estimated_revenue) : null,
-          employee_count: record.employee_count ? parseInt(record.employee_count) : null,
-          year_founded: record.year_founded ? parseInt(record.year_founded) : null,
+          estimated_revenue: record.estimated_revenue ? parseInt(String(record.estimated_revenue)) : null,
+          employee_count: record.employee_count ? parseInt(String(record.employee_count)) : null,
+          year_founded: record.year_founded ? parseInt(String(record.year_founded)) : null,
           ownership_type: record.ownership_type || 'private',
           qualifying_tier: record.qualifying_tier || null,
           status: record.status || 'active',
@@ -66,7 +64,7 @@ export async function POST(request: NextRequest) {
         // Lookup market by name
         if (record.market) {
           const market = markets.find((m: { id: string; name: string }) => 
-            m.name.toLowerCase() === record.market.toLowerCase()
+            m.name.toLowerCase() === record.market!.toLowerCase()
           )
           if (market) {
             processedRecord.market_id = market.id
@@ -78,7 +76,7 @@ export async function POST(request: NextRequest) {
         // Lookup vertical by name
         if (record.vertical) {
           const vertical = verticals.find((v: { id: string; name: string }) => 
-            v.name.toLowerCase() === record.vertical.toLowerCase()
+            v.name.toLowerCase() === record.vertical!.toLowerCase()
           )
           if (vertical) {
             processedRecord.vertical_id = vertical.id
@@ -109,6 +107,12 @@ export async function POST(request: NextRequest) {
           { error: error.message },
           { status: 400 }
         )
+      }
+
+      if (data) {
+        for (const record of data) {
+          logCreate({ supabase, request }, 'company', record, { source: 'csv_import' })
+        }
       }
 
       return NextResponse.json({

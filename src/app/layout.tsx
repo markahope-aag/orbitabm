@@ -4,6 +4,8 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { OrgProvider } from "@/lib/context/OrgContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { SidebarNav } from "@/components/layout/SidebarNav";
 import { Toaster } from "react-hot-toast";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
@@ -21,7 +23,26 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "OrbitABM",
-  description: "Multi-tenant ABM campaign intelligence platform",
+  description: "Campaign Intelligence Platform",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
+  openGraph: {
+    title: "OrbitABM",
+    description: "Campaign Intelligence Platform",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OrbitABM",
+    description: "Campaign Intelligence Platform",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
@@ -37,7 +58,13 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <OrgProvider>
-              <AppLayout>
+              <AppLayout
+                sidebar={
+                  <Sidebar>
+                    <SidebarNav />
+                  </Sidebar>
+                }
+              >
                 {children}
               </AppLayout>
               <Toaster

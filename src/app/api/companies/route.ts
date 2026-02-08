@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { createCompanySchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -84,19 +87,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-
-    // Basic validation
-    if (!body.name || !body.organization_id) {
-      throw new ApiError(
-        'Name and organization_id are required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
+    const validation = validateRequest(createCompanySchema, body)
+    if (!validation.success) return validation.response
 
     const { data, error } = await supabase
       .from('companies')
-      .insert([body])
+      .insert([validation.data])
       .select()
       .single()
 
@@ -118,6 +114,8 @@ export async function POST(request: NextRequest) {
         error
       )
     }
+
+    logCreate({ supabase, request }, 'company', data)
 
     return NextResponse.json({
       data,

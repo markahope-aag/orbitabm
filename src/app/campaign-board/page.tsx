@@ -1,30 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Clock, User } from 'lucide-react'
 import { useOrg } from '@/lib/context/OrgContext'
-import type { 
-  CampaignRow, 
-  CompanyRow,
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import type { DragStartEvent, DragEndEvent, DragOverEvent } from '@dnd-kit/core'
+import BoardColumn from '@/components/campaign-board/BoardColumn'
+import DragOverlayCard from '@/components/campaign-board/DragOverlayCard'
+import type { CampaignWithRelations } from '@/components/campaign-board/BoardCard'
+import { showSuccessToast, showErrorToast } from '@/lib/utils/toast'
+import type {
+  CampaignStatus,
   MarketRow,
   VerticalRow,
-  PlaybookTemplateRow,
-  ProfileRow,
-  ActivityRow
 } from '@/lib/types/database'
-
-interface CampaignWithRelations extends CampaignRow {
-  companies?: CompanyRow & {
-    markets?: MarketRow
-    verticals?: VerticalRow
-  }
-  playbook_templates?: PlaybookTemplateRow
-  profiles?: ProfileRow
-  total_steps?: number
-  next_activity?: ActivityRow
-  days_since_start?: number
-}
 
 const statusColumns = [
   { key: 'planned', label: 'Planned', color: 'bg-blue-50 border-blue-200' },
@@ -44,11 +40,20 @@ export default function CampaignBoardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // DnD state
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+
   // Filter state
   const [filters, setFilters] = useState<{
     market_id?: string
     vertical_id?: string
   }>({})
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  )
 
   useEffect(() => {
     if (currentOrgId) {
@@ -173,33 +178,78 @@ export default function CampaignBoardPage() {
     return acc
   }, {} as Record<string, CampaignWithRelations[]>)
 
-  const getCardBorderColor = (campaign: CampaignWithRelations) => {
-    if (!campaign.next_activity || !campaign.next_activity.scheduled_date) return 'border-slate-200'
-    
-    const today = new Date()
-    const activityDate = new Date(campaign.next_activity.scheduled_date)
-    
-    // Reset time to compare just dates
-    today.setHours(0, 0, 0, 0)
-    activityDate.setHours(0, 0, 0, 0)
-    
-    if (activityDate < today) return 'border-red-400' // Overdue
-    if (activityDate.getTime() === today.getTime()) return 'border-amber-400' // Due today
-    return 'border-emerald-400' // Future
-  }
+  // Determine which column a campaign currently belongs to
+  const getColumnForCampaign = useCallback((campaign: CampaignWithRelations): string => {
+    if (['completed', 'won', 'lost', 'pivoted'].includes(campaign.status)) return 'completed'
+    return campaign.status
+  }, [])
 
-  const handleCardClick = (campaign: CampaignWithRelations) => {
-    window.location.href = `/campaigns/${campaign.id}`
-  }
+  // DnD handlers
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string)
+  }, [])
 
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return '?'
-    return name
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase())
-      .join('')
-      .substring(0, 2)
-  }
+  const handleDragOver = useCallback((_event: DragOverEvent) => {
+    // Visual feedback is handled by BoardColumn's isOver state
+  }, [])
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    setActiveDragId(null)
+
+    const { active, over } = event
+    if (!over) return
+
+    const campaignId = active.id as string
+    const campaign = campaigns.find(c => c.id === campaignId)
+    if (!campaign) return
+
+    // Determine target column: over.id could be a column key or another card id
+    let targetColumn: string | undefined
+
+    // Check if dropped over a column directly
+    const isColumn = statusColumns.some(col => col.key === over.id)
+    if (isColumn) {
+      targetColumn = over.id as string
+    } else {
+      // Dropped over another card — find which column that card is in
+      const overCampaign = campaigns.find(c => c.id === over.id)
+      if (overCampaign) {
+        targetColumn = getColumnForCampaign(overCampaign)
+      }
+    }
+
+    if (!targetColumn) return
+
+    const currentColumn = getColumnForCampaign(campaign)
+    if (targetColumn === currentColumn) return
+
+    // Optimistic update
+    const previousCampaigns = [...campaigns]
+    setCampaigns(prev =>
+      prev.map(c =>
+        c.id === campaignId ? { ...c, status: targetColumn as CampaignStatus } : c
+      )
+    )
+
+    try {
+      const { error: updateError } = await supabase
+        .from('campaigns')
+        .update({ status: targetColumn })
+        .eq('id', campaignId)
+
+      if (updateError) throw updateError
+
+      showSuccessToast(`Campaign moved to ${statusColumns.find(c => c.key === targetColumn)?.label}`)
+    } catch (err) {
+      // Revert on error
+      setCampaigns(previousCampaigns)
+      showErrorToast(err)
+    }
+  }, [campaigns, getColumnForCampaign, supabase])
+
+  const activeCampaign = activeDragId
+    ? campaigns.find(c => c.id === activeDragId) ?? null
+    : null
 
   if (loading) {
     return (
@@ -269,100 +319,28 @@ export default function CampaignBoardPage() {
           </div>
         </div>
 
-        {/* Kanban Board */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {statusColumns.map((column) => (
-            <div key={column.key} className={`rounded-lg border-2 ${column.color} min-h-96`}>
-              {/* Column Header */}
-              <div className="p-4 border-b border-slate-200">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-semibold text-slate-900">{column.label}</h3>
-                  <span className="text-sm text-slate-500 bg-white px-2 py-1 rounded">
-                    {campaignsByStatus[column.key]?.length || 0}
-                  </span>
-                </div>
-              </div>
+        {/* Kanban Board with DnD */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {statusColumns.map((column) => (
+              <BoardColumn
+                key={column.key}
+                column={column}
+                campaigns={campaignsByStatus[column.key] || []}
+              />
+            ))}
+          </div>
 
-              {/* Cards */}
-              <div className="p-4 space-y-3">
-                {campaignsByStatus[column.key]?.map((campaign) => (
-                  <div
-                    key={campaign.id}
-                    onClick={() => handleCardClick(campaign)}
-                    className={`bg-white rounded-lg border-2 ${getCardBorderColor(campaign)} p-4 cursor-pointer hover:shadow-md transition-shadow`}
-                  >
-                    {/* Company Name */}
-                    <h4 className="font-bold text-slate-900 mb-2 text-sm">
-                      {campaign.companies?.name || 'Unknown Company'}
-                    </h4>
-
-                    {/* Market — Vertical */}
-                    <p className="text-xs text-slate-600 mb-3">
-                      {[
-                        campaign.companies?.markets?.name,
-                        campaign.companies?.verticals?.name
-                      ].filter(Boolean).join(' — ') || 'No market/vertical'}
-                    </p>
-
-                    {/* Current Step Info */}
-                    <div className="flex items-center text-xs text-slate-500 mb-2">
-                      <Clock className="w-3 h-3 mr-1" />
-                      Step {campaign.current_step || 1} of {campaign.total_steps || 0}
-                    </div>
-
-                    {/* Days Since Start */}
-                    <div className="flex items-center text-xs text-slate-500 mb-2">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      {campaign.days_since_start || 0} days since start
-                    </div>
-
-                    {/* Next Activity Due Date */}
-                    {campaign.next_activity && (
-                      <div className="flex items-center text-xs text-slate-500 mb-3">
-                        <span className="font-medium">Next:</span>
-                        <span className="ml-1">
-                          {campaign.next_activity.scheduled_date ? new Date(campaign.next_activity.scheduled_date).toLocaleDateString() : 'N/A'}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Assigned To */}
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">
-                        {campaign.playbook_templates?.name || 'No playbook'}
-                      </span>
-                      <div className="flex items-center">
-                        {campaign.profiles?.full_name ? (
-                          <div className="flex items-center text-xs text-slate-600">
-                            <div className="w-6 h-6 bg-cyan-100 rounded-full flex items-center justify-center mr-2">
-                              <span className="text-xs font-medium text-cyan-700">
-                                {getInitials(campaign.profiles.full_name)}
-                              </span>
-                            </div>
-                            <span className="hidden sm:inline">
-                              {campaign.profiles.full_name.split(' ')[0]}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center text-xs text-slate-400">
-                            <User className="w-4 h-4 mr-1" />
-                            <span>Unassigned</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {campaignsByStatus[column.key]?.length === 0 && (
-                  <div className="text-center py-8 text-slate-400">
-                    <p className="text-sm">No campaigns</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+          <DragOverlay>
+            {activeCampaign ? <DragOverlayCard campaign={activeCampaign} /> : null}
+          </DragOverlay>
+        </DndContext>
 
         {/* Legend */}
         <div className="mt-8 bg-white rounded-lg p-4 shadow-sm border border-slate-200">

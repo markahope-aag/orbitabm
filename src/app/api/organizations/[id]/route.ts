@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { updateOrganizationSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logUpdate, logDelete } from '@/lib/audit'
 
 export async function GET(
   request: NextRequest,
@@ -95,7 +98,7 @@ export async function PATCH(
     // Check if organization exists
     const { data: existingOrg, error: fetchError } = await supabase
       .from('organizations')
-      .select('id, slug')
+      .select('*')
       .eq('id', id)
       .is('deleted_at', null)
       .single()
@@ -108,27 +111,12 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { name, slug, type, website, notes } = body
+    const validation = validateRequest(updateOrganizationSchema, body)
+    if (!validation.success) return validation.response
+    const { slug } = validation.data
 
-    // Validate type if provided
-    if (type && !['agency', 'client'].includes(type)) {
-      return NextResponse.json(
-        { error: 'Invalid type. Must be "agency" or "client"' },
-        { status: 400 }
-      )
-    }
-
-    // Validate slug format if provided
+    // Check for duplicate slug (excluding current organization)
     if (slug) {
-      const slugRegex = /^[a-z0-9-]+$/
-      if (!slugRegex.test(slug)) {
-        return NextResponse.json(
-          { error: 'Invalid slug format. Use lowercase letters, numbers, and hyphens only' },
-          { status: 400 }
-        )
-      }
-
-      // Check for duplicate slug (excluding current organization)
       if (slug !== existingOrg.slug) {
         const { data: duplicateOrg } = await supabase
           .from('organizations')
@@ -147,15 +135,7 @@ export async function PATCH(
       }
     }
 
-    // Build update object with only provided fields
-    const updateData: Record<string, string | null> = {}
-    if (name !== undefined) updateData.name = name
-    if (slug !== undefined) updateData.slug = slug
-    if (type !== undefined) updateData.type = type
-    if (website !== undefined) updateData.website = website || null
-    if (notes !== undefined) updateData.notes = notes || null
-
-    if (Object.keys(updateData).length === 0) {
+    if (Object.keys(validation.data).length === 0) {
       return NextResponse.json(
         { error: 'No fields to update' },
         { status: 400 }
@@ -164,7 +144,7 @@ export async function PATCH(
 
     const { data: organization, error } = await supabase
       .from('organizations')
-      .update(updateData)
+      .update(validation.data)
       .eq('id', id)
       .select()
       .single()
@@ -176,6 +156,8 @@ export async function PATCH(
         { status: 500 }
       )
     }
+
+    logUpdate({ supabase, request }, 'organization', id, existingOrg, organization)
 
     return NextResponse.json({
       success: true,
@@ -267,6 +249,8 @@ export async function DELETE(
         { status: 500 }
       )
     }
+
+    logDelete({ supabase, request }, 'organization', existingOrg)
 
     return NextResponse.json({
       success: true,

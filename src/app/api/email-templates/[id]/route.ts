@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { updateEmailTemplateSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logUpdate, logDelete } from '@/lib/audit'
 
 export async function GET(
   request: NextRequest,
@@ -46,10 +49,14 @@ export async function PATCH(
     const supabase = await createClient()
     const { id } = await params
     const body = await request.json()
+    const validation = validateRequest(updateEmailTemplateSchema, body)
+    if (!validation.success) return validation.response
+
+    const { data: oldData } = await supabase.from('email_templates').select('*').eq('id', id).single()
 
     const { data, error } = await supabase
       .from('email_templates')
-      .update(body)
+      .update(validation.data)
       .eq('id', id)
       .select()
       .single()
@@ -60,6 +67,8 @@ export async function PATCH(
         { status: error.code === 'PGRST116' ? 404 : 400 }
       )
     }
+
+    if (oldData) logUpdate({ supabase, request }, 'email_template', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -82,6 +91,13 @@ export async function DELETE(
     const supabase = await createClient()
     const { id } = await params
 
+    // Pre-fetch email template data for audit logging
+    const { data: templateData } = await supabase
+      .from('email_templates')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     const { error } = await supabase
       .from('email_templates')
       .delete()
@@ -92,6 +108,10 @@ export async function DELETE(
         { error: error.message },
         { status: error.code === 'PGRST116' ? 404 : 400 }
       )
+    }
+
+    if (templateData) {
+      logDelete({ supabase, request }, 'email_template', templateData)
     }
 
     return NextResponse.json({

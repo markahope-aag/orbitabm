@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { updateDigitalSnapshotSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logUpdate, logDelete } from '@/lib/audit'
 
 export async function GET(
   request: NextRequest,
@@ -79,52 +82,9 @@ export async function PATCH(
     const supabase = await createClient()
     const { id } = await params
     const body = await request.json()
-
-    // Remove fields that shouldn't be updated
-    const {
-      id: _id,
-      organization_id: _orgId,
-      company_id: _companyId,
-      created_at: _createdAt,
-      ...updateData
-    } = body
-
-    // Validate numeric ranges if being updated
-    if (updateData.google_rating !== undefined && updateData.google_rating !== null && (updateData.google_rating < 0 || updateData.google_rating > 5)) {
-      throw new ApiError(
-        'Google rating must be between 0 and 5',
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        { field: 'google_rating', value: updateData.google_rating }
-      )
-    }
-
-    if (updateData.yelp_rating !== undefined && updateData.yelp_rating !== null && (updateData.yelp_rating < 0 || updateData.yelp_rating > 5)) {
-      throw new ApiError(
-        'Yelp rating must be between 0 and 5',
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        { field: 'yelp_rating', value: updateData.yelp_rating }
-      )
-    }
-
-    if (updateData.page_speed_mobile !== undefined && updateData.page_speed_mobile !== null && (updateData.page_speed_mobile < 0 || updateData.page_speed_mobile > 100)) {
-      throw new ApiError(
-        'Page speed mobile must be between 0 and 100',
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        { field: 'page_speed_mobile', value: updateData.page_speed_mobile }
-      )
-    }
-
-    if (updateData.page_speed_desktop !== undefined && updateData.page_speed_desktop !== null && (updateData.page_speed_desktop < 0 || updateData.page_speed_desktop > 100)) {
-      throw new ApiError(
-        'Page speed desktop must be between 0 and 100',
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        { field: 'page_speed_desktop', value: updateData.page_speed_desktop }
-      )
-    }
+    const validation = validateRequest(updateDigitalSnapshotSchema, body)
+    if (!validation.success) return validation.response
+    const updateData = validation.data
 
     // If snapshot_date is being updated, check for duplicates
     if (updateData.snapshot_date) {
@@ -174,6 +134,8 @@ export async function PATCH(
       }
     }
 
+    const { data: oldData } = await supabase.from('digital_snapshots').select('*').eq('id', id).single()
+
     const { data, error } = await supabase
       .from('digital_snapshots')
       .update(updateData)
@@ -203,6 +165,8 @@ export async function PATCH(
         error
       )
     }
+
+    if (oldData) logUpdate({ supabase, request }, 'digital_snapshot', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -241,6 +205,13 @@ export async function DELETE(
     const supabase = await createClient()
     const { id } = await params
 
+    // Pre-fetch snapshot data for audit logging
+    const { data: snapshotData } = await supabase
+      .from('digital_snapshots')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     // Digital snapshots are historical data, so we do a hard delete
     // (unlike other entities that use soft deletes)
     const { error } = await supabase
@@ -264,6 +235,10 @@ export async function DELETE(
         500,
         error
       )
+    }
+
+    if (snapshotData) {
+      logDelete({ supabase, request }, 'digital_snapshot', snapshotData)
     }
 
     return NextResponse.json({

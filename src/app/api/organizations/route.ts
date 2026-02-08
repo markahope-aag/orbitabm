@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { createOrganizationSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 const ITEMS_PER_PAGE = 20
 
@@ -106,31 +109,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, slug, type, website, notes } = body
-
-    // Validation
-    if (!name || !slug || !type) {
-      return NextResponse.json(
-        { error: 'Missing required fields: name, slug, type' },
-        { status: 400 }
-      )
-    }
-
-    if (!['agency', 'client'].includes(type)) {
-      return NextResponse.json(
-        { error: 'Invalid type. Must be "agency" or "client"' },
-        { status: 400 }
-      )
-    }
-
-    // Validate slug format (lowercase, alphanumeric, hyphens only)
-    const slugRegex = /^[a-z0-9-]+$/
-    if (!slugRegex.test(slug)) {
-      return NextResponse.json(
-        { error: 'Invalid slug format. Use lowercase letters, numbers, and hyphens only' },
-        { status: 400 }
-      )
-    }
+    const validation = validateRequest(createOrganizationSchema, body)
+    if (!validation.success) return validation.response
+    const { name, slug, type, website, notes } = validation.data
 
     // Check for duplicate slug
     const { data: existingOrg } = await supabase
@@ -154,8 +135,8 @@ export async function POST(request: NextRequest) {
         name,
         slug,
         type,
-        website: website || null,
-        notes: notes || null
+        website: website ?? null,
+        notes: notes ?? null
       })
       .select()
       .single()
@@ -167,6 +148,8 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    logCreate({ supabase, request }, 'organization', organization)
 
     return NextResponse.json({
       success: true,

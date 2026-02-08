@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { updateAssetSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logUpdate, logDelete } from '@/lib/audit'
 
 export async function GET(
   request: NextRequest,
@@ -74,19 +77,14 @@ export async function PATCH(
     const supabase = await createClient()
     const { id } = await params
     const body = await request.json()
+    const validation = validateRequest(updateAssetSchema, body)
+    if (!validation.success) return validation.response
 
-    const {
-      id: _id,
-      organization_id: _orgId,
-      created_at: _createdAt,
-      updated_at: _updatedAt,
-      deleted_at: _deletedAt,
-      ...updateData
-    } = body
+    const { data: oldData } = await supabase.from('assets').select('*').eq('id', id).is('deleted_at', null).single()
 
     const { data, error } = await supabase
       .from('assets')
-      .update(updateData)
+      .update(validation.data)
       .eq('id', id)
       .is('deleted_at', null)
       .select(`
@@ -111,6 +109,8 @@ export async function PATCH(
         error
       )
     }
+
+    if (oldData) logUpdate({ supabase, request }, 'asset', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -149,7 +149,7 @@ export async function DELETE(
     const supabase = await createClient()
     const { id } = await params
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('assets')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
@@ -172,6 +172,8 @@ export async function DELETE(
         error
       )
     }
+
+    logDelete({ supabase, request }, 'asset', data)
 
     return NextResponse.json({
       data: { id, deleted: true },

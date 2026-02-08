@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { createDocumentTemplateSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -61,10 +64,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
+    const validation = validateRequest(createDocumentTemplateSchema, body)
+    if (!validation.success) return validation.response
 
     const { data, error } = await supabase
       .from('document_templates')
-      .insert([body])
+      .insert([validation.data])
       .select()
       .single()
 
@@ -74,6 +79,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    logCreate({ supabase, request }, 'document_template', data)
 
     return NextResponse.json({
       data,

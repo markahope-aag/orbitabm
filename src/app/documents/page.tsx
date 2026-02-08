@@ -206,6 +206,7 @@ export default function DocumentsPage() {
           <DataTable
             data={filteredDocs as unknown as Record<string, unknown>[]}
             loading={loading}
+            entityName="documents"
             columns={[
               {
                 key: 'title',

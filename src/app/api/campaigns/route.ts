@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { createCampaignSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -115,30 +118,9 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-
-    const {
-      organization_id,
-      name,
-      company_id,
-      playbook_template_id,
-      market_id,
-      vertical_id,
-      status = 'planned',
-      start_date,
-      end_date,
-      current_step = 0,
-      assigned_to,
-      notes
-    } = body
-
-    // Validation
-    if (!organization_id || !name || !company_id || !market_id || !vertical_id) {
-      throw new ApiError(
-        'Organization ID, name, company ID, market ID, and vertical ID are required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
+    const validation = validateRequest(createCampaignSchema, body)
+    if (!validation.success) return validation.response
+    const { organization_id, name, company_id, playbook_template_id, market_id, vertical_id } = validation.data
 
     // Verify that the company, market, and vertical exist and belong to the organization
     const { data: company, error: companyError } = await supabase
@@ -238,20 +220,7 @@ export async function POST(request: NextRequest) {
     // Insert new campaign
     const { data, error } = await supabase
       .from('campaigns')
-      .insert({
-        organization_id,
-        name,
-        company_id,
-        playbook_template_id,
-        market_id,
-        vertical_id,
-        status,
-        start_date,
-        end_date,
-        current_step,
-        assigned_to,
-        notes
-      })
+      .insert(validation.data)
       .select(`
         *,
         companies (
@@ -285,6 +254,8 @@ export async function POST(request: NextRequest) {
         error
       )
     }
+
+    logCreate({ supabase, request }, 'campaign', data)
 
     return NextResponse.json({
       data,

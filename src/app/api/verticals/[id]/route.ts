@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { updateVerticalSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logUpdate, logDelete } from '@/lib/audit'
 
 export async function GET(
   request: NextRequest,
@@ -70,9 +73,9 @@ export async function PATCH(
     const supabase = await createClient()
     const { id } = await params
     const body = await request.json()
-
-    // Remove fields that shouldn't be updated
-    const { id: _id, organization_id: _orgId, created_at: _createdAt, updated_at: _updatedAt, deleted_at: _deletedAt, ...updateData } = body
+    const validation = validateRequest(updateVerticalSchema, body)
+    if (!validation.success) return validation.response
+    const updateData = validation.data
 
     // If name is being updated, check for duplicates
     if (updateData.name) {
@@ -103,6 +106,8 @@ export async function PATCH(
       }
     }
 
+    const { data: oldData } = await supabase.from('verticals').select('*').eq('id', id).is('deleted_at', null).single()
+
     const { data, error } = await supabase
       .from('verticals')
       .update(updateData)
@@ -126,6 +131,8 @@ export async function PATCH(
         error
       )
     }
+
+    if (oldData) logUpdate({ supabase, request }, 'vertical', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -191,7 +198,7 @@ export async function DELETE(
     }
 
     // Soft delete the vertical
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('verticals')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
@@ -214,6 +221,8 @@ export async function DELETE(
         error
       )
     }
+
+    logDelete({ supabase, request }, 'vertical', data)
 
     return NextResponse.json({
       data: { id, deleted: true },

@@ -237,6 +237,7 @@ export default function Verticals() {
           columns={columns}
           data={(verticals as unknown as Record<string, unknown>[]) || []}
           loading={loading}
+          entityName="verticals"
           onRowClick={(row) => handleEdit(row as unknown as VerticalRow)}
           onAdd={handleAdd}
           addLabel="Add Vertical"

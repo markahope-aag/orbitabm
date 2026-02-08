@@ -426,6 +426,7 @@ export default function CompanyDetailPage() {
             <DataTable
               data={competitors as unknown as Record<string, unknown>[]}
               loading={loading}
+              entityName="competitors"
               columns={[
                 {
                   key: 'name',
@@ -486,6 +487,7 @@ export default function CompanyDetailPage() {
             <DataTable
               data={campaigns as unknown as Record<string, unknown>[]}
               loading={loading}
+              entityName="campaigns"
               columns={[
                 {
                   key: 'name',
@@ -554,6 +556,7 @@ export default function CompanyDetailPage() {
             <DataTable
               data={digitalSnapshots as unknown as Record<string, unknown>[]}
               loading={loading}
+              entityName="digital_snapshots"
               columns={[
                 {
                   key: 'snapshot_date',
@@ -649,6 +652,7 @@ export default function CompanyDetailPage() {
             <DataTable
               data={assets as unknown as Record<string, unknown>[]}
               loading={loading}
+              entityName="assets"
               columns={[
                 {
                   key: 'title',

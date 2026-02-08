@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { createAssetSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -87,42 +90,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-
-    const {
-      organization_id,
-      asset_type,
-      title,
-      campaign_id,
-      company_id,
-      description,
-      file_url,
-      landing_page_url,
-      status,
-      delivered_date
-    } = body
-
-    if (!organization_id || !asset_type || !title) {
-      throw new ApiError(
-        'Organization ID, asset type, and title are required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
+    const validation = validateRequest(createAssetSchema, body)
+    if (!validation.success) return validation.response
 
     const { data, error } = await supabase
       .from('assets')
-      .insert({
-        organization_id,
-        asset_type,
-        title,
-        campaign_id,
-        company_id,
-        description,
-        file_url,
-        landing_page_url,
-        status,
-        delivered_date
-      })
+      .insert(validation.data)
       .select(`
         *,
         campaigns (id, name),
@@ -138,6 +111,8 @@ export async function POST(request: NextRequest) {
         error
       )
     }
+
+    logCreate({ supabase, request }, 'asset', data)
 
     return NextResponse.json({
       data,

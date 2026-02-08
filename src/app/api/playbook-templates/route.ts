@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { createPlaybookTemplateSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -83,34 +86,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-
-    const {
-      organization_id,
-      name,
-      vertical_id,
-      description,
-      total_duration_days,
-      is_active
-    } = body
-
-    if (!organization_id || !name) {
-      throw new ApiError(
-        'Organization ID and name are required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
+    const validation = validateRequest(createPlaybookTemplateSchema, body)
+    if (!validation.success) return validation.response
 
     const { data, error } = await supabase
       .from('playbook_templates')
-      .insert({
-        organization_id,
-        name,
-        vertical_id,
-        description,
-        total_duration_days,
-        is_active
-      })
+      .insert(validation.data)
       .select(`
         *,
         verticals (id, name),
@@ -126,6 +107,8 @@ export async function POST(request: NextRequest) {
         error
       )
     }
+
+    logCreate({ supabase, request }, 'playbook_template', data)
 
     return NextResponse.json({
       data,

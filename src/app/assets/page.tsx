@@ -240,6 +240,7 @@ export default function AssetsPage() {
           <DataTable
             data={assets as unknown as Record<string, unknown>[]}
             loading={loading}
+            entityName="assets"
             columns={[
               {
                 key: 'title',

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { DataTable, SlideOver } from '@/components/ui'
 import { Plus, ExternalLink, Building2, TrendingUp, Users } from 'lucide-react'
 import { useOrg } from '@/lib/context/OrgContext'
+import { showErrorToast, showSuccessToast } from '@/lib/utils/toast'
 import type { 
   PEPlatformRow, 
   PEAcquisitionRow, 
@@ -227,8 +228,10 @@ export default function PETrackerPage() {
         headquarters: '',
         notes: ''
       })
+      showSuccessToast(editingPlatform ? 'Platform updated' : 'Platform added')
     } catch (err) {
       console.error('Error saving platform:', err)
+      showErrorToast(err)
     }
   }
 
@@ -292,8 +295,10 @@ export default function PETrackerPage() {
         notes: '',
         use_existing_company: true
       })
+      showSuccessToast('Acquisition added')
     } catch (err) {
       console.error('Error saving acquisition:', err)
+      showErrorToast(err)
     }
   }
 
@@ -423,6 +428,7 @@ export default function PETrackerPage() {
           <DataTable
             data={platforms as unknown as Record<string, unknown>[]}
             loading={loading}
+            entityName="platforms"
             columns={[
               {
                 key: 'name',
@@ -486,6 +492,7 @@ export default function PETrackerPage() {
               <DataTable
                 data={selectedPlatformAcquisitions as unknown as Record<string, unknown>[]}
                 loading={loading}
+                entityName="acquisitions"
                 columns={[
                   {
                     key: 'company_name',

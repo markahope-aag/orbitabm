@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { createContactSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,10 +65,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
+    const validation = validateRequest(createContactSchema, body)
+    if (!validation.success) return validation.response
 
     const { data, error } = await supabase
       .from('contacts')
-      .insert([body])
+      .insert([validation.data])
       .select()
       .single()
 
@@ -75,6 +80,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    logCreate({ supabase, request }, 'contact', data)
 
     return NextResponse.json({
       data,

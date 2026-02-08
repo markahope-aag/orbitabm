@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { createPlaybookStepSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -79,40 +82,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-
-    const {
-      organization_id,
-      playbook_template_id,
-      step_number,
-      day_offset,
-      channel,
-      title,
-      description,
-      asset_type_required,
-      is_pivot_trigger
-    } = body
-
-    if (!organization_id || !playbook_template_id || !step_number || !day_offset || !channel || !title) {
-      throw new ApiError(
-        'Organization ID, playbook template ID, step number, day offset, channel, and title are required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
+    const validation = validateRequest(createPlaybookStepSchema, body)
+    if (!validation.success) return validation.response
 
     const { data, error } = await supabase
       .from('playbook_steps')
-      .insert({
-        organization_id,
-        playbook_template_id,
-        step_number,
-        day_offset,
-        channel,
-        title,
-        description,
-        asset_type_required,
-        is_pivot_trigger
-      })
+      .insert(validation.data)
       .select(`
         *,
         playbook_templates (id, name)
@@ -127,6 +102,8 @@ export async function POST(request: NextRequest) {
         error
       )
     }
+
+    logCreate({ supabase, request }, 'playbook_step', data)
 
     return NextResponse.json({
       data,

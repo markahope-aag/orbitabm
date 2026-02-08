@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { updateContactSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logUpdate, logDelete } from '@/lib/audit'
 
 export async function GET(
   request: NextRequest,
@@ -47,10 +50,14 @@ export async function PATCH(
     const supabase = await createClient()
     const { id } = await params
     const body = await request.json()
+    const validation = validateRequest(updateContactSchema, body)
+    if (!validation.success) return validation.response
+
+    const { data: oldData } = await supabase.from('contacts').select('*').eq('id', id).is('deleted_at', null).single()
 
     const { data, error } = await supabase
       .from('contacts')
-      .update(body)
+      .update(validation.data)
       .eq('id', id)
       .is('deleted_at', null)
       .select()
@@ -62,6 +69,8 @@ export async function PATCH(
         { status: error.code === 'PGRST116' ? 404 : 400 }
       )
     }
+
+    if (oldData) logUpdate({ supabase, request }, 'contact', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -98,6 +107,8 @@ export async function DELETE(
         { status: error.code === 'PGRST116' ? 404 : 400 }
       )
     }
+
+    logDelete({ supabase, request }, 'contact', data)
 
     return NextResponse.json({
       data,

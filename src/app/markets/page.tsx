@@ -223,6 +223,7 @@ export default function Markets() {
           columns={columns}
           data={(markets as unknown as Record<string, unknown>[]) || []}
           loading={loading}
+          entityName="markets"
           onRowClick={(row) => handleEdit(row as unknown as MarketRow)}
           onAdd={handleAdd}
           addLabel="Add Market"

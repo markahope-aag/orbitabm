@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { DataTable, Badge, SlideOver } from '@/components/ui'
 import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react'
 import { useOrg } from '@/lib/context/OrgContext'
+import { showErrorToast, showSuccessToast } from '@/lib/utils/toast'
 import type { DocumentTemplateRow, VerticalRow } from '@/lib/types/database'
 
 interface TemplateWithRelations extends DocumentTemplateRow {
@@ -146,8 +147,10 @@ export default function TemplatesPage() {
       await fetchData()
       setModalOpen(false)
       setEditing(null)
+      showSuccessToast(editing ? 'Template updated' : 'Template created')
     } catch (err) {
       console.error('Error saving template:', err)
+      showErrorToast(err)
     } finally {
       setSaving(false)
     }
@@ -166,8 +169,10 @@ export default function TemplatesPage() {
       await fetchData()
       setModalOpen(false)
       setEditing(null)
+      showSuccessToast('Template deleted')
     } catch (err) {
       console.error('Error deleting template:', err)
+      showErrorToast(err)
     }
   }
 
@@ -243,6 +248,7 @@ export default function TemplatesPage() {
           <DataTable
             data={templates as unknown as Record<string, unknown>[]}
             loading={loading}
+            entityName="templates"
             columns={[
               {
                 key: 'name',

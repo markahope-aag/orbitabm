@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { updateCampaignSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logUpdate, logDelete } from '@/lib/audit'
 
 export async function GET(
   request: NextRequest,
@@ -112,16 +115,9 @@ export async function PATCH(
     const supabase = await createClient()
     const { id } = await params
     const body = await request.json()
-
-    // Remove fields that shouldn't be updated
-    const {
-      id: _id,
-      organization_id: _orgId,
-      created_at: _createdAt,
-      updated_at: _updatedAt,
-      deleted_at: _deletedAt,
-      ...updateData
-    } = body
+    const validation = validateRequest(updateCampaignSchema, body)
+    if (!validation.success) return validation.response
+    const updateData = validation.data
 
     // If name is being updated, check for duplicates
     if (updateData.name) {
@@ -249,6 +245,8 @@ export async function PATCH(
       }
     }
 
+    const { data: oldData } = await supabase.from('campaigns').select('*').eq('id', id).is('deleted_at', null).single()
+
     const { data, error } = await supabase
       .from('campaigns')
       .update(updateData)
@@ -294,6 +292,8 @@ export async function PATCH(
         error
       )
     }
+
+    if (oldData) logUpdate({ supabase, request }, 'campaign', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -372,6 +372,14 @@ export async function DELETE(
       )
     }
 
+    // Pre-fetch campaign data for audit logging
+    const { data: campaignData } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .single()
+
     // Soft delete the campaign
     const { error } = await supabase
       .from('campaigns')
@@ -395,6 +403,10 @@ export async function DELETE(
         500,
         error
       )
+    }
+
+    if (campaignData) {
+      logDelete({ supabase, request }, 'campaign', campaignData)
     }
 
     return NextResponse.json({

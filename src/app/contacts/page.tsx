@@ -279,6 +279,7 @@ export default function ContactsPage() {
           <DataTable
             data={filteredContacts as unknown as Record<string, unknown>[]}
             loading={loading}
+            entityName="contacts"
             columns={[
               {
                 key: 'name',

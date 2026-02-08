@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { createVerticalSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logCreate } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -79,29 +82,9 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-
-    const {
-      organization_id,
-      name,
-      sector,
-      b2b_b2c,
-      naics_code,
-      revenue_floor,
-      typical_revenue_range,
-      typical_marketing_budget_pct,
-      key_decision_maker_title,
-      tier,
-      notes
-    } = body
-
-    // Validation
-    if (!organization_id || !name) {
-      throw new ApiError(
-        'Organization ID and name are required',
-        ERROR_CODES.VALIDATION_ERROR,
-        400
-      )
-    }
+    const validation = validateRequest(createVerticalSchema, body)
+    if (!validation.success) return validation.response
+    const { organization_id, name } = validation.data
 
     // Check for duplicate names within organization
     const { data: existing, error: checkError } = await supabase
@@ -133,19 +116,7 @@ export async function POST(request: NextRequest) {
     // Insert new vertical
     const { data, error } = await supabase
       .from('verticals')
-      .insert({
-        organization_id,
-        name,
-        sector,
-        b2b_b2c,
-        naics_code,
-        revenue_floor,
-        typical_revenue_range,
-        typical_marketing_budget_pct,
-        key_decision_maker_title,
-        tier,
-        notes
-      })
+      .insert(validation.data)
       .select()
       .single()
 
@@ -157,6 +128,8 @@ export async function POST(request: NextRequest) {
         error
       )
     }
+
+    logCreate({ supabase, request }, 'vertical', data)
 
     return NextResponse.json({
       data,

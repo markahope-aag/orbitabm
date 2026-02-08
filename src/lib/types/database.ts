@@ -25,6 +25,25 @@ export type AssetType = 'blueprint' | 'website_audit' | 'market_report' | 'landi
 export type AssetStatus = 'draft' | 'ready' | 'delivered' | 'viewed'
 export type ResultType = 'meeting_scheduled' | 'proposal_sent' | 'proposal_accepted' | 'contract_signed' | 'contract_lost' | 'no_response' | 'declined' | 'breakup_sent' | 'referral_received' | 'other'
 
+// Audit types
+export type AuditAction = 'create' | 'update' | 'delete'
+export type AuditEntityType =
+  | 'organization'
+  | 'market'
+  | 'vertical'
+  | 'company'
+  | 'contact'
+  | 'campaign'
+  | 'activity'
+  | 'asset'
+  | 'result'
+  | 'playbook_template'
+  | 'playbook_step'
+  | 'digital_snapshot'
+  | 'email_template'
+  | 'document_template'
+  | 'generated_document'
+
 // Document Intelligence types
 export type DocumentType = 'prospect_research' | 'campaign_sequence' | 'competitive_analysis' | 'audit_report' | 'proposal'
 export type DocumentStatus = 'draft' | 'in_review' | 'approved' | 'delivered' | 'archived'
@@ -980,6 +999,7 @@ export interface EmailTemplateRow {
   id: string
   organization_id: string
   playbook_step_id: string | null
+  campaign_id: string | null
   name: string
   subject_line: string
   subject_line_alt: string | null
@@ -995,6 +1015,7 @@ export interface EmailTemplateInsert {
   id?: string
   organization_id: string
   playbook_step_id?: string | null
+  campaign_id?: string | null
   name: string
   subject_line: string
   subject_line_alt?: string | null
@@ -1010,6 +1031,7 @@ export interface EmailTemplateUpdate {
   id?: string
   organization_id?: string
   playbook_step_id?: string | null
+  campaign_id?: string | null
   name?: string
   subject_line?: string
   subject_line_alt?: string | null
@@ -1019,6 +1041,41 @@ export interface EmailTemplateUpdate {
   notes?: string | null
   created_at?: string
   updated_at?: string
+}
+
+// Audit Logs
+export interface AuditLogRow {
+  id: string
+  organization_id: string | null
+  entity_type: AuditEntityType
+  entity_id: string
+  action: AuditAction
+  user_id: string | null
+  user_email: string | null
+  old_values: Record<string, unknown> | null
+  new_values: Record<string, unknown> | null
+  changed_fields: string[] | null
+  ip_address: string | null
+  user_agent: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
+
+export interface AuditLogInsert {
+  id?: string
+  organization_id?: string | null
+  entity_type: AuditEntityType
+  entity_id: string
+  action: AuditAction
+  user_id?: string | null
+  user_email?: string | null
+  old_values?: Record<string, unknown> | null
+  new_values?: Record<string, unknown> | null
+  changed_fields?: string[] | null
+  ip_address?: string | null
+  user_agent?: string | null
+  metadata?: Record<string, unknown> | null
+  created_at?: string
 }
 
 // =====================================================
@@ -1122,6 +1179,11 @@ export interface Database {
         Row: EmailTemplateRow
         Insert: EmailTemplateInsert
         Update: EmailTemplateUpdate
+      }
+      audit_logs: {
+        Row: AuditLogRow
+        Insert: AuditLogInsert
+        Update: never
       }
     }
     Views: {

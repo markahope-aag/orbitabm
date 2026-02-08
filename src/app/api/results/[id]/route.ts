@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
+import { updateResultSchema } from '@/lib/validations/schemas'
+import { validateRequest } from '@/lib/validations/helpers'
+import { logUpdate, logDelete } from '@/lib/audit'
 
 export async function GET(
   request: NextRequest,
@@ -72,18 +75,14 @@ export async function PATCH(
     const supabase = await createClient()
     const { id } = await params
     const body = await request.json()
+    const validation = validateRequest(updateResultSchema, body)
+    if (!validation.success) return validation.response
 
-    const {
-      id: _id,
-      organization_id: _orgId,
-      created_at: _createdAt,
-      updated_at: _updatedAt,
-      ...updateData
-    } = body
+    const { data: oldData } = await supabase.from('results').select('*').eq('id', id).single()
 
     const { data, error } = await supabase
       .from('results')
-      .update(updateData)
+      .update(validation.data)
       .eq('id', id)
       .select(`
         *,
@@ -106,6 +105,8 @@ export async function PATCH(
         error
       )
     }
+
+    if (oldData) logUpdate({ supabase, request }, 'result', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -144,6 +145,13 @@ export async function DELETE(
     const supabase = await createClient()
     const { id } = await params
 
+    // Pre-fetch result data for audit logging
+    const { data: resultData } = await supabase
+      .from('results')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     const { error } = await supabase
       .from('results')
       .delete()
@@ -156,6 +164,10 @@ export async function DELETE(
         500,
         error
       )
+    }
+
+    if (resultData) {
+      logDelete({ supabase, request }, 'result', resultData)
     }
 
     return NextResponse.json({

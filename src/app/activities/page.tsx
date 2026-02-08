@@ -339,6 +339,7 @@ export default function ActivitiesPage() {
           <DataTable
             data={activities as unknown as Record<string, unknown>[]}
             loading={loading}
+            entityName="activities"
             columns={[
               {
                 key: 'scheduled_date',

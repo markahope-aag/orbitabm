@@ -59,10 +59,8 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
-  const isApiDocsRoute = request.nextUrl.pathname.startsWith('/api-docs')
-
-  // Allow API routes and public routes to pass through
-  if (isApiRoute || isApiDocsRoute) {
+  // Allow API routes to pass through
+  if (isApiRoute) {
     return response
   }
 
