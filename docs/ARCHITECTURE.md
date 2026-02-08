@@ -6,6 +6,22 @@ This document provides a comprehensive overview of OrbitABM's system architectur
 
 OrbitABM is a multi-tenant Account-Based Marketing (ABM) campaign intelligence platform built with modern web technologies and designed for scalability, security, and maintainability.
 
+### Technology Stack (v2.1.0)
+- **Frontend**: Next.js 16.1.6 (App Router), React 19.2.3, TypeScript 5
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, RLS)
+- **Styling**: Tailwind CSS 4 with custom navy/cyan brand theme
+- **UI Components**: Custom component library with Lucide icons v0.563.0
+- **Notifications**: React Hot Toast v2.6.0 with comprehensive error handling
+- **Data Processing**: Papaparse v5.5.3 for CSV handling
+- **Drag & Drop**: @dnd-kit v6.3.1+ for campaign board
+- **Authentication**: Supabase Auth with SSR support (@supabase/ssr v0.8.0)
+- **Database**: PostgreSQL with comprehensive Row Level Security (RLS)
+- **API**: RESTful API with OpenAPI/Swagger documentation
+- **Security**: Comprehensive security headers, CSRF protection, rate limiting
+- **Caching**: LRU cache v11.2.5 with multi-layer optimization
+- **Validation**: Zod v4.3.6 for schema validation
+- **Documentation**: Swagger UI with interactive API testing
+
 ### High-Level Architecture
 
 ```
@@ -140,7 +156,7 @@ Organizations (1) ──< (N) Profiles (Users)
               └──< Email Templates
 ```
 
-### Database Tables (17 Core Tables)
+### Database Tables (20+ Core Tables)
 
 **Core Entities:**
 1. `organizations` - Tenant isolation
@@ -165,7 +181,14 @@ Organizations (1) ──< (N) Profiles (Users)
 
 **Intelligence System:**
 16. `digital_snapshots` - Digital presence data
-17. `audit_logs` - System audit trail
+17. `audit_logs` - Comprehensive system audit trail
+
+**Security & Performance:**
+- Comprehensive security headers and CSRF protection
+- Rate limiting with sliding window algorithm
+- Multi-layer caching system with LRU cache
+- Query performance monitoring and optimization
+- Environment validation and health checks
 
 **Document Intelligence:**
 18. `document_templates` - Document templates
@@ -289,12 +312,16 @@ API Request → RLS Policy Check → Data Access → Response
 
 ### Security Features
 
-- **Session Management**: Secure HTTP-only cookies
-- **CSRF Protection**: Built-in Next.js CSRF protection
-- **Input Validation**: Server-side validation and sanitization
-- **SQL Injection Prevention**: Parameterized queries and RLS
-- **XSS Protection**: Content Security Policy headers
-- **Rate Limiting**: Supabase built-in rate limiting
+- **Session Management**: Secure HTTP-only cookies with automatic refresh
+- **CSRF Protection**: Double-submit cookie pattern with token validation
+- **Rate Limiting**: Sliding window algorithm with configurable limits
+- **Security Headers**: Comprehensive CSP, HSTS, XSS protection, frame options
+- **Input Validation**: Server-side validation with Zod schemas
+- **SQL Injection Prevention**: Parameterized queries and RLS policies
+- **XSS Protection**: Content Security Policy and input sanitization
+- **Audit Logging**: Comprehensive audit trail for all user actions
+- **Environment Validation**: Startup validation and health monitoring
+- **API Protection**: Security middleware with incident reporting
 
 ## 📱 Frontend Architecture
 
@@ -367,10 +394,13 @@ export function useCompanies(orgId: string, filters?: CompanyFilters) {
 - Pagination for large datasets
 
 **Caching Strategy:**
-- Browser caching for static assets
-- API response caching where appropriate
-- Supabase query caching
-- CDN caching for global distribution
+- **Multi-layer caching**: LRU cache with intelligent invalidation
+- **Stale-while-revalidate**: Background cache refresh for optimal performance
+- **Query result caching**: Cached database queries with smart invalidation
+- **N+1 query prevention**: Eager loading and batch operations
+- **Browser caching**: Static assets with proper cache headers
+- **CDN caching**: Global distribution with Vercel Edge Network
+- **Performance monitoring**: Real-time query and cache metrics
 
 ### Monitoring and Analytics
 

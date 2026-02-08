@@ -38,20 +38,38 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
 ### 2. Database Setup
 
-Run the database migration in your Supabase SQL Editor:
+Run the database migrations in your Supabase project:
 
+**Option 1: Using Supabase CLI (Recommended)**
+```bash
+# Link to your Supabase project
+npx supabase link --project-ref your-project-ref
+
+# Push all 14 migrations to your database
+npx supabase db push
+
+# Verify migrations were applied
+npx supabase migration list
+```
+
+**Option 2: Manual SQL Execution**
 1. Open Supabase Dashboard → SQL Editor
-2. Copy the contents of `supabase/migrations/001_initial_schema.sql`
-3. Paste and execute the SQL
+2. Execute each migration file in order (001 through 014)
+3. Start with `supabase/migrations/001_initial_schema.sql`
+4. Continue through all 14 migration files
 
-This creates all necessary tables, indexes, and relationships.
+This creates all necessary tables, indexes, relationships, RLS policies, and security functions.
 
 ### 3. Seed Initial Data
 
-Run the seed script to populate your database with foundational data:
+Run the seeding scripts to populate your database with foundational data:
 
 ```bash
+# Seed core data (organizations, markets, verticals, etc.)
 npm run seed
+
+# Seed email and document templates
+npm run seed:templates
 ```
 
 This creates:
@@ -60,6 +78,8 @@ This creates:
 - 15 industry verticals (Tier 1-3)
 - 2 PE platforms
 - Sample HVAC playbook template
+- Email templates for campaign sequences
+- Document templates for research and analysis
 
 ## 🏢 First-Time User Flow
 
@@ -72,10 +92,12 @@ This creates:
 ### Step 2: Understand the Interface
 
 **Sidebar Navigation:**
-- **Command Center**: Dashboard and Campaign Board
+- **Command Center**: Dashboard, Campaign Board, Audit Log
 - **Intelligence**: Companies, Markets, Competitors, PE Tracker
 - **Operations**: Campaigns, Playbooks, Activities, Assets
+- **Documents**: Research Documents, Email Templates, Document Templates
 - **Settings**: Verticals, Contacts, Import Data, Organizations
+- **API**: Interactive API Documentation (Swagger UI)
 
 **Organization Switcher:**
 - Located at the top of the sidebar

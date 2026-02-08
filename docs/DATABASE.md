@@ -22,17 +22,21 @@ Organizations ──< Users (profiles)
      │        │         ├──< Digital Snapshots
      │        │         └──< Assets
      │        │
-     ├──< Playbook Templates ──< Playbook Steps
+     ├──< Playbook Templates ──< Playbook Steps ──< Email Templates
      │        │
      ├──< Campaigns ──< Activities
      │        │       ├──< Campaign Competitors (junction)
      │        │       ├──< Assets
      │        │       └──< Results
      │
-     └── (all tables carry organization_id for multi-tenancy)
+     ├──< Document Templates ──< Generated Documents
+     │
+     └──< Audit Logs (tracks all entity changes)
+     
+     (all tables carry organization_id for multi-tenancy)
 ```
 
-## 📋 Core Tables
+## 📋 Core Tables (20+ Tables)
 
 ### organizations
 The top-level tenant entity. Each organization (agency or client) has isolated data.
@@ -451,6 +455,107 @@ CREATE TABLE campaign_competitors (
   UNIQUE(campaign_id, company_id)
 );
 ```
+
+## 📋 Document Intelligence Tables
+
+### document_templates
+Templates for generating various types of documents (research, proposals, etc.).
+
+```sql
+CREATE TABLE document_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL REFERENCES organizations(id),
+  name text NOT NULL,
+  document_type text NOT NULL CHECK (document_type IN 
+    ('prospect_research', 'campaign_sequence', 'competitive_analysis', 'audit_report', 'proposal')),
+  vertical_id uuid REFERENCES verticals(id),
+  template_structure jsonb NOT NULL,
+  version integer NOT NULL DEFAULT 1,
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  deleted_at timestamptz
+);
+```
+
+### generated_documents
+AI-generated documents based on templates and company data.
+
+```sql
+CREATE TABLE generated_documents (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL REFERENCES organizations(id),
+  document_template_id uuid REFERENCES document_templates(id),
+  company_id uuid REFERENCES companies(id),
+  campaign_id uuid REFERENCES campaigns(id),
+  title text NOT NULL,
+  document_type text NOT NULL CHECK (document_type IN 
+    ('prospect_research', 'campaign_sequence', 'competitive_analysis', 'audit_report', 'proposal')),
+  status text NOT NULL DEFAULT 'draft' CHECK (status IN 
+    ('draft', 'in_review', 'approved', 'delivered', 'archived')),
+  content jsonb,
+  readiness_score integer CHECK (readiness_score BETWEEN 0 AND 10),
+  version integer NOT NULL DEFAULT 1,
+  approved_by uuid REFERENCES profiles(id),
+  approved_at timestamptz,
+  last_generated_at timestamptz,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  deleted_at timestamptz
+);
+```
+
+### email_templates
+Campaign-scoped email templates with merge fields.
+
+```sql
+CREATE TABLE email_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL REFERENCES organizations(id),
+  playbook_step_id uuid REFERENCES playbook_steps(id),
+  name text NOT NULL,
+  subject_line text NOT NULL,
+  subject_line_alt text,
+  body text NOT NULL,
+  target_contact_role text CHECK (target_contact_role IN 
+    ('economic_buyer', 'technical_buyer', 'brand_buyer', 'champion', 'any')),
+  merge_fields_required text[],
+  notes text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+```
+
+## 📊 Audit & Monitoring Tables
+
+### audit_logs
+Comprehensive audit trail for all user actions and data changes.
+
+```sql
+CREATE TABLE audit_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid REFERENCES organizations(id),
+  entity_type text NOT NULL,
+  entity_id uuid NOT NULL,
+  action text NOT NULL CHECK (action IN ('create', 'update', 'delete')),
+  user_id uuid REFERENCES auth.users(id),
+  user_email text,
+  old_values jsonb,
+  new_values jsonb,
+  changed_fields text[],
+  ip_address text,
+  user_agent text,
+  metadata jsonb,
+  created_at timestamptz DEFAULT now()
+);
+```
+
+**Key Fields:**
+- `entity_type` - Type of entity being audited (company, campaign, etc.)
+- `action` - Type of action performed (create, update, delete)
+- `old_values`/`new_values` - Before and after values for changes
+- `changed_fields` - Array of field names that were modified
+- `metadata` - Additional context about the action
 
 ## 🔄 Database Functions & Triggers
 
