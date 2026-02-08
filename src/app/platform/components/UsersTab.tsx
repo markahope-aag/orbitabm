@@ -3,14 +3,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useOrg } from '@/lib/context/OrgContext'
+import { useAuth } from '@/lib/context/AuthContext'
 import { DataTable, Badge, ConfirmDialog } from '@/components/ui'
 import { showSuccessToast, showErrorToast } from '@/lib/utils/toast'
-import { MoreVertical, ArrowRightLeft, ShieldPlus, ShieldOff } from 'lucide-react'
+import { MoreVertical, ArrowRightLeft, ShieldPlus, ShieldOff, Trash2, KeyRound } from 'lucide-react'
 import type { PlatformRole, UserRole } from '@/lib/types/database'
 
 interface UserWithOrg {
   id: string
   full_name: string | null
+  email: string | null
   role: UserRole
   created_at: string
   organization_id: string
@@ -35,7 +37,9 @@ const platformRoleColor = (role: PlatformRole | null) => {
 export function UsersTab() {
   const supabase = createClient()
   const { platformRole: callerPlatformRole } = useOrg()
+  const { user: currentUser } = useAuth()
   const isOwner = callerPlatformRole === 'platform_owner'
+  const isAdmin = callerPlatformRole === 'platform_admin' || isOwner
 
   const [users, setUsers] = useState<UserWithOrg[]>([])
   const [orgs, setOrgs] = useState<OrgOption[]>([])
@@ -55,17 +59,29 @@ export function UsersTab() {
   } | null>(null)
   const [grantRole, setGrantRole] = useState<PlatformRole>('platform_admin')
 
+  // Create user dialog
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    email: '',
+    full_name: '',
+    organization_id: '',
+    role: 'user' as UserRole,
+  })
+  const [creating, setCreating] = useState(false)
+
+  // Delete user confirm
+  const [deleteUser, setDeleteUser] = useState<UserWithOrg | null>(null)
+
+  // Reset password confirm
+  const [resetPasswordUser, setResetPasswordUser] = useState<UserWithOrg | null>(null)
+
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
-      const [profilesResult, platformRolesResult, orgsResult] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('id, full_name, role, created_at, organization_id, organizations(name)')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('platform_roles')
-          .select('user_id, role'),
+
+      // Fetch users with emails from the platform API
+      const [usersRes, orgsResult] = await Promise.all([
+        fetch('/api/platform/users'),
         supabase
           .from('organizations')
           .select('id, name')
@@ -73,24 +89,10 @@ export function UsersTab() {
           .order('name'),
       ])
 
-      if (profilesResult.error) throw profilesResult.error
+      if (!usersRes.ok) throw new Error('Failed to fetch users')
+      const usersData = await usersRes.json()
 
-      const platformMap: Record<string, PlatformRole> = {}
-      for (const pr of platformRolesResult.data || []) {
-        platformMap[pr.user_id] = pr.role as PlatformRole
-      }
-
-      const merged: UserWithOrg[] = (profilesResult.data || []).map((p: Record<string, unknown>) => ({
-        id: p.id as string,
-        full_name: p.full_name as string | null,
-        role: p.role as UserRole,
-        created_at: p.created_at as string,
-        organization_id: p.organization_id as string,
-        orgName: (p.organizations as { name: string } | null)?.name || 'Unknown',
-        platformRole: platformMap[p.id as string] || null,
-      }))
-
-      setUsers(merged)
+      setUsers(usersData.data || [])
       setOrgs((orgsResult.data || []) as OrgOption[])
     } catch (err) {
       console.error('Error fetching users:', err)
@@ -185,12 +187,78 @@ export function UsersTab() {
     }
   }
 
+  const handleCreateUser = async () => {
+    if (!createForm.email || !createForm.full_name || !createForm.organization_id) return
+    try {
+      setCreating(true)
+      const res = await fetch('/api/platform/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createForm),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to create user')
+      }
+      showSuccessToast('User invited successfully')
+      setShowCreateDialog(false)
+      setCreateForm({ email: '', full_name: '', organization_id: '', role: 'user' })
+      fetchUsers()
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : 'Create user failed')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleDeleteUser = async () => {
+    if (!deleteUser) return
+    try {
+      const res = await fetch(`/api/platform/users/${deleteUser.id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to delete user')
+      }
+      showSuccessToast('User deleted')
+      setDeleteUser(null)
+      fetchUsers()
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : 'Delete user failed')
+    }
+  }
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordUser) return
+    try {
+      const res = await fetch(`/api/platform/users/${resetPasswordUser.id}/reset-password`, {
+        method: 'POST',
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to send password reset')
+      }
+      showSuccessToast('Password reset email sent')
+      setResetPasswordUser(null)
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : 'Password reset failed')
+    }
+  }
+
   const columns = [
     {
       key: 'full_name',
       header: 'Name',
       render: (row: UserWithOrg) => (
         <span className="font-medium">{row.full_name || 'Unnamed'}</span>
+      ),
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      render: (row: UserWithOrg) => (
+        <span className="text-slate-600">{row.email || '—'}</span>
       ),
     },
     {
@@ -252,6 +320,19 @@ export function UsersTab() {
                 <ArrowRightLeft className="w-4 h-4" />
                 <span>Reassign Organization</span>
               </button>
+              {isAdmin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setResetPasswordUser(row)
+                    setMenuUserId(null)
+                  }}
+                  className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <KeyRound className="w-4 h-4" />
+                  <span>Send Password Reset</span>
+                </button>
+              )}
               {isOwner && !row.platformRole && (
                 <button
                   onClick={(e) => {
@@ -279,6 +360,19 @@ export function UsersTab() {
                   <span>Revoke Platform Role</span>
                 </button>
               )}
+              {isAdmin && currentUser?.id !== row.id && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setDeleteUser(row)
+                    setMenuUserId(null)
+                  }}
+                  className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete User</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -292,10 +386,91 @@ export function UsersTab() {
         columns={columns}
         data={users}
         loading={loading}
-        searchFields={['full_name']}
+        searchFields={['full_name', 'email']}
         emptyMessage="No users found"
         entityName="users"
+        onAdd={isAdmin ? () => {
+          setCreateForm({ email: '', full_name: '', organization_id: orgs[0]?.id || '', role: 'user' })
+          setShowCreateDialog(true)
+        } : undefined}
+        addLabel="Create User"
       />
+
+      {/* Create User Dialog */}
+      {showCreateDialog && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowCreateDialog(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold text-navy-900 mb-4">Create User</h3>
+              <p className="text-sm text-slate-600 mb-4">
+                An invitation email will be sent so the user can set their password.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    placeholder="user@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    value={createForm.full_name}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, full_name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    placeholder="Jane Smith"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Organization</label>
+                  <select
+                    value={createForm.organization_id}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, organization_id: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                  >
+                    {orgs.map(org => (
+                      <option key={org.id} value={org.id}>{org.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Org Role</label>
+                  <select
+                    value={createForm.role}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, role: e.target.value as UserRole }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                  >
+                    {ORG_ROLES.map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowCreateDialog(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateUser}
+                  disabled={creating || !createForm.email || !createForm.full_name || !createForm.organization_id}
+                  className="px-4 py-2 text-sm font-medium text-white bg-cyan-500 rounded-md hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {creating ? 'Creating...' : 'Create & Send Invite'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Reassign Org Dialog */}
       {reassignUser && (
@@ -379,6 +554,24 @@ export function UsersTab() {
         onConfirm={handlePlatformRoleAction}
         title="Revoke Platform Role"
         message={`Are you sure you want to revoke the platform role from "${platformRoleAction?.user.full_name || 'Unnamed'}"?`}
+      />
+
+      {/* Delete User Confirm */}
+      <ConfirmDialog
+        open={!!deleteUser}
+        onClose={() => setDeleteUser(null)}
+        onConfirm={handleDeleteUser}
+        title="Delete User"
+        message={`Are you sure you want to permanently delete "${deleteUser?.full_name || 'Unnamed'}" (${deleteUser?.email || 'no email'})? This action cannot be undone.`}
+      />
+
+      {/* Reset Password Confirm */}
+      <ConfirmDialog
+        open={!!resetPasswordUser}
+        onClose={() => setResetPasswordUser(null)}
+        onConfirm={handleResetPassword}
+        title="Send Password Reset"
+        message={`Send a password reset email to ${resetPasswordUser?.email || 'this user'}?`}
       />
     </>
   )

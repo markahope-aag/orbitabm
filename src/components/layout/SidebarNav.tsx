@@ -2,6 +2,7 @@
 
 import { NavLink } from './NavLink'
 import { useOrg } from '@/lib/context/OrgContext'
+import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Kanban,
@@ -55,7 +56,9 @@ const navigation = [
 
 export function SidebarNav() {
   const { platformRole } = useOrg()
+  const pathname = usePathname()
   const isPlatformAdmin = platformRole === 'platform_owner' || platformRole === 'platform_admin'
+  const isPlatformActive = pathname === '/platform'
 
   return (
     <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
@@ -87,7 +90,7 @@ export function SidebarNav() {
           </NavLink>
           {isPlatformAdmin && (
             <NavLink href="/platform" variant="magenta">
-              <Shield size={18} />
+              <Shield size={18} fill={isPlatformActive ? 'currentColor' : 'none'} />
               <span>Platform Admin</span>
             </NavLink>
           )}

@@ -15,7 +15,7 @@ const variants = {
     inactive: 'text-navy-300 hover:text-white hover:bg-navy-800',
   },
   magenta: {
-    active: 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-600/25',
+    active: 'bg-navy-800 text-fuchsia-300',
     inactive: 'text-fuchsia-300 hover:text-white hover:bg-navy-800',
   },
 }
