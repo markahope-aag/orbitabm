@@ -151,7 +151,7 @@ async function postHandler(request: NextRequest) {
       )
     }
 
-    logCreate({ supabase, request }, 'organization', organization)
+    await logCreate({ supabase, request }, 'organization', organization)
 
     return NextResponse.json({
       success: true,

@@ -81,7 +81,7 @@ export async function PATCH(
       )
     }
 
-    if (oldData) logUpdate({ supabase, request }, 'document_template', id, oldData, data)
+    if (oldData) await logUpdate({ supabase, request }, 'document_template', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -110,6 +110,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Check for active child references
+    const { data: refDocs } = await supabase
+      .from('generated_documents').select('id').eq('document_template_id', id).is('deleted_at', null).limit(1)
+    if (refDocs?.length) {
+      return NextResponse.json(
+        { error: 'Cannot delete document template — it has generated documents.' },
+        { status: 409 }
+      )
+    }
+
     const { data, error } = await supabase
       .from('document_templates')
       .update({ deleted_at: new Date().toISOString() })
@@ -125,7 +135,7 @@ export async function DELETE(
       )
     }
 
-    logDelete({ supabase, request }, 'document_template', data)
+    await logDelete({ supabase, request }, 'document_template', data)
 
     return NextResponse.json({
       data,

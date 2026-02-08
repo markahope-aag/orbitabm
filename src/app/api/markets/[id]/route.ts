@@ -114,7 +114,7 @@ export async function PATCH(
       )
     }
 
-    if (oldData) logUpdate({ supabase, request }, 'market', id, oldData, data)
+    if (oldData) await logUpdate({ supabase, request }, 'market', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -170,7 +170,7 @@ export async function DELETE(
       )
     }
 
-    logDelete({ supabase, request }, 'market', data)
+    await logDelete({ supabase, request }, 'market', data)
 
     return NextResponse.json({
       data,

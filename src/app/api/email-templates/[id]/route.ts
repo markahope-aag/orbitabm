@@ -79,7 +79,7 @@ export async function PATCH(
       )
     }
 
-    if (oldData) logUpdate({ supabase, request }, 'email_template', id, oldData, data)
+    if (oldData) await logUpdate({ supabase, request }, 'email_template', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -127,7 +127,7 @@ export async function DELETE(
     }
 
     if (templateData) {
-      logDelete({ supabase, request }, 'email_template', templateData)
+      await logDelete({ supabase, request }, 'email_template', templateData)
     }
 
     return NextResponse.json({

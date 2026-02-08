@@ -38,15 +38,38 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Get organizations the user has access to
-    // For now, users can only access their own organization
-    // In the future, this could be expanded for agency users to access client organizations
-    const { data: organizations, error } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('id', profile.organization_id)
-      .is('deleted_at', null)
-      .order('name')
+    // Check if user has a platform role
+    const { data: platformRoleData } = await supabase
+      .from('platform_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .single()
+
+    const platformRole = platformRoleData?.role ?? null
+
+    let organizations
+    let error
+
+    if (platformRole) {
+      // Platform users can see all organizations
+      const result = await supabase
+        .from('organizations')
+        .select('*')
+        .is('deleted_at', null)
+        .order('name')
+      organizations = result.data
+      error = result.error
+    } else {
+      // Standard users only see their own organization
+      const result = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', profile.organization_id)
+        .is('deleted_at', null)
+        .order('name')
+      organizations = result.data
+      error = result.error
+    }
 
     if (error) {
       console.error('Error fetching user organizations:', error)
@@ -60,7 +83,8 @@ export async function GET(_request: NextRequest) {
       success: true,
       data: organizations,
       current_organization_id: profile.organization_id,
-      user_role: profile.role
+      user_role: profile.role,
+      platform_role: platformRole
     })
 
   } catch (error) {

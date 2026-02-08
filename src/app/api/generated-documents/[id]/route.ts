@@ -84,7 +84,7 @@ export async function PATCH(
       )
     }
 
-    if (oldData) logUpdate({ supabase, request }, 'generated_document', id, oldData, data)
+    if (oldData) await logUpdate({ supabase, request }, 'generated_document', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -113,6 +113,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Check if any campaign references this document
+    const { data: refCampaigns } = await supabase
+      .from('campaigns').select('id').or(`research_doc_id.eq.${id},sequence_doc_id.eq.${id}`).is('deleted_at', null).limit(1)
+    if (refCampaigns?.length) {
+      return NextResponse.json(
+        { error: 'Cannot delete document — it is linked to a campaign.' },
+        { status: 409 }
+      )
+    }
+
     const { data, error } = await supabase
       .from('generated_documents')
       .update({ deleted_at: new Date().toISOString() })
@@ -128,7 +138,7 @@ export async function DELETE(
       )
     }
 
-    logDelete({ supabase, request }, 'generated_document', data)
+    await logDelete({ supabase, request }, 'generated_document', data)
 
     return NextResponse.json({
       data,

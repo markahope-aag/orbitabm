@@ -117,7 +117,7 @@ export async function PATCH(
       )
     }
 
-    if (oldData) logUpdate({ supabase, request }, 'playbook_step', id, oldData, data)
+    if (oldData) await logUpdate({ supabase, request }, 'playbook_step', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -168,6 +168,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Check for active child references
+    const [{ data: refActivities }, { data: refTemplates }] = await Promise.all([
+      supabase.from('activities').select('id').eq('playbook_step_id', id).is('deleted_at', null).limit(1),
+      supabase.from('email_templates').select('id').eq('playbook_step_id', id).is('deleted_at', null).limit(1),
+    ])
+    if (refActivities?.length || refTemplates?.length) {
+      throw new ApiError(
+        'Cannot delete playbook step — it has linked activities or email templates.',
+        ERROR_CODES.RESOURCE_CONFLICT,
+        409
+      )
+    }
+
     const { error } = await supabase
       .from('playbook_steps')
       .delete()
@@ -183,7 +196,7 @@ export async function DELETE(
     }
 
     if (stepData) {
-      logDelete({ supabase, request }, 'playbook_step', stepData)
+      await logDelete({ supabase, request }, 'playbook_step', stepData)
     }
 
     return NextResponse.json({

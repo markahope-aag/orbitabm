@@ -1,4 +1,7 @@
+'use client'
+
 import { NavLink } from './NavLink'
+import { useOrg } from '@/lib/context/OrgContext'
 import {
   LayoutDashboard,
   Kanban,
@@ -13,11 +16,9 @@ import {
   FileText,
   Layers,
   Users,
-  Upload,
-  Building,
   FileSearch,
-  LayoutTemplate,
-  History,
+  Settings,
+  Shield,
 } from 'lucide-react'
 
 const navigation = [
@@ -35,6 +36,7 @@ const navigation = [
       { name: 'Markets', href: '/markets', icon: MapPin },
       { name: 'Competitors', href: '/competitors', icon: Swords },
       { name: 'PE Tracker', href: '/pe-tracker', icon: TrendingUp },
+      { name: 'Verticals', href: '/verticals', icon: Layers },
       { name: 'Documents', href: '/documents', icon: FileSearch },
     ]
   },
@@ -43,25 +45,18 @@ const navigation = [
     items: [
       { name: 'Campaigns', href: '/campaigns', icon: Target },
       { name: 'Targets', href: '/targets', icon: Crosshair },
+      { name: 'Contacts', href: '/contacts', icon: Users },
       { name: 'Playbooks', href: '/playbooks', icon: BookOpen },
       { name: 'Activities', href: '/activities', icon: CheckSquare },
       { name: 'Assets', href: '/assets', icon: FileText },
     ]
   },
-  {
-    section: 'SETTINGS',
-    items: [
-      { name: 'Verticals', href: '/verticals', icon: Layers },
-      { name: 'Contacts', href: '/contacts', icon: Users },
-      { name: 'Import Data', href: '/import', icon: Upload },
-      { name: 'Organizations', href: '/organizations', icon: Building },
-      { name: 'Templates', href: '/settings/templates', icon: LayoutTemplate },
-      { name: 'Audit Log', href: '/audit-log', icon: History },
-    ]
-  }
 ]
 
 export function SidebarNav() {
+  const { platformRole } = useOrg()
+  const isPlatformAdmin = platformRole === 'platform_owner' || platformRole === 'platform_admin'
+
   return (
     <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
       {navigation.map((section) => (
@@ -82,6 +77,22 @@ export function SidebarNav() {
           </ul>
         </div>
       ))}
+
+      {/* Bottom links, visually separated */}
+      <div className="pt-4 border-t border-navy-800">
+        <ul className="space-y-1">
+          <NavLink href="/settings">
+            <Settings size={18} />
+            <span>Settings</span>
+          </NavLink>
+          {isPlatformAdmin && (
+            <NavLink href="/platform" variant="magenta">
+              <Shield size={18} />
+              <span>Platform Admin</span>
+            </NavLink>
+          )}
+        </ul>
+      </div>
     </nav>
   )
 }

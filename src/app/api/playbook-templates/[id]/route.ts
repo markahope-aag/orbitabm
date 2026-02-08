@@ -121,7 +121,7 @@ export async function PATCH(
       )
     }
 
-    if (oldData) logUpdate({ supabase, request }, 'playbook_template', id, oldData, data)
+    if (oldData) await logUpdate({ supabase, request }, 'playbook_template', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -166,6 +166,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Check for active child references
+    const { data: refCampaigns } = await supabase
+      .from('campaigns').select('id').eq('playbook_template_id', id).is('deleted_at', null).limit(1)
+    if (refCampaigns?.length) {
+      throw new ApiError(
+        'Cannot delete playbook template — it is in use by campaigns.',
+        ERROR_CODES.RESOURCE_CONFLICT,
+        409
+      )
+    }
+
     const { data, error } = await supabase
       .from('playbook_templates')
       .update({ deleted_at: new Date().toISOString() })
@@ -190,7 +201,7 @@ export async function DELETE(
       )
     }
 
-    logDelete({ supabase, request }, 'playbook_template', data)
+    await logDelete({ supabase, request }, 'playbook_template', data)
 
     return NextResponse.json({
       data: { id, deleted: true },

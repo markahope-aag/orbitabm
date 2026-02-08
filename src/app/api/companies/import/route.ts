@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
               marketCache.set(cacheKey, newMarket.id)
               processedRecord.market_id = newMarket.id
               marketsCreated.push(marketName)
-              logCreate({ supabase, request }, 'market', { id: newMarket.id, organization_id, name: marketName, state: marketState || '' }, { source: 'csv_import_auto' })
+              await logCreate({ supabase, request }, 'market', { id: newMarket.id, organization_id, name: marketName, state: marketState || '' }, { source: 'csv_import_auto' })
             }
           }
         }
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
               verticalCache.set(cacheKey, newVertical.id)
               processedRecord.vertical_id = newVertical.id
               verticalsCreated.push(verticalName)
-              logCreate({ supabase, request }, 'vertical', { id: newVertical.id, organization_id, name: verticalName }, { source: 'csv_import_auto' })
+              await logCreate({ supabase, request }, 'vertical', { id: newVertical.id, organization_id, name: verticalName }, { source: 'csv_import_auto' })
             }
           }
         }
@@ -323,7 +323,7 @@ export async function POST(request: NextRequest) {
 
         if (data) {
           for (const record of data) {
-            logCreate({ supabase, request }, 'company', record, { source: 'csv_import' })
+            await logCreate({ supabase, request }, 'company', record, { source: 'csv_import' })
           }
         }
 

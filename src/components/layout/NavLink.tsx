@@ -6,11 +6,24 @@ import { usePathname } from 'next/navigation'
 interface NavLinkProps {
   href: string
   children: React.ReactNode
+  variant?: 'default' | 'magenta'
 }
 
-export function NavLink({ href, children }: NavLinkProps) {
+const variants = {
+  default: {
+    active: 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/25',
+    inactive: 'text-navy-300 hover:text-white hover:bg-navy-800',
+  },
+  magenta: {
+    active: 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-600/25',
+    inactive: 'text-fuchsia-300 hover:text-white hover:bg-navy-800',
+  },
+}
+
+export function NavLink({ href, children, variant = 'default' }: NavLinkProps) {
   const pathname = usePathname()
   const isActive = pathname === href
+  const colors = variants[variant]
 
   return (
     <li>
@@ -18,10 +31,7 @@ export function NavLink({ href, children }: NavLinkProps) {
         href={href}
         className={`
           flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors
-          ${isActive
-            ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/25'
-            : 'text-navy-300 hover:text-white hover:bg-navy-800'
-          }
+          ${isActive ? colors.active : colors.inactive}
         `}
       >
         {children}

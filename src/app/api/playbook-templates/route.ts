@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    logCreate({ supabase, request }, 'playbook_template', data)
+    await logCreate({ supabase, request }, 'playbook_template', data)
 
     return NextResponse.json({
       data,

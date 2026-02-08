@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
 
       if (data) {
         for (const record of data) {
-          logCreate({ supabase, request }, 'digital_snapshot', record, { source: 'csv_import' })
+          await logCreate({ supabase, request }, 'digital_snapshot', record, { source: 'csv_import' })
         }
       }
 

@@ -158,7 +158,7 @@ export async function PATCH(
       )
     }
 
-    logUpdate({ supabase, request }, 'organization', id, existingOrg, organization)
+    await logUpdate({ supabase, request }, 'organization', id, existingOrg, organization)
 
     return NextResponse.json({
       success: true,
@@ -251,7 +251,7 @@ export async function DELETE(
       )
     }
 
-    logDelete({ supabase, request }, 'organization', existingOrg)
+    await logDelete({ supabase, request }, 'organization', existingOrg)
 
     return NextResponse.json({
       success: true,

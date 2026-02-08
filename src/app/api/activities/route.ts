@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    logCreate({ supabase, request }, 'activity', data)
+    await logCreate({ supabase, request }, 'activity', data)
 
     return NextResponse.json({
       data,

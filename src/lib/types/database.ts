@@ -6,7 +6,8 @@
 // =====================================================
 
 export type OrganizationType = 'agency' | 'client'
-export type UserRole = 'admin' | 'manager' | 'viewer'
+export type UserRole = 'owner' | 'admin' | 'user' | 'viewer'
+export type PlatformRole = 'platform_owner' | 'platform_admin'
 export type PEActivityLevel = 'none' | 'low' | 'moderate' | 'high' | 'critical'
 export type B2BType = 'B2B' | 'B2C' | 'Both'
 export type VerticalTier = 'tier_1' | 'tier_2' | 'tier_3' | 'borderline' | 'eliminated'
@@ -43,6 +44,8 @@ export type AuditEntityType =
   | 'email_template'
   | 'document_template'
   | 'generated_document'
+  | 'profile'
+  | 'platform_role'
 
 // Document Intelligence types
 export type DocumentType = 'prospect_research' | 'campaign_sequence' | 'competitive_analysis' | 'audit_report' | 'proposal'
@@ -1087,6 +1090,14 @@ export interface AuditLogInsert {
   created_at?: string
 }
 
+// Platform Roles
+export interface PlatformRoleRow {
+  user_id: string
+  role: PlatformRole
+  created_at: string
+  updated_at: string
+}
+
 // =====================================================
 // DATABASE TYPE MAP
 // =====================================================
@@ -1193,6 +1204,11 @@ export interface Database {
         Row: AuditLogRow
         Insert: AuditLogInsert
         Update: never
+      }
+      platform_roles: {
+        Row: PlatformRoleRow
+        Insert: PlatformRoleRow
+        Update: { role?: PlatformRole; updated_at?: string }
       }
     }
     Views: {

@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
 
         if (data) {
           for (const record of data) {
-            logCreate({ supabase, request }, 'contact', record, { source: 'csv_import' })
+            await logCreate({ supabase, request }, 'contact', record, { source: 'csv_import' })
           }
         }
 

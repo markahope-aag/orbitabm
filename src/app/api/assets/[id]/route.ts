@@ -121,7 +121,7 @@ export async function PATCH(
       )
     }
 
-    if (oldData) logUpdate({ supabase, request }, 'asset', id, oldData, data)
+    if (oldData) await logUpdate({ supabase, request }, 'asset', id, oldData, data)
 
     return NextResponse.json({
       data,
@@ -190,7 +190,7 @@ export async function DELETE(
       )
     }
 
-    logDelete({ supabase, request }, 'asset', data)
+    await logDelete({ supabase, request }, 'asset', data)
 
     return NextResponse.json({
       data: { id, deleted: true },

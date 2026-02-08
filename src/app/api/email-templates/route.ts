@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    logCreate({ supabase, request }, 'email_template', data)
+    await logCreate({ supabase, request }, 'email_template', data)
 
     return NextResponse.json({
       data,

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useAuth } from './AuthContext'
-import type { OrganizationRow } from '@/lib/types/database'
+import type { OrganizationRow, PlatformRole, UserRole } from '@/lib/types/database'
 
 interface OrgContextType {
   currentOrgId: string | null
@@ -13,6 +13,9 @@ interface OrgContextType {
   loading: boolean
   error: string | null
   refreshOrganizations: () => Promise<void>
+  platformRole: PlatformRole | null
+  isPlatformUser: boolean
+  userRole: UserRole | null
 }
 
 const OrgContext = createContext<OrgContextType | undefined>(undefined)
@@ -27,12 +30,16 @@ export function OrgProvider({ children }: OrgProviderProps) {
   const [organizations, setOrganizations] = useState<OrganizationRow[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [platformRole, setPlatformRole] = useState<PlatformRole | null>(null)
+  const [userRole, setUserRole] = useState<UserRole | null>(null)
 
   // Fetch user's organizations
   const fetchOrganizations = async () => {
     if (!user) {
       setOrganizations(null)
       setCurrentOrgId(null)
+      setPlatformRole(null)
+      setUserRole(null)
       setLoading(false)
       return
     }
@@ -49,6 +56,8 @@ export function OrgProvider({ children }: OrgProviderProps) {
       const result = await response.json()
       const orgs = result.data || []
       setOrganizations(orgs)
+      setPlatformRole(result.platform_role ?? null)
+      setUserRole(result.user_role ?? null)
 
       // Set current organization
       if (orgs.length > 0) {
@@ -80,17 +89,19 @@ export function OrgProvider({ children }: OrgProviderProps) {
 
   const setCurrentOrg = (org: OrganizationRow) => {
     setCurrentOrgId(org.id)
-    // Optionally persist to localStorage for session persistence
+    // Persist to localStorage and cookie for server-side resolution
     if (typeof window !== 'undefined') {
       localStorage.setItem('currentOrgId', org.id)
+      document.cookie = `orbit_current_org=${org.id}; path=/; max-age=31536000; samesite=lax`
     }
   }
 
   const handleSetCurrentOrgId = (orgId: string) => {
     setCurrentOrgId(orgId)
-    // Optionally persist to localStorage for session persistence
+    // Persist to localStorage and cookie for server-side resolution
     if (typeof window !== 'undefined') {
       localStorage.setItem('currentOrgId', orgId)
+      document.cookie = `orbit_current_org=${orgId}; path=/; max-age=31536000; samesite=lax`
     }
   }
 
@@ -112,7 +123,10 @@ export function OrgProvider({ children }: OrgProviderProps) {
     setCurrentOrgId: handleSetCurrentOrgId,
     loading: loading || authLoading,
     error,
-    refreshOrganizations: fetchOrganizations
+    refreshOrganizations: fetchOrganizations,
+    platformRole,
+    isPlatformUser: platformRole !== null,
+    userRole
   }
 
   return (

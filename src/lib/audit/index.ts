@@ -73,50 +73,51 @@ function computeChanges(
 
 async function writeLog(ctx: AuditContext, entry: AuditLogInsert) {
   try {
-    await ctx.supabase.from('audit_logs').insert(entry)
+    const { error } = await ctx.supabase.from('audit_logs').insert(entry)
+    if (error) {
+      console.error('[audit] Supabase error writing audit log:', error.message)
+    }
   } catch (err) {
     console.error('[audit] Failed to write audit log:', err)
   }
 }
 
 // ---------------------------------------------------------------------------
-// Public API
+// Public API — all functions are async and must be awaited by callers
 // ---------------------------------------------------------------------------
 
 /**
  * Log a create action. Call after a successful insert.
  * `data` should be the returned row (must contain `id` and optionally `organization_id`).
  */
-export function logCreate(
+export async function logCreate(
   ctx: AuditContext,
   entityType: AuditEntityType,
   data: Record<string, unknown>,
   metadata?: Record<string, unknown>,
 ) {
-  // Fire-and-forget
-  void (async () => {
-    const [user, req] = await Promise.all([getUserInfo(ctx.supabase), Promise.resolve(getRequestInfo(ctx.request))])
-    const { old_values, new_values, changed_fields } = computeChanges('create', null, data)
-    await writeLog(ctx, {
-      organization_id: (data.organization_id as string) ?? null,
-      entity_type: entityType,
-      entity_id: data.id as string,
-      action: 'create',
-      ...user,
-      ...req,
-      old_values,
-      new_values,
-      changed_fields,
-      metadata: metadata ?? null,
-    })
-  })()
+  const user = await getUserInfo(ctx.supabase)
+  const req = getRequestInfo(ctx.request)
+  const { old_values, new_values, changed_fields } = computeChanges('create', null, data)
+  await writeLog(ctx, {
+    organization_id: (data.organization_id as string) ?? null,
+    entity_type: entityType,
+    entity_id: data.id as string,
+    action: 'create',
+    ...user,
+    ...req,
+    old_values,
+    new_values,
+    changed_fields,
+    metadata: metadata ?? null,
+  })
 }
 
 /**
  * Log an update action. Call after a successful update.
  * Pass the pre-fetched old row and the returned updated row.
  */
-export function logUpdate(
+export async function logUpdate(
   ctx: AuditContext,
   entityType: AuditEntityType,
   entityId: string,
@@ -124,50 +125,48 @@ export function logUpdate(
   newValues: Record<string, unknown>,
   metadata?: Record<string, unknown>,
 ) {
-  void (async () => {
-    const [user, req] = await Promise.all([getUserInfo(ctx.supabase), Promise.resolve(getRequestInfo(ctx.request))])
-    const { old_values, new_values, changed_fields } = computeChanges('update', oldValues, newValues)
-    // Skip writing if nothing actually changed
-    if (!changed_fields || changed_fields.length === 0) return
-    await writeLog(ctx, {
-      organization_id: (newValues.organization_id ?? oldValues.organization_id) as string | null,
-      entity_type: entityType,
-      entity_id: entityId,
-      action: 'update',
-      ...user,
-      ...req,
-      old_values,
-      new_values,
-      changed_fields,
-      metadata: metadata ?? null,
-    })
-  })()
+  const user = await getUserInfo(ctx.supabase)
+  const req = getRequestInfo(ctx.request)
+  const { old_values, new_values, changed_fields } = computeChanges('update', oldValues, newValues)
+  // Skip writing if nothing actually changed
+  if (!changed_fields || changed_fields.length === 0) return
+  await writeLog(ctx, {
+    organization_id: (newValues.organization_id ?? oldValues.organization_id) as string | null,
+    entity_type: entityType,
+    entity_id: entityId,
+    action: 'update',
+    ...user,
+    ...req,
+    old_values,
+    new_values,
+    changed_fields,
+    metadata: metadata ?? null,
+  })
 }
 
 /**
  * Log a delete (soft-delete) action. Call after a successful soft delete.
  * `data` should contain at minimum `id` and `organization_id`.
  */
-export function logDelete(
+export async function logDelete(
   ctx: AuditContext,
   entityType: AuditEntityType,
   data: Record<string, unknown>,
   metadata?: Record<string, unknown>,
 ) {
-  void (async () => {
-    const [user, req] = await Promise.all([getUserInfo(ctx.supabase), Promise.resolve(getRequestInfo(ctx.request))])
-    const { old_values, new_values, changed_fields } = computeChanges('delete', data, null)
-    await writeLog(ctx, {
-      organization_id: (data.organization_id as string) ?? null,
-      entity_type: entityType,
-      entity_id: data.id as string,
-      action: 'delete',
-      ...user,
-      ...req,
-      old_values,
-      new_values,
-      changed_fields,
-      metadata: metadata ?? null,
-    })
-  })()
+  const user = await getUserInfo(ctx.supabase)
+  const req = getRequestInfo(ctx.request)
+  const { old_values, new_values, changed_fields } = computeChanges('delete', data, null)
+  await writeLog(ctx, {
+    organization_id: (data.organization_id as string) ?? null,
+    entity_type: entityType,
+    entity_id: data.id as string,
+    action: 'delete',
+    ...user,
+    ...req,
+    old_values,
+    new_values,
+    changed_fields,
+    metadata: metadata ?? null,
+  })
 }
