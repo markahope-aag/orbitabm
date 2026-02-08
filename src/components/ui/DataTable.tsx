@@ -54,7 +54,6 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
-    setCurrentPage(1) // Reset to first page on search change
     if (!searchTerm || !searchable) return data
 
     return data.filter((row) => {
@@ -168,7 +167,7 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
                 type="text"
                 placeholder="Search..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1) }}
                 className="pl-10 pr-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               />
             </div>
