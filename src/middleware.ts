@@ -1,8 +1,31 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { supabaseConfig } from '@/lib/config'
+import { securityMiddleware, logSecurityEvent } from '@/lib/security'
 
 export async function middleware(request: NextRequest) {
+  // Apply security middleware first
+  const securityResult = securityMiddleware(request)
+  if (securityResult && securityResult.status !== 200) {
+    // Log security violations
+    if (securityResult.status === 429) {
+      logSecurityEvent({
+        type: 'rate_limit_exceeded',
+        ip: request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || undefined,
+        path: request.nextUrl.pathname,
+      })
+    } else if (securityResult.status === 403) {
+      logSecurityEvent({
+        type: 'csrf_violation',
+        ip: request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || undefined,
+        path: request.nextUrl.pathname,
+      })
+    }
+    
+    return securityResult
+  }
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -60,9 +83,22 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+  const isHealthCheck = request.nextUrl.pathname === '/api/health'
+
+  // Allow health checks without authentication
+  if (isHealthCheck) {
+    return response
+  }
 
   // Reject unauthenticated API requests with 401
   if (isApiRoute && !session) {
+    logSecurityEvent({
+      type: 'suspicious_activity',
+      ip: request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown',
+      userAgent: request.headers.get('user-agent') || undefined,
+      path: request.nextUrl.pathname,
+      details: { reason: 'unauthenticated_api_access' },
+    })
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
