@@ -5,6 +5,7 @@ import { updateVerticalSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logUpdate, logDelete } from '@/lib/audit'
 import { resolveUserOrgId } from '@/lib/auth/resolve-org'
+import { normalizeName } from '@/lib/utils/normalize'
 
 export async function GET(
   request: NextRequest,
@@ -81,34 +82,39 @@ export async function PATCH(
     const body = await request.json()
     const validation = validateRequest(updateVerticalSchema, body)
     if (!validation.success) return validation.response
-    const updateData = validation.data
+    const updateData = { ...validation.data } as Record<string, unknown>
 
-    // If name is being updated, check for duplicates
-    if (updateData.name) {
-      const { data: existing, error: checkError } = await supabase
-        .from('verticals')
-        .select('id, organization_id')
-        .eq('name', updateData.name)
-        .neq('id', id)
-        .is('deleted_at', null)
-        .single()
+    // If name is being updated, check for normalized name duplicates
+    if (validation.data.name) {
+      const nameNormalized = normalizeName(validation.data.name)
+      updateData.name_normalized = nameNormalized
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw new ApiError(
-          'Failed to check for duplicate vertical',
-          ERROR_CODES.DATABASE_ERROR,
-          500,
-          checkError
-        )
-      }
+      if (nameNormalized) {
+        const { data: existing, error: checkError } = await supabase
+          .from('verticals')
+          .select('id, name')
+          .eq('name_normalized', nameNormalized)
+          .neq('id', id)
+          .is('deleted_at', null)
+          .single()
 
-      if (existing) {
-        throw new ApiError(
-          'Vertical with this name already exists',
-          ERROR_CODES.DUPLICATE_ENTRY,
-          409,
-          { field: 'name', value: updateData.name }
-        )
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw new ApiError(
+            'Failed to check for duplicate vertical',
+            ERROR_CODES.DATABASE_ERROR,
+            500,
+            checkError
+          )
+        }
+
+        if (existing) {
+          throw new ApiError(
+            `A vertical with a similar name already exists: '${existing.name}'`,
+            ERROR_CODES.DUPLICATE_ENTRY,
+            409,
+            { field: 'name', value: validation.data.name }
+          )
+        }
       }
     }
 
@@ -133,6 +139,14 @@ export async function PATCH(
           'Vertical not found',
           ERROR_CODES.NOT_FOUND,
           404
+        )
+      }
+      if (error.code === '23505') {
+        throw new ApiError(
+          'A vertical with this name already exists',
+          ERROR_CODES.DUPLICATE_ENTRY,
+          409,
+          error
         )
       }
       throw new ApiError(

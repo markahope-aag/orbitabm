@@ -5,6 +5,7 @@ import { createVerticalSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
 import { resolveUserOrgId } from '@/lib/auth/resolve-org'
+import { normalizeName } from '@/lib/utils/normalize'
 
 export async function GET(request: NextRequest) {
   try {
@@ -87,42 +88,53 @@ export async function POST(request: NextRequest) {
     }
 
     const { name } = validation.data
+    const nameNormalized = normalizeName(name)
 
-    // Check for duplicate names within organization
-    const { data: existing, error: checkError } = await supabase
-      .from('verticals')
-      .select('id')
-      .eq('organization_id', userOrgId)
-      .eq('name', name)
-      .is('deleted_at', null)
-      .single()
+    // Check for duplicate normalized name within organization
+    if (nameNormalized) {
+      const { data: existing, error: checkError } = await supabase
+        .from('verticals')
+        .select('id, name')
+        .eq('organization_id', userOrgId)
+        .eq('name_normalized', nameNormalized)
+        .is('deleted_at', null)
+        .single()
 
-    if (checkError && checkError.code !== 'PGRST116') {
-      throw new ApiError(
-        'Failed to check for duplicate vertical',
-        ERROR_CODES.DATABASE_ERROR,
-        500,
-        checkError
-      )
-    }
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw new ApiError(
+          'Failed to check for duplicate vertical',
+          ERROR_CODES.DATABASE_ERROR,
+          500,
+          checkError
+        )
+      }
 
-    if (existing) {
-      throw new ApiError(
-        'Vertical with this name already exists',
-        ERROR_CODES.DUPLICATE_ENTRY,
-        409,
-        { field: 'name', value: name }
-      )
+      if (existing) {
+        throw new ApiError(
+          `A vertical with a similar name already exists: '${existing.name}'`,
+          ERROR_CODES.DUPLICATE_ENTRY,
+          409,
+          { field: 'name', value: name }
+        )
+      }
     }
 
     // Insert new vertical
     const { data, error } = await supabase
       .from('verticals')
-      .insert({ ...validation.data, organization_id: userOrgId })
+      .insert({ ...validation.data, organization_id: userOrgId, name_normalized: nameNormalized })
       .select()
       .single()
 
     if (error) {
+      if (error.code === '23505') {
+        throw new ApiError(
+          'A vertical with this name already exists',
+          ERROR_CODES.DUPLICATE_ENTRY,
+          409,
+          error
+        )
+      }
       throw new ApiError(
         'Failed to create vertical',
         ERROR_CODES.DATABASE_ERROR,

@@ -66,15 +66,48 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // If email is being updated, check for duplicates
+    const updatePayload = { ...validation.data } as Record<string, unknown>
+    if ('email' in validation.data && validation.data.email) {
+      const email = validation.data.email.toLowerCase()
+      updatePayload.email = email
+
+      const { data: existing, error: checkError } = await supabase
+        .from('contacts')
+        .select('id, first_name, last_name')
+        .eq('organization_id', userOrgId)
+        .ilike('email', email)
+        .neq('id', id)
+        .is('deleted_at', null)
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        return NextResponse.json({ error: 'Failed to check for duplicate contact' }, { status: 500 })
+      }
+
+      if (existing) {
+        return NextResponse.json(
+          { error: `A contact with email '${email}' already exists (${existing.first_name} ${existing.last_name})` },
+          { status: 409 }
+        )
+      }
+    }
+
     const { data, error } = await supabase
       .from('contacts')
-      .update(validation.data)
+      .update(updatePayload)
       .eq('id', id)
       .is('deleted_at', null)
       .select()
       .single()
 
     if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { error: 'A contact with this email already exists' },
+          { status: 409 }
+        )
+      }
       return NextResponse.json(
         { error: error.message },
         { status: error.code === 'PGRST116' ? 404 : 400 }
@@ -108,6 +141,16 @@ export async function DELETE(
     const userOrgId = await resolveUserOrgId(supabase)
     if (!userOrgId || !existing || existing.organization_id !== userOrgId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Check for active child references
+    const { data: refActivities } = await supabase
+      .from('activities').select('id').eq('contact_id', id).is('deleted_at', null).limit(1)
+    if (refActivities?.length) {
+      return NextResponse.json(
+        { error: 'Cannot delete contact — it has linked activities.' },
+        { status: 409 }
+      )
     }
 
     const { data, error } = await supabase

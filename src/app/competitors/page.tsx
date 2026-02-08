@@ -140,8 +140,9 @@ export default function CompetitorsPage() {
             typical_marketing_budget_pct: null,
             key_decision_maker_title: null,
             tier: null,
+            name_normalized: null,
             notes: null,
-            created_at: '', 
+            created_at: '',
             updated_at: '', 
             deleted_at: null 
           },

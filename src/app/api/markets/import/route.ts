@@ -4,6 +4,7 @@ import { importMarketsSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
 import { resolveUserOrgId } from '@/lib/auth/resolve-org'
+import { normalizeName } from '@/lib/utils/normalize'
 
 const PE_ACTIVITY_LEVELS = new Set(['none', 'low', 'moderate', 'high', 'critical'])
 
@@ -32,8 +33,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const processedData = []
+    const processedData: Array<Record<string, unknown>> = []
     const errors: string[] = []
+    const seenNormalized = new Map<string, number>() // normalized name → first row index
 
     for (let i = 0; i < importData.length; i++) {
       const record = importData[i]
@@ -46,9 +48,23 @@ export async function POST(request: NextRequest) {
           if (match) state = match[1].toUpperCase()
         }
 
+        const name = record.name.trim()
+        const nameNormalized = normalizeName(name)
+
+        // Intra-batch normalized name dedup
+        if (nameNormalized) {
+          const existingRow = seenNormalized.get(nameNormalized)
+          if (existingRow !== undefined) {
+            errors.push(`Row ${i + 1}: Duplicate market name '${name}' — similar to row ${existingRow + 1}, skipping`)
+            continue
+          }
+          seenNormalized.set(nameNormalized, i)
+        }
+
         const processedRecord = {
           organization_id,
-          name: record.name.trim(),
+          name,
+          name_normalized: nameNormalized,
           state: state || '',
           metro_population: record.metro_population ? parseInt(String(record.metro_population)) || null : null,
           market_size_estimate: record.market_size_estimate
@@ -67,62 +83,144 @@ export async function POST(request: NextRequest) {
     if (processedData.length > 0) {
       let upsertData = processedData
       let updatedCount = 0
+      let protectedSkipped = 0
 
-      if (mode === 'append') {
-        const names = processedData.map(r => r.name)
+      // Fetch existing markets by normalized name for both modes
+      const normalizedNames = processedData.map(r => r.name_normalized as string).filter(Boolean)
+      const existingByNormalized = new Map<string, Record<string, unknown>>()
+      if (normalizedNames.length > 0) {
         const { data: existing } = await supabase
           .from('markets')
           .select('*')
           .eq('organization_id', organization_id)
-          .in('name', names)
+          .in('name_normalized', normalizedNames)
           .is('deleted_at', null)
 
-        const existingByName = new Map<string, Record<string, unknown>>()
         for (const row of existing || []) {
-          existingByName.set((row.name as string).toLowerCase(), row)
+          if (row.name_normalized) existingByNormalized.set(row.name_normalized as string, row)
         }
+      }
 
-        upsertData = processedData.map(csvRow => {
-          const existingRow = existingByName.get(csvRow.name.toLowerCase())
-          if (!existingRow) return csvRow
+      // Also fetch by exact name for upsert compatibility
+      const names = processedData.map(r => r.name as string)
+      const { data: existingByNameRows } = await supabase
+        .from('markets')
+        .select('*')
+        .eq('organization_id', organization_id)
+        .in('name', names)
+        .is('deleted_at', null)
+
+      const existingByName = new Map<string, Record<string, unknown>>()
+      for (const row of existingByNameRows || []) {
+        existingByName.set((row.name as string).toLowerCase(), row)
+      }
+
+      if (mode === 'append') {
+        upsertData = []
+        for (const csvRow of processedData) {
+          const nn = csvRow.name_normalized as string | null
+          // Skip if normalized name matches existing DB record with different exact name
+          if (nn && existingByNormalized.has(nn)) {
+            const match = existingByNormalized.get(nn)!
+            if ((match.name as string).toLowerCase() !== (csvRow.name as string).toLowerCase()) {
+              errors.push(`Market "${csvRow.name}" is similar to existing market "${match.name}" — skipping`)
+              continue
+            }
+          }
+
+          const existingRow = existingByName.get((csvRow.name as string).toLowerCase())
+          if (!existingRow) {
+            upsertData.push(csvRow)
+            continue
+          }
 
           const merged = { ...csvRow }
-          const mergeFields = ['state', 'metro_population', 'market_size_estimate', 'pe_activity_level', 'notes'] as const
+          const mergeFields = ['state', 'metro_population', 'market_size_estimate', 'pe_activity_level', 'notes']
           for (const field of mergeFields) {
             if (merged[field] === null || merged[field] === undefined) {
-              (merged as Record<string, unknown>)[field] = existingRow[field] ?? null
+              merged[field] = existingRow[field] ?? null
             }
           }
           updatedCount++
-          return merged
-        })
-      }
+          upsertData.push(merged)
+        }
+      } else {
+        // Overwrite mode — protect records that are in use
+        const allExisting = [...existingByNormalized.values(), ...existingByName.values()]
+        const existingIds = [...new Set(allExisting.map(r => r.id as string))]
+        const inUseIds = new Set<string>()
 
-      const { data, error } = await supabase
-        .from('markets')
-        .upsert(upsertData, {
-          onConflict: 'organization_id,name',
-          ignoreDuplicates: false,
-        })
-        .select()
+        if (existingIds.length > 0) {
+          const [{ data: usedByCompanies }, { data: usedByCampaigns }] = await Promise.all([
+            supabase.from('companies').select('market_id').in('market_id', existingIds).is('deleted_at', null),
+            supabase.from('campaigns').select('market_id').in('market_id', existingIds).is('deleted_at', null),
+          ])
+          for (const row of usedByCompanies || []) inUseIds.add(row.market_id)
+          for (const row of usedByCampaigns || []) inUseIds.add(row.market_id)
+        }
 
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
-      }
+        upsertData = []
+        for (let i = 0; i < processedData.length; i++) {
+          const csvRow = processedData[i]
+          const nn = csvRow.name_normalized as string | null
 
-      if (data) {
-        for (const record of data) {
-          logCreate({ supabase, request }, 'market', record, { source: 'csv_import' })
+          // Skip if normalized name matches existing DB record with different exact name
+          if (nn && existingByNormalized.has(nn)) {
+            const match = existingByNormalized.get(nn)!
+            if ((match.name as string).toLowerCase() !== (csvRow.name as string).toLowerCase()) {
+              errors.push(`Row ${i + 1}: Market "${csvRow.name}" is similar to existing market "${match.name}" — skipping`)
+              continue
+            }
+          }
+
+          const existingRow = existingByName.get((csvRow.name as string).toLowerCase())
+          if (existingRow && inUseIds.has(existingRow.id as string)) {
+            errors.push(`Row ${i + 1}: Market "${csvRow.name}" is in use (has companies/campaigns) — skipped in overwrite mode`)
+            protectedSkipped++
+          } else {
+            upsertData.push(csvRow)
+          }
         }
       }
 
-      const totalCount = data?.length || 0
+      if (upsertData.length > 0) {
+        const { data, error } = await supabase
+          .from('markets')
+          .upsert(upsertData, {
+            onConflict: 'organization_id,name',
+            ignoreDuplicates: false,
+          })
+          .select()
+
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+
+        if (data) {
+          for (const record of data) {
+            logCreate({ supabase, request }, 'market', record, { source: 'csv_import' })
+          }
+        }
+
+        const totalCount = data?.length || 0
+        return NextResponse.json({
+          created: totalCount - updatedCount,
+          updated: updatedCount,
+          total: totalCount,
+          protectedSkipped,
+          errors,
+          data,
+          mode,
+        })
+      }
+
       return NextResponse.json({
-        created: totalCount - updatedCount,
-        updated: updatedCount,
-        total: totalCount,
+        created: 0,
+        updated: 0,
+        total: 0,
+        protectedSkipped,
         errors,
-        data,
+        data: [],
         mode,
       })
     }
@@ -131,6 +229,7 @@ export async function POST(request: NextRequest) {
       created: 0,
       updated: 0,
       total: 0,
+      protectedSkipped: 0,
       errors,
       data: [],
       mode,

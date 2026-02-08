@@ -4,6 +4,7 @@ import { importCompaniesSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
 import { resolveUserOrgId } from '@/lib/auth/resolve-org'
+import { extractDomain, normalizeWebsite } from '@/lib/utils/normalize'
 
 const OWNERSHIP_TYPE_MAP: Record<string, string> = {
   independent: 'independent',
@@ -22,14 +23,6 @@ function trimString(val: string | null | undefined): string | null {
   if (val == null) return null
   const trimmed = val.trim()
   return trimmed || null
-}
-
-function normalizeWebsite(url: string | null | undefined): string | null {
-  if (!url) return null
-  const trimmed = url.trim()
-  if (!trimmed) return null
-  if (/^https?:\/\//i.test(trimmed)) return trimmed
-  return `https://${trimmed}`
 }
 
 function extractStateFromMarketName(name: string): string {
@@ -86,17 +79,32 @@ export async function POST(request: NextRequest) {
     const verticalsCreated: string[] = []
 
     // Process each record
-    const processedData = []
-    const errors = []
+    const processedData: Array<Record<string, unknown>> = []
+    const errors: string[] = []
+    const seenDomains = new Map<string, number>() // domain → first row index
 
     for (let i = 0; i < importData.length; i++) {
       const record = importData[i]
 
       try {
+        const website = normalizeWebsite(record.website)
+        const domain = extractDomain(website)
+
+        // Intra-batch domain dedup
+        if (domain) {
+          const existingRow = seenDomains.get(domain)
+          if (existingRow !== undefined) {
+            errors.push(`Row ${i + 1}: Duplicate domain '${domain}' — already in row ${existingRow + 1}, skipping`)
+            continue
+          }
+          seenDomains.set(domain, i)
+        }
+
         const processedRecord = {
           organization_id,
           name: record.name.trim(),
-          website: normalizeWebsite(record.website),
+          website,
+          domain,
           phone: trimString(record.phone),
           address_line1: trimString(record.address_line1),
           address_line2: trimString(record.address_line2),
@@ -182,78 +190,166 @@ export async function POST(request: NextRequest) {
     if (processedData.length > 0) {
       let upsertData = processedData
       let updatedCount = 0
+      let protectedSkipped = 0
 
-      if (mode === 'append') {
-        // Fetch existing companies by name so we can merge non-null CSV fields
-        const names = processedData.map(r => r.name)
-        const { data: existing } = await supabase
+      // Fetch existing companies by name for both modes
+      const names = processedData.map(r => r.name as string)
+      const { data: existing } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('organization_id', organization_id)
+        .in('name', names)
+        .is('deleted_at', null)
+
+      const existingByName = new Map<string, Record<string, unknown>>()
+      for (const row of existing || []) {
+        existingByName.set((row.name as string).toLowerCase(), row)
+      }
+
+      // Fetch existing companies by domain for domain-based dedup
+      const domains = processedData.map(r => r.domain as string).filter(Boolean)
+      const existingByDomain = new Map<string, Record<string, unknown>>()
+      if (domains.length > 0) {
+        const { data: domainMatches } = await supabase
           .from('companies')
           .select('*')
           .eq('organization_id', organization_id)
-          .in('name', names)
+          .in('domain', domains)
           .is('deleted_at', null)
 
-        const existingByName = new Map<string, Record<string, unknown>>()
-        for (const row of existing || []) {
-          existingByName.set((row.name as string).toLowerCase(), row)
+        for (const row of domainMatches || []) {
+          if (row.domain) existingByDomain.set(row.domain as string, row)
         }
+      }
 
-        upsertData = processedData.map(csvRow => {
-          const existingRow = existingByName.get(csvRow.name.toLowerCase())
-          if (!existingRow) return csvRow // New record, no merge needed
+      if (mode === 'append') {
+        upsertData = []
+        for (const csvRow of processedData) {
+          // Skip if domain already exists in DB (and not matched by name for upsert)
+          const csvDomain = csvRow.domain as string | null
+          if (csvDomain && existingByDomain.has(csvDomain)) {
+            const match = existingByDomain.get(csvDomain)!
+            // If it's the same company by name, allow upsert merge
+            if ((match.name as string).toLowerCase() !== (csvRow.name as string).toLowerCase()) {
+              errors.push(`Row: Company "${csvRow.name}" has domain '${csvDomain}' which belongs to existing company "${match.name}" — skipping`)
+              continue
+            }
+          }
+
+          const existingRow = existingByName.get((csvRow.name as string).toLowerCase())
+          if (!existingRow) {
+            upsertData.push(csvRow)
+            continue
+          }
 
           // Merge: start with existing DB values, overlay only non-null CSV values
           const merged = { ...csvRow }
           const mergeFields = [
-            'website', 'phone', 'address_line1', 'address_line2',
+            'website', 'domain', 'phone', 'address_line1', 'address_line2',
             'city', 'state', 'zip', 'estimated_revenue', 'employee_count',
             'year_founded', 'ownership_type', 'qualifying_tier', 'status',
             'manufacturer_affiliations', 'certifications', 'awards', 'notes',
             'market_id', 'vertical_id',
-          ] as const
+          ]
 
           for (const field of mergeFields) {
             if (merged[field] === null || merged[field] === undefined) {
-              // CSV didn't provide this field — keep existing DB value
-              (merged as Record<string, unknown>)[field] = existingRow[field] ?? null
+              merged[field] = existingRow[field] ?? null
             }
           }
 
           updatedCount++
-          return merged
-        })
-      }
+          upsertData.push(merged)
+        }
+      } else {
+        // Overwrite mode — protect records that are in use
+        const existingIds = (existing || []).map(r => r.id as string)
+        const inUseIds = new Set<string>()
 
-      const { data, error } = await supabase
-        .from('companies')
-        .upsert(upsertData, {
-          onConflict: 'organization_id,name',
-          ignoreDuplicates: false
-        })
-        .select()
+        if (existingIds.length > 0) {
+          const [{ data: usedByContacts }, { data: usedByCampaigns }, { data: usedBySnapshots }, { data: usedByAssets }, { data: usedByDocs }] = await Promise.all([
+            supabase.from('contacts').select('company_id').in('company_id', existingIds).is('deleted_at', null),
+            supabase.from('campaigns').select('company_id').in('company_id', existingIds).is('deleted_at', null),
+            supabase.from('digital_snapshots').select('company_id').in('company_id', existingIds).is('deleted_at', null),
+            supabase.from('assets').select('company_id').in('company_id', existingIds).is('deleted_at', null),
+            supabase.from('generated_documents').select('company_id').in('company_id', existingIds).is('deleted_at', null),
+          ])
+          for (const row of usedByContacts || []) inUseIds.add(row.company_id)
+          for (const row of usedByCampaigns || []) inUseIds.add(row.company_id)
+          for (const row of usedBySnapshots || []) inUseIds.add(row.company_id)
+          for (const row of usedByAssets || []) inUseIds.add(row.company_id)
+          for (const row of usedByDocs || []) inUseIds.add(row.company_id)
+        }
 
-      if (error) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 400 }
-        )
-      }
+        upsertData = []
+        for (let i = 0; i < processedData.length; i++) {
+          const csvRow = processedData[i]
 
-      if (data) {
-        for (const record of data) {
-          logCreate({ supabase, request }, 'company', record, { source: 'csv_import' })
+          // Skip if domain already exists in DB under a different name
+          const csvDomain = csvRow.domain as string | null
+          if (csvDomain && existingByDomain.has(csvDomain)) {
+            const match = existingByDomain.get(csvDomain)!
+            if ((match.name as string).toLowerCase() !== (csvRow.name as string).toLowerCase()) {
+              errors.push(`Row ${i + 1}: Company "${csvRow.name}" has domain '${csvDomain}' which belongs to existing company "${match.name}" — skipping`)
+              continue
+            }
+          }
+
+          const existingRow = existingByName.get((csvRow.name as string).toLowerCase())
+          if (existingRow && inUseIds.has(existingRow.id as string)) {
+            errors.push(`Row ${i + 1}: Company "${csvRow.name}" is in use (has campaigns/contacts) — skipped in overwrite mode`)
+            protectedSkipped++
+          } else {
+            upsertData.push(csvRow)
+          }
         }
       }
 
-      const totalCount = data?.length || 0
-      const createdCount = totalCount - updatedCount
+      if (upsertData.length > 0) {
+        const { data, error } = await supabase
+          .from('companies')
+          .upsert(upsertData, {
+            onConflict: 'organization_id,name',
+            ignoreDuplicates: false
+          })
+          .select()
+
+        if (error) {
+          return NextResponse.json(
+            { error: error.message },
+            { status: 400 }
+          )
+        }
+
+        if (data) {
+          for (const record of data) {
+            logCreate({ supabase, request }, 'company', record, { source: 'csv_import' })
+          }
+        }
+
+        const totalCount = data?.length || 0
+        const createdCount = totalCount - updatedCount
+
+        return NextResponse.json({
+          created: createdCount,
+          updated: updatedCount,
+          total: totalCount,
+          protectedSkipped,
+          errors,
+          data,
+          marketsCreated,
+          verticalsCreated,
+          mode,
+        })
+      }
 
       return NextResponse.json({
-        created: createdCount,
-        updated: updatedCount,
-        total: totalCount,
+        created: 0,
+        updated: 0,
+        total: 0,
+        protectedSkipped,
         errors,
-        data,
+        data: [],
         marketsCreated,
         verticalsCreated,
         mode,
@@ -263,6 +359,7 @@ export async function POST(request: NextRequest) {
         created: 0,
         updated: 0,
         total: 0,
+        protectedSkipped: 0,
         errors,
         data: [],
         marketsCreated,

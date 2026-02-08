@@ -54,8 +54,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const processedData = []
+    const processedData: Array<Record<string, unknown>> = []
     const errors: string[] = []
+    const seenEmails = new Map<string, number>() // email → first row index
 
     for (let i = 0; i < importData.length; i++) {
       const record = importData[i]
@@ -70,6 +71,16 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        const email = record.email.trim().toLowerCase()
+
+        // Intra-batch email dedup
+        const existingEmailRow = seenEmails.get(email)
+        if (existingEmailRow !== undefined) {
+          errors.push(`Row ${i + 1}: Duplicate email '${email}' — already in row ${existingEmailRow + 1}, skipping`)
+          continue
+        }
+        seenEmails.set(email, i)
+
         const relStatus = trimString(record.relationship_status)
 
         processedData.push({
@@ -78,7 +89,7 @@ export async function POST(request: NextRequest) {
           first_name: record.first_name.trim(),
           last_name: record.last_name.trim(),
           title: trimString(record.title),
-          email: trimString(record.email),
+          email,
           phone: trimString(record.phone),
           linkedin_url: trimString(record.linkedin_url),
           is_primary: parseBool(record.is_primary),
@@ -93,68 +104,114 @@ export async function POST(request: NextRequest) {
     if (processedData.length > 0) {
       let upsertData = processedData
       let updatedCount = 0
+      let protectedSkipped = 0
 
-      if (mode === 'append') {
-        // Match existing contacts by name + company_id
+      // Fetch existing contacts by email for dedup
+      const emails = processedData.map(r => r.email as string).filter(Boolean)
+      const existingByEmail = new Map<string, Record<string, unknown>>()
+      if (emails.length > 0) {
         const { data: existing } = await supabase
           .from('contacts')
           .select('*')
           .eq('organization_id', organization_id)
+          .in('email', emails)
           .is('deleted_at', null)
 
-        const existingByKey = new Map<string, Record<string, unknown>>()
         for (const row of existing || []) {
-          const key = `${(row.first_name as string).toLowerCase()}|${(row.last_name as string).toLowerCase()}|${row.company_id || ''}`
-          existingByKey.set(key, row)
+          if (row.email) existingByEmail.set((row.email as string).toLowerCase(), row)
         }
+      }
 
-        upsertData = processedData.map(csvRow => {
-          const key = `${csvRow.first_name.toLowerCase()}|${csvRow.last_name.toLowerCase()}|${csvRow.company_id || ''}`
-          const existingRow = existingByKey.get(key)
-          if (!existingRow) return csvRow
+      if (mode === 'append') {
+        upsertData = []
+        for (const csvRow of processedData) {
+          const csvEmail = (csvRow.email as string).toLowerCase()
+          const existingRow = existingByEmail.get(csvEmail)
+          if (!existingRow) {
+            upsertData.push(csvRow)
+            continue
+          }
 
+          // Merge: overlay non-null CSV values onto existing
           const merged = { ...csvRow }
-          const mergeFields = [
-            'title', 'email', 'phone', 'linkedin_url', 'notes',
-          ] as const
+          const mergeFields = ['title', 'phone', 'linkedin_url', 'notes']
           for (const field of mergeFields) {
             if (merged[field] === null || merged[field] === undefined) {
-              (merged as Record<string, unknown>)[field] = existingRow[field] ?? null
+              merged[field] = existingRow[field] ?? null
             }
           }
           updatedCount++
-          return merged
-        })
-      }
+          // Skip — contact with this email already exists (append mode keeps existing)
+          errors.push(`Contact with email '${csvEmail}' already exists (${existingRow.first_name} ${existingRow.last_name}) — skipping`)
+        }
+      } else {
+        // Overwrite mode — protect contacts that have activities
+        const allExistingIds = [...existingByEmail.values()].map(r => r.id as string)
+        const inUseIds = new Set<string>()
 
-      // Contacts don't have a unique constraint for upsert, so use insert
-      const { data, error } = await supabase
-        .from('contacts')
-        .insert(upsertData)
-        .select()
+        if (allExistingIds.length > 0) {
+          const { data: usedByActivities } = await supabase
+            .from('activities').select('contact_id').in('contact_id', allExistingIds).is('deleted_at', null)
+          for (const row of usedByActivities || []) inUseIds.add(row.contact_id)
+        }
 
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
-      }
-
-      if (data) {
-        for (const record of data) {
-          logCreate({ supabase, request }, 'contact', record, { source: 'csv_import' })
+        upsertData = []
+        for (let i = 0; i < processedData.length; i++) {
+          const csvRow = processedData[i]
+          const csvEmail = (csvRow.email as string).toLowerCase()
+          const existingRow = existingByEmail.get(csvEmail)
+          if (existingRow && inUseIds.has(existingRow.id as string)) {
+            errors.push(`Row ${i + 1}: Contact with email '${csvEmail}' is in use (has activities) — skipped in overwrite mode`)
+            protectedSkipped++
+          } else if (existingRow) {
+            // Email exists but not in use — skip (duplicate)
+            errors.push(`Row ${i + 1}: Contact with email '${csvEmail}' already exists (${existingRow.first_name} ${existingRow.last_name}) — skipping`)
+          } else {
+            upsertData.push(csvRow)
+          }
         }
       }
 
-      const totalCount = data?.length || 0
+      if (upsertData.length > 0) {
+        const { data, error } = await supabase
+          .from('contacts')
+          .insert(upsertData)
+          .select()
+
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+
+        if (data) {
+          for (const record of data) {
+            logCreate({ supabase, request }, 'contact', record, { source: 'csv_import' })
+          }
+        }
+
+        const totalCount = data?.length || 0
+        return NextResponse.json({
+          created: totalCount - updatedCount,
+          updated: updatedCount,
+          total: totalCount,
+          protectedSkipped,
+          errors,
+          data,
+          mode,
+        })
+      }
+
       return NextResponse.json({
-        created: totalCount - updatedCount,
-        updated: updatedCount,
-        total: totalCount,
+        created: 0,
+        updated: 0,
+        total: 0,
+        protectedSkipped,
         errors,
-        data,
+        data: [],
         mode,
       })
     }
 
-    return NextResponse.json({ created: 0, updated: 0, total: 0, errors, data: [], mode })
+    return NextResponse.json({ created: 0, updated: 0, total: 0, protectedSkipped: 0, errors, data: [], mode })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

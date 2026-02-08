@@ -10,6 +10,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { cachedFetch, cacheKeys, dynamicCache, staticCache } from '@/lib/cache'
+import { extractDomain } from '@/lib/utils/normalize'
 
 // DataLoader-like batch loading utility
 class BatchLoader<K, V> {
@@ -403,6 +404,7 @@ export async function batchCreateCompanies(
       companies.map(company => ({
         ...company,
         organization_id: organizationId,
+        domain: extractDomain(company.website),
       })),
       { 
         onConflict: 'organization_id,name',

@@ -5,6 +5,7 @@ import { createCompanySchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
 import { resolveUserOrgId } from '@/lib/auth/resolve-org'
+import { extractDomain } from '@/lib/utils/normalize'
 
 export async function GET(request: NextRequest) {
   try {
@@ -92,23 +93,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    const domain = extractDomain(validation.data.website)
+
+    // Check for duplicate domain within organization
+    if (domain) {
+      const { data: existing, error: checkError } = await supabase
+        .from('companies')
+        .select('id, name')
+        .eq('organization_id', userOrgId)
+        .eq('domain', domain)
+        .is('deleted_at', null)
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw new ApiError(
+          'Failed to check for duplicate company',
+          ERROR_CODES.DATABASE_ERROR,
+          500,
+          checkError
+        )
+      }
+
+      if (existing) {
+        throw new ApiError(
+          `A company with domain '${domain}' already exists (${existing.name})`,
+          ERROR_CODES.DUPLICATE_ENTRY,
+          409,
+          { field: 'website', value: domain }
+        )
+      }
+    }
+
     const { data, error } = await supabase
       .from('companies')
-      .insert([{ ...validation.data, organization_id: userOrgId }])
+      .insert([{ ...validation.data, organization_id: userOrgId, domain }])
       .select()
       .single()
 
     if (error) {
-      // Handle specific database errors
-      if (error.code === '23505') { // Unique constraint violation
+      if (error.code === '23505') {
         throw new ApiError(
-          'A company with this name already exists',
+          'A company with this name or domain already exists',
           ERROR_CODES.DUPLICATE_ENTRY,
           409,
           error
         )
       }
-      
+
       throw new ApiError(
         'Failed to create company',
         ERROR_CODES.DATABASE_ERROR,

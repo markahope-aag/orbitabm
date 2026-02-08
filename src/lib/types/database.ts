@@ -131,6 +131,7 @@ export interface MarketRow {
   metro_population: number | null
   market_size_estimate: number | null
   pe_activity_level: PEActivityLevel | null
+  name_normalized: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -145,6 +146,7 @@ export interface MarketInsert {
   metro_population?: number | null
   market_size_estimate?: number | null
   pe_activity_level?: PEActivityLevel | null
+  name_normalized?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -159,6 +161,7 @@ export interface MarketUpdate {
   metro_population?: number | null
   market_size_estimate?: number | null
   pe_activity_level?: PEActivityLevel | null
+  name_normalized?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -178,6 +181,7 @@ export interface VerticalRow {
   typical_marketing_budget_pct: string | null
   key_decision_maker_title: string | null
   tier: VerticalTier | null
+  name_normalized: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -196,6 +200,7 @@ export interface VerticalInsert {
   typical_marketing_budget_pct?: string | null
   key_decision_maker_title?: string | null
   tier?: VerticalTier | null
+  name_normalized?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -214,6 +219,7 @@ export interface VerticalUpdate {
   typical_marketing_budget_pct?: string | null
   key_decision_maker_title?: string | null
   tier?: VerticalTier | null
+  name_normalized?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -292,6 +298,7 @@ export interface CompanyRow {
   awards: string | null
   readiness_score: number | null
   last_researched_at: string | null
+  domain: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -305,6 +312,7 @@ export interface CompanyInsert {
   market_id?: string | null
   vertical_id?: string | null
   website?: string | null
+  domain?: string | null
   phone?: string | null
   address_line1?: string | null
   address_line2?: string | null
@@ -336,6 +344,7 @@ export interface CompanyUpdate {
   market_id?: string | null
   vertical_id?: string | null
   website?: string | null
+  domain?: string | null
   phone?: string | null
   address_line1?: string | null
   address_line2?: string | null

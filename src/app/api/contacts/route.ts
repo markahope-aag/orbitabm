@@ -70,13 +70,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Normalize email to lowercase
+    const email = validation.data.email.toLowerCase()
+
+    // Check for duplicate email within organization
+    const { data: existing, error: checkError } = await supabase
+      .from('contacts')
+      .select('id, first_name, last_name')
+      .eq('organization_id', userOrgId)
+      .ilike('email', email)
+      .is('deleted_at', null)
+      .single()
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      return NextResponse.json(
+        { error: 'Failed to check for duplicate contact' },
+        { status: 500 }
+      )
+    }
+
+    if (existing) {
+      return NextResponse.json(
+        { error: `A contact with email '${email}' already exists (${existing.first_name} ${existing.last_name})` },
+        { status: 409 }
+      )
+    }
+
     const { data, error } = await supabase
       .from('contacts')
-      .insert([{ ...validation.data, organization_id: userOrgId }])
+      .insert([{ ...validation.data, email, organization_id: userOrgId }])
       .select()
       .single()
 
     if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { error: `A contact with this email already exists` },
+          { status: 409 }
+        )
+      }
       return NextResponse.json(
         { error: error.message },
         { status: 400 }
