@@ -8,6 +8,8 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { SidebarNav } from "@/components/layout/SidebarNav";
 import { Toaster } from "react-hot-toast";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+// Import startup validation to ensure environment is validated at app startup
+import "@/lib/startup-validation";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",

@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { updateOrganizationSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logUpdate, logDelete } from '@/lib/audit'
+import { supabaseConfig } from '@/lib/config'
 
 export async function GET(
   request: NextRequest,
@@ -14,8 +15,8 @@ export async function GET(
     const cookieStore = await cookies()
     
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseConfig.url,
+      supabaseConfig.anonKey,
       {
         cookies: {
           get(name: string) {
@@ -78,8 +79,8 @@ export async function PATCH(
     const cookieStore = await cookies()
     
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseConfig.url,
+      supabaseConfig.anonKey,
       {
         cookies: {
           get(name: string) {
@@ -182,8 +183,8 @@ export async function DELETE(
     const cookieStore = await cookies()
     
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseConfig.url,
+      supabaseConfig.anonKey,
       {
         cookies: {
           get(name: string) {

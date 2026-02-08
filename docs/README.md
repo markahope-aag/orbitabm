@@ -14,6 +14,7 @@ Welcome to the OrbitABM documentation hub. This directory contains comprehensive
 - **[API Documentation](API.md)** - REST API endpoints and usage
 - **[Component Library](COMPONENTS.md)** - UI component reference
 - **[Configuration Guide](CONFIGURATION.md)** - Environment and feature configuration
+- **[Environment Validation](ENVIRONMENT_VALIDATION.md)** - Environment variable validation and troubleshooting
 - **[Testing Guide](TESTING.md)** - Comprehensive testing procedures
 
 ### 🔒 Security & Operations
@@ -74,6 +75,7 @@ Welcome to the OrbitABM documentation hub. This directory contains comprehensive
 - ✅ Enhanced [API Documentation](API.md) with new endpoints
 - ✅ Added [Migration Guide](MIGRATION_GUIDE.md) for database updates
 - ✅ Updated [Security Model](SECURITY.md) with latest policies
+- ✅ Added [Environment Validation](ENVIRONMENT_VALIDATION.md) for configuration management
 
 ### Maintenance Schedule
 - **Weekly**: Review and update based on code changes

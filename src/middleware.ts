@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { supabaseConfig } from '@/lib/config'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -9,8 +10,8 @@ export async function middleware(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseConfig.url,
+    supabaseConfig.anonKey,
     {
       cookies: {
         get(name: string) {
@@ -59,7 +60,13 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
-  // Allow API routes to pass through
+
+  // Reject unauthenticated API requests with 401
+  if (isApiRoute && !session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Let authenticated API requests through (cookies already refreshed above)
   if (isApiRoute) {
     return response
   }

@@ -19,10 +19,30 @@ dotenv.config({ path: path.join(process.cwd(), '.env.local') })
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
+// Validate required environment variables
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('❌ Missing required environment variables:')
   console.error('   NEXT_PUBLIC_SUPABASE_URL:', !!supabaseUrl)
   console.error('   SUPABASE_SERVICE_ROLE_KEY:', !!supabaseServiceKey)
+  console.error('\n💡 Make sure your .env.local file contains:')
+  console.error('   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co')
+  console.error('   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key')
+  process.exit(1)
+}
+
+// Validate URL format
+if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
+  console.error('❌ Invalid NEXT_PUBLIC_SUPABASE_URL format')
+  console.error('   Expected: https://your-project.supabase.co')
+  console.error('   Received:', supabaseUrl)
+  process.exit(1)
+}
+
+// Validate service key format (should be a JWT)
+if (!supabaseServiceKey.startsWith('eyJ')) {
+  console.error('❌ Invalid SUPABASE_SERVICE_ROLE_KEY format')
+  console.error('   Expected: JWT token starting with "eyJ"')
+  console.error('   Received: [REDACTED]')
   process.exit(1)
 }
 
