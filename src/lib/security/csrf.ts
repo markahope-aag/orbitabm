@@ -28,6 +28,19 @@ function hashToken(token: string): string {
 }
 
 /**
+ * Check if a request path should be exempt from CSRF protection
+ */
+function isCSRFExempt(pathname: string): boolean {
+  const exemptPaths = [
+    '/api/health',           // Health check endpoint
+    '/api/auth/callback',    // OAuth callback
+    '/auth/callback',        // Supabase auth callback
+  ]
+  
+  return exemptPaths.some(path => pathname.startsWith(path))
+}
+
+/**
  * Validate CSRF token using double-submit cookie pattern
  */
 export function validateCSRFToken(request: NextRequest): boolean {
@@ -37,12 +50,13 @@ export function validateCSRFToken(request: NextRequest): boolean {
     return true
   }
 
-  // Skip CSRF validation for API routes with proper authentication
-  // (API routes should use other authentication mechanisms)
-  if (request.nextUrl.pathname.startsWith('/api/')) {
-    return true // API routes handle their own security
+  // Skip CSRF validation for specific exempt paths
+  if (isCSRFExempt(request.nextUrl.pathname)) {
+    return true
   }
 
+  // For API routes, require CSRF token for state-changing operations
+  // This ensures all POST/PUT/PATCH/DELETE operations are protected
   const tokenFromHeader = request.headers.get(CSRF_TOKEN_HEADER)
   const tokenFromCookie = request.cookies.get(CSRF_COOKIE_NAME)?.value
 
@@ -101,6 +115,52 @@ export function csrfMiddleware(request: NextRequest): NextResponse | null {
   }
 
   return null // Continue with request
+}
+
+/**
+ * Server-side CSRF validation for API routes
+ */
+export function validateCSRFForAPI(request: NextRequest): { valid: boolean; error?: string } {
+  // Skip validation for safe methods
+  const safeMethods = ['GET', 'HEAD', 'OPTIONS']
+  if (safeMethods.includes(request.method)) {
+    return { valid: true }
+  }
+
+  // Skip validation for exempt paths
+  if (isCSRFExempt(request.nextUrl.pathname)) {
+    return { valid: true }
+  }
+
+  const tokenFromHeader = request.headers.get(CSRF_TOKEN_HEADER)
+  const tokenFromCookie = request.cookies.get(CSRF_COOKIE_NAME)?.value
+
+  if (!tokenFromHeader) {
+    return { 
+      valid: false, 
+      error: 'CSRF token missing from request headers. Include x-csrf-token header.' 
+    }
+  }
+
+  if (!tokenFromCookie) {
+    return { 
+      valid: false, 
+      error: 'CSRF token missing from cookies. Ensure cookies are enabled.' 
+    }
+  }
+
+  // Validate token match
+  const headerHash = hashToken(tokenFromHeader)
+  const cookieHash = hashToken(tokenFromCookie)
+
+  if (headerHash !== cookieHash) {
+    return { 
+      valid: false, 
+      error: 'CSRF token mismatch. Request may be from unauthorized source.' 
+    }
+  }
+
+  return { valid: true }
 }
 
 /**

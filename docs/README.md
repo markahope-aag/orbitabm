@@ -20,6 +20,7 @@ Welcome to the OrbitABM documentation hub. This directory contains comprehensive
 ### 🔒 Security & Operations
 - **[Security Model](SECURITY.md)** - RLS policies and data protection
 - **[Security Headers](SECURITY_HEADERS.md)** - XSS, CSRF, and security protection implementation
+- **[CSRF Testing Guide](CSRF_TESTING_GUIDE.md)** - Comprehensive CSRF protection testing
 - **[Authentication System](AUTHENTICATION.md)** - User authentication and security
 - **[Deployment Guide](DEPLOYMENT.md)** - Production deployment instructions
 - **[Migration Guide](MIGRATION_GUIDE.md)** - Database migrations and upgrades

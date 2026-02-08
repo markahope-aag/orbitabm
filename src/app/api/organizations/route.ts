@@ -5,10 +5,11 @@ import { createOrganizationSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
 import { supabaseConfig } from '@/lib/config'
+import { withSecurity, securityConfigs } from '@/lib/security/api-protection'
 
 const ITEMS_PER_PAGE = 20
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -165,3 +166,16 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// Export handlers with security protection
+export const GET = withSecurity(getHandler, {
+  requireCSRF: false, // GET requests don't need CSRF protection
+  rateLimit: true,
+  methods: ['GET'],
+})
+
+export const POST = withSecurity(postHandler, {
+  requireCSRF: true,  // POST requests require CSRF protection
+  rateLimit: true,
+  methods: ['POST'],
+})
