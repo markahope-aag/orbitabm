@@ -83,7 +83,8 @@ const serverEnvSchema = envSchema.extend({
     .refine(
       (key) => key.startsWith('eyJ'),
       'SUPABASE_SERVICE_ROLE_KEY must be a valid JWT token'
-    ),
+    )
+    .optional(), // Optional during build time
 })
 
 /**
@@ -93,12 +94,14 @@ function validateEnv() {
   try {
     // Check if we're on the server or client
     const isServer = typeof window === 'undefined'
+    // Check if we're in build mode
+    const isBuild = process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === undefined && !process.env.SUPABASE_SERVICE_ROLE_KEY
     
-    if (isServer) {
-      // Server-side validation (includes service role key)
+    if (isServer && !isBuild) {
+      // Server-side validation (includes service role key) - skip during build
       return serverEnvSchema.parse(process.env)
     } else {
-      // Client-side validation (only public variables)
+      // Client-side validation (only public variables) or build-time
       return clientEnvSchema.parse(process.env)
     }
   } catch (error) {
