@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Search, ChevronUp, ChevronDown, Plus, Download } from 'lucide-react'
+import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Download } from 'lucide-react'
 import { exportToCSV } from '@/lib/utils/csvExport'
 
 interface Column<T = Record<string, unknown>> {
@@ -25,6 +25,7 @@ interface DataTableProps<T = Record<string, unknown>> {
   exportFilename?: string
   entityName?: string
   orgSlug?: string
+  pageSize?: number
 }
 
 export function DataTable<T extends Record<string, unknown> = Record<string, unknown>>({
@@ -40,21 +41,25 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
   exportable = true,
   exportFilename,
   entityName = 'data',
-  orgSlug = 'export'
+  orgSlug = 'export',
+  pageSize: initialPageSize = 25
 }: DataTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortConfig, setSortConfig] = useState<{
     key: string
     direction: 'asc' | 'desc'
   } | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [rowsPerPage, setRowsPerPage] = useState(initialPageSize)
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
+    setCurrentPage(1) // Reset to first page on search change
     if (!searchTerm || !searchable) return data
 
     return data.filter((row) => {
       const fieldsToSearch = searchFields.length > 0 ? searchFields : columns.map(col => col.key)
-      
+
       return fieldsToSearch.some(field => {
         const value = (row as Record<string, unknown>)[field]
         if (value === null || value === undefined) return false
@@ -83,6 +88,12 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
       return 0
     })
   }, [filteredData, sortConfig])
+
+  // Pagination
+  const totalRows = sortedData.length
+  const totalPages = Math.ceil(totalRows / rowsPerPage)
+  const startIndex = (currentPage - 1) * rowsPerPage
+  const paginatedData = sortedData.slice(startIndex, startIndex + rowsPerPage)
 
   const handleSort = (key: string) => {
     setSortConfig(current => {
@@ -215,7 +226,7 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
                 </td>
               </tr>
             ) : (
-              sortedData.map((row, index) => (
+              paginatedData.map((row, index) => (
                 <tr
                   key={(row as Record<string, unknown>).id as string || index}
                   className={`hover:bg-slate-50 ${onRowClick ? 'cursor-pointer' : ''} ${
@@ -234,6 +245,60 @@ export function DataTable<T extends Record<string, unknown> = Record<string, unk
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalRows > 0 && (
+        <div className="px-6 py-3 border-t border-slate-200 flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-sm text-slate-600">
+            <span>Showing {startIndex + 1}–{Math.min(startIndex + rowsPerPage, totalRows)} of {totalRows}</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1) }}
+              className="ml-2 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            >
+              <option value={10}>10 / page</option>
+              <option value={25}>25 / page</option>
+              <option value={50}>50 / page</option>
+              <option value={100}>100 / page</option>
+            </select>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-2 py-1 text-sm text-slate-600 hover:bg-slate-100 rounded disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                First
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => p - 1)}
+                disabled={currentPage === 1}
+                className="p-1 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="px-3 py-1 text-sm text-slate-700 font-medium">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => p + 1)}
+                disabled={currentPage === totalPages}
+                className="p-1 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="px-2 py-1 text-sm text-slate-600 hover:bg-slate-100 rounded disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Last
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

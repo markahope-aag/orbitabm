@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
           year_founded: record.year_founded ? parseInt(String(record.year_founded)) : null,
           ownership_type: record.ownership_type || 'private',
           qualifying_tier: record.qualifying_tier || null,
-          status: record.status || 'active',
+          status: record.status || 'prospect',
           manufacturer_affiliations: record.manufacturer_affiliations || null,
           certifications: record.certifications || null,
           awards: record.awards || null,

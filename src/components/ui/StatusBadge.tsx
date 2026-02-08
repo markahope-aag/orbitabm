@@ -7,13 +7,13 @@ interface StatusBadgeProps {
 function getStatusColor(status: string): 'green' | 'yellow' | 'red' | 'blue' | 'gray' | 'purple' {
   const normalizedStatus = status.toLowerCase()
 
-  // Green statuses - positive/active states
-  if (['active', 'client', 'completed', 'won', 'connected', 'approved', 'delivered'].includes(normalizedStatus)) {
+  // Green statuses - positive/active/top-tier states
+  if (['active', 'client', 'completed', 'won', 'connected', 'approved', 'delivered', 'top'].includes(normalizedStatus)) {
     return 'green'
   }
 
-  // Blue statuses - planned/in-progress states
-  if (['planned', 'scheduled', 'prospect', 'identified', 'draft'].includes(normalizedStatus)) {
+  // Blue statuses - planned/in-progress/qualified states
+  if (['planned', 'scheduled', 'prospect', 'identified', 'draft', 'qualified'].includes(normalizedStatus)) {
     return 'blue'
   }
 
@@ -27,17 +27,32 @@ function getStatusColor(status: string): 'green' | 'yellow' | 'red' | 'blue' | '
     return 'red'
   }
 
-  // Purple statuses - special states
-  if (['pivoted'].includes(normalizedStatus)) {
+  // Purple statuses - special/PE states
+  if (['pivoted', 'pe_backed'].includes(normalizedStatus)) {
     return 'purple'
+  }
+
+  // Ownership types
+  if (['corporate'].includes(normalizedStatus)) {
+    return 'blue'
+  }
+  if (['franchise'].includes(normalizedStatus)) {
+    return 'yellow'
+  }
+  if (['independent'].includes(normalizedStatus)) {
+    return 'green'
   }
 
   // Default to gray for unknown statuses
   return 'gray'
 }
 
+function formatLabel(status: string): string {
+  return status.replace(/_/g, ' ')
+}
+
 export function StatusBadge({ status }: StatusBadgeProps) {
   const color = getStatusColor(status)
-  
-  return <Badge label={status} color={color} />
+
+  return <Badge label={formatLabel(status)} color={color} />
 }

@@ -68,7 +68,7 @@ export default function OrganizationSwitcher({
 
   return (
     <div className="w-full">
-      <Listbox value={currentOrg} onChange={handleOrganizationChange}>
+      <Listbox value={currentOrg as OrganizationRow | undefined} onChange={handleOrganizationChange}>
         <div className="relative">
           <Listbox.Button className={`relative w-full cursor-pointer rounded-md bg-navy-800 py-2 pl-3 pr-10 text-left shadow-sm ring-1 ring-navy-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
             compact ? 'text-sm' : ''
