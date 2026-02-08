@@ -11,28 +11,65 @@ RESTful API endpoints for programmatic access to OrbitABM data and functionality
 ## 📋 Implementation Status
 
 **Currently Implemented:**
+- ✅ Organizations API (full CRUD + my-organizations)
 - ✅ Companies API (full CRUD + bulk import)
 - ✅ Contacts API (full CRUD)
 - ✅ Markets API (full CRUD)
 - ✅ Verticals API (full CRUD)
 - ✅ Campaigns API (full CRUD)
+- ✅ Activities API (full CRUD)
+- ✅ Assets API (full CRUD)
+- ✅ Results API (full CRUD)
+- ✅ Playbook Templates API (full CRUD)
+- ✅ Playbook Steps API (full CRUD)
 - ✅ Digital Snapshots API (full CRUD)
 - ✅ Document Templates API (full CRUD)
 - ✅ Generated Documents API (full CRUD)
 - ✅ Email Templates API (full CRUD)
+- ✅ Audit Logs API (read-only)
+
+**Recently Added:**
+- ✅ Authentication & Authorization (Supabase Auth)
+- ✅ Row Level Security policies
+- ✅ Organization context management
+- ✅ Comprehensive error handling
+- ✅ OpenAPI documentation
 
 **Planned for Future Releases:**
-- 🔄 Authentication & Authorization
 - 🔄 Webhooks & Real-time updates
 - 🔄 Bulk import for additional entities
 - 🔄 Advanced filtering and search
+- 🔄 Rate limiting and throttling
+- 🔄 API versioning
 
 ## 🔐 Authentication
 
-**Current Status**: No authentication required (MVP phase)
-**Future**: JWT-based authentication with role-based access control
+**Current Status**: JWT-based authentication with Supabase Auth
+**Authorization**: Row Level Security (RLS) with organization-based access control
 
-All requests must include the `organization_id` parameter to ensure proper data isolation.
+### Authentication Methods
+
+**Session-based Authentication:**
+```javascript
+// Client-side authentication check
+const { data: { session } } = await supabase.auth.getSession()
+if (!session) {
+  // Redirect to login
+}
+```
+
+**API Route Authentication:**
+```javascript
+// Server-side authentication in API routes
+const { data: { session }, error } = await supabase.auth.getSession()
+if (error || !session) {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+}
+```
+
+### Organization Context
+
+All API requests are automatically scoped to the user's organization through RLS policies. The `organization_id` is derived from the authenticated user's profile.
 
 ## 📋 Base URL
 
@@ -913,6 +950,320 @@ DELETE /api/email-templates/{id}
 ```
 
 **Note**: Email templates use hard delete (no `deleted_at` column). This permanently removes the record.
+
+---
+
+## 🏢 Organizations API
+
+### List Organizations
+```http
+GET /api/organizations
+```
+
+**Query Parameters:**
+- `page` (number): Page number for pagination (default: 1)
+- `limit` (number): Items per page (default: 20)
+- `search` (string): Search by name or slug
+- `type` (string): Filter by 'agency' or 'client'
+
+**Example:**
+```bash
+curl "http://localhost:3000/api/organizations?type=client&limit=10"
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Client Organization",
+      "slug": "client-org",
+      "type": "client",
+      "website": "https://client.com",
+      "notes": "Important client",
+      "created_at": "2026-02-07T10:00:00Z",
+      "updated_at": "2026-02-07T10:00:00Z"
+    }
+  ],
+  "success": true,
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 5,
+    "totalPages": 1,
+    "hasNext": false,
+    "hasPrev": false
+  }
+}
+```
+
+### Get User's Organizations
+```http
+GET /api/organizations/my-organizations
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "My Organization",
+      "slug": "my-org",
+      "type": "agency"
+    }
+  ],
+  "current_organization_id": "uuid",
+  "user_role": "admin",
+  "success": true
+}
+```
+
+### Create Organization
+```http
+POST /api/organizations
+```
+
+**Request Body:**
+```json
+{
+  "name": "New Organization",
+  "slug": "new-org",
+  "type": "client",
+  "website": "https://example.com",
+  "notes": "Organization notes"
+}
+```
+
+### Update Organization
+```http
+PATCH /api/organizations/{id}
+```
+
+### Delete Organization
+```http
+DELETE /api/organizations/{id}
+```
+
+---
+
+## 📋 Activities API
+
+### List Activities
+```http
+GET /api/activities
+```
+
+**Query Parameters:**
+- `organization_id` (required) - Organization UUID
+- `campaign_id` (optional) - Filter by campaign
+- `status` (optional) - Filter by status: `scheduled`, `completed`, `skipped`, `overdue`
+- `channel` (optional) - Filter by channel
+- `from_date` (optional) - Filter from date (YYYY-MM-DD)
+- `to_date` (optional) - Filter to date (YYYY-MM-DD)
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "campaign_id": "uuid",
+      "activity_type": "email_sent",
+      "channel": "email",
+      "scheduled_date": "2026-02-10",
+      "status": "scheduled",
+      "campaigns": {
+        "name": "Acme HVAC Campaign",
+        "companies": { "name": "Acme HVAC" }
+      }
+    }
+  ],
+  "success": true
+}
+```
+
+### Update Activity Status
+```http
+PATCH /api/activities/{id}
+```
+
+**Request Body:**
+```json
+{
+  "status": "completed",
+  "completed_date": "2026-02-07",
+  "outcome": "replied",
+  "notes": "Positive response received"
+}
+```
+
+---
+
+## 📁 Assets API
+
+### List Assets
+```http
+GET /api/assets?organization_id=uuid
+```
+
+**Query Parameters:**
+- `organization_id` (required) - Organization UUID
+- `asset_type` (optional) - Filter by asset type
+- `company_id` (optional) - Filter by company
+- `campaign_id` (optional) - Filter by campaign
+- `status` (optional) - Filter by status
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "title": "Strategic Blueprint",
+      "asset_type": "blueprint",
+      "status": "delivered",
+      "delivered_date": "2026-02-05",
+      "companies": { "name": "Acme HVAC" },
+      "campaigns": { "name": "Q1 Campaign" }
+    }
+  ],
+  "success": true
+}
+```
+
+---
+
+## 📊 Results API
+
+### List Results
+```http
+GET /api/results?organization_id=uuid
+```
+
+**Query Parameters:**
+- `organization_id` (required) - Organization UUID
+- `campaign_id` (optional) - Filter by campaign
+- `result_type` (optional) - Filter by result type
+- `from_date` (optional) - Filter from date
+- `to_date` (optional) - Filter to date
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "campaign_id": "uuid",
+      "result_type": "contract_signed",
+      "result_date": "2026-02-07",
+      "contract_value_monthly": 5000.00,
+      "contract_term_months": 12,
+      "total_contract_value": 60000.00,
+      "campaigns": {
+        "name": "Acme HVAC Campaign",
+        "companies": { "name": "Acme HVAC" }
+      }
+    }
+  ],
+  "success": true
+}
+```
+
+---
+
+## 📖 Playbook Templates API
+
+### List Playbook Templates
+```http
+GET /api/playbook-templates?organization_id=uuid
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "HVAC ABM Sequence",
+      "vertical_id": "uuid",
+      "total_duration_days": 35,
+      "is_active": true,
+      "verticals": { "name": "HVAC Companies" }
+    }
+  ],
+  "success": true
+}
+```
+
+---
+
+## 📝 Playbook Steps API
+
+### List Playbook Steps
+```http
+GET /api/playbook-steps?organization_id=uuid&playbook_template_id=uuid
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "playbook_template_id": "uuid",
+      "step_number": 1,
+      "day_offset": 1,
+      "channel": "mail",
+      "title": "Strategic Blueprint Delivery",
+      "asset_type_required": "blueprint",
+      "is_pivot_trigger": false
+    }
+  ],
+  "success": true
+}
+```
+
+---
+
+## 📋 Audit Logs API
+
+### List Audit Logs
+```http
+GET /api/audit-logs?organization_id=uuid
+```
+
+**Query Parameters:**
+- `organization_id` (required) - Organization UUID
+- `table_name` (optional) - Filter by table
+- `action` (optional) - Filter by action: `INSERT`, `UPDATE`, `DELETE`
+- `user_id` (optional) - Filter by user
+- `from_date` (optional) - Filter from date
+- `to_date` (optional) - Filter to date
+- `limit` (optional) - Results per page (default: 100)
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "table_name": "companies",
+      "action": "UPDATE",
+      "record_id": "uuid",
+      "old_values": { "status": "prospect" },
+      "new_values": { "status": "target" },
+      "user_id": "uuid",
+      "timestamp": "2026-02-07T10:00:00Z",
+      "profiles": { "full_name": "John Doe" }
+    }
+  ],
+  "success": true
+}
+```
+
+**Note**: Audit logs are read-only and automatically generated by database triggers.
 
 ---
 

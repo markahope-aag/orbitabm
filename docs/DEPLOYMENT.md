@@ -45,9 +45,19 @@ Complete guide for deploying OrbitABM to production environments.
 Add these in Vercel dashboard → Settings → Environment Variables:
 
 ```env
+# Supabase Configuration (Required)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Application Configuration (Optional)
+NODE_ENV=production
+NEXT_TELEMETRY_DISABLED=1
+
+# Feature Flags (Optional)
+FEATURE_AUDIT_LOGS=true
+FEATURE_DOCUMENT_INTELLIGENCE=true
+FEATURE_EMAIL_TEMPLATES=true
 ```
 
 **Deploy:**
