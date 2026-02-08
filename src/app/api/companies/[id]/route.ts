@@ -31,6 +31,11 @@ export async function GET(
       )
     }
 
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId || data.organization_id !== userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     return NextResponse.json({
       data,
       error: null
@@ -56,6 +61,11 @@ export async function PATCH(
     if (!validation.success) return validation.response
 
     const { data: oldData } = await supabase.from('companies').select('*').eq('id', id).is('deleted_at', null).single()
+
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId || !oldData || oldData.organization_id !== userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const { data, error } = await supabase
       .from('companies')
@@ -94,6 +104,12 @@ export async function DELETE(
   try {
     const supabase = await createClient()
     const { id } = await params
+
+    const { data: existing } = await supabase.from('companies').select('organization_id').eq('id', id).single()
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId || !existing || existing.organization_id !== userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const { data, error } = await supabase
       .from('companies')

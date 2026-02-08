@@ -4,6 +4,7 @@ import { ApiError, ERROR_CODES } from '@/lib/utils/errors'
 import { updateCampaignSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logUpdate, logDelete } from '@/lib/audit'
+import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 
 export async function GET(
   request: NextRequest,
@@ -76,6 +77,11 @@ export async function GET(
         500,
         error
       )
+    }
+
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId || (data as unknown as Record<string, unknown>).organization_id !== userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     return NextResponse.json({
@@ -247,6 +253,11 @@ export async function PATCH(
 
     const { data: oldData } = await supabase.from('campaigns').select('*').eq('id', id).is('deleted_at', null).single()
 
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId || !oldData || oldData.organization_id !== userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { data, error } = await supabase
       .from('campaigns')
       .update(updateData)
@@ -379,6 +390,11 @@ export async function DELETE(
       .eq('id', id)
       .is('deleted_at', null)
       .single()
+
+    const userOrgId = await resolveUserOrgId(supabase)
+    if (!userOrgId || !campaignData || campaignData.organization_id !== userOrgId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     // Soft delete the campaign
     const { error } = await supabase
