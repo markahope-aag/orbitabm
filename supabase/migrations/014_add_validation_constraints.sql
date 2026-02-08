@@ -44,9 +44,27 @@ ALTER TABLE pe_platforms ADD CONSTRAINT pe_platforms_brand_count_nonneg
 ALTER TABLE pe_platforms ADD CONSTRAINT pe_platforms_estimated_valuation_nonneg
   CHECK (estimated_valuation >= 0);
 
--- unique name within organization
-ALTER TABLE pe_platforms ADD CONSTRAINT pe_platforms_org_name_unique
-  UNIQUE (organization_id, name);
+-- Deduplicate pe_platforms before adding unique constraint:
+-- Keep the oldest record (earliest created_at) for each (org, name) pair,
+-- soft-delete the rest.
+UPDATE pe_platforms SET deleted_at = now()
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id,
+           ROW_NUMBER() OVER (
+             PARTITION BY organization_id, name
+             ORDER BY created_at ASC
+           ) AS rn
+    FROM pe_platforms
+    WHERE deleted_at IS NULL
+  ) ranked
+  WHERE rn > 1
+);
+
+-- unique name within organization (only for non-deleted records)
+CREATE UNIQUE INDEX pe_platforms_org_name_unique
+  ON pe_platforms (organization_id, name)
+  WHERE deleted_at IS NULL;
 
 
 -- =====================================================
