@@ -159,6 +159,7 @@ const companyImportItemSchema = z.object({
 export const importCompaniesSchema = z.object({
   organization_id: uuid,
   data: z.array(companyImportItemSchema).min(1),
+  mode: z.enum(['append', 'overwrite']).optional().default('append'),
 }).strict()
 
 // --- Contacts ---

@@ -7,18 +7,22 @@ import { ColumnMapper } from '@/components/import/ColumnMapper'
 import { ImportPreview } from '@/components/import/ImportPreview'
 import { downloadTemplate } from '@/lib/utils/csvExport'
 import { showErrorToast, showSuccessToast, toastPromise } from '@/lib/utils/toast'
-import { 
-  Upload, 
-  Download, 
-  CheckCircle, 
-  AlertTriangle, 
-  ArrowLeft, 
+import { exportToCSV } from '@/lib/utils/csvExport'
+import {
+  Upload,
+  Download,
+  CheckCircle,
+  AlertTriangle,
+  ArrowLeft,
   ArrowRight,
-  Database
+  Database,
+  RefreshCw,
+  Shield
 } from 'lucide-react'
 
 type EntityType = 'companies' | 'contacts' | 'markets' | 'verticals' | 'digital_snapshots'
 type ImportStep = 'select' | 'upload' | 'map' | 'preview' | 'import' | 'complete'
+type ImportMode = 'append' | 'overwrite'
 
 interface ProcessedRow {
   originalIndex: number
@@ -132,13 +136,61 @@ export default function ImportPage() {
   const [columnMappings, setColumnMappings] = useState<Array<{ csvHeader: string; dbField: string | null }>>([])
   const [processedRows, setProcessedRows] = useState<ProcessedRow[]>([])
   const [isImporting, setIsImporting] = useState(false)
-  const [importResults, setImportResults] = useState<{ created: number; skipped: number; errors: string[] } | null>(null)
+  const [importResults, setImportResults] = useState<{
+    created: number
+    updated: number
+    skipped: number
+    errors: string[]
+    marketsCreated: string[]
+    verticalsCreated: string[]
+    mode: ImportMode
+  } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [existingCount, setExistingCount] = useState<number>(0)
+  const [importMode, setImportMode] = useState<ImportMode>('append')
+  const [isExporting, setIsExporting] = useState(false)
 
-  const handleEntitySelect = (entityType: EntityType) => {
+  const handleEntitySelect = async (entityType: EntityType) => {
     setSelectedEntity(entityType)
     setCurrentStep('upload')
     setError(null)
+    setImportMode('append')
+
+    // Fetch existing record count for this entity type
+    try {
+      const res = await fetch('/api/import/counts')
+      if (res.ok) {
+        const counts = await res.json()
+        setExistingCount(counts[entityType] ?? 0)
+      }
+    } catch {
+      // Non-critical — just won't show the warning
+      setExistingCount(0)
+    }
+  }
+
+  const handleExportExisting = async () => {
+    if (selectedEntity !== 'companies') return
+    setIsExporting(true)
+    try {
+      const res = await fetch('/api/companies/export')
+      if (!res.ok) throw new Error('Export failed')
+      const { data } = await res.json()
+      if (!data || data.length === 0) {
+        showErrorToast('No data to export')
+        return
+      }
+      const columns = Object.keys(data[0]).map((key: string) => ({
+        key,
+        header: key,
+      }))
+      exportToCSV(data, columns, 'companies')
+      showSuccessToast(`Exported ${data.length} companies`)
+    } catch {
+      showErrorToast('Failed to export existing data')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   const handleDataParsed = (data: Record<string, unknown>[], headers: string[]) => {
@@ -210,7 +262,8 @@ export default function ImportPage() {
             },
             body: JSON.stringify({
               data: importData,
-              organization_id: currentOrgId
+              organization_id: currentOrgId,
+              mode: importMode,
             })
           })
 
@@ -224,18 +277,27 @@ export default function ImportPage() {
         {
           loading: `Importing ${validRows.length} ${selectedEntity}...`,
           success: (results) => {
-            const created = results.created || validRows.length
+            const created = results.created ?? 0
+            const updated = results.updated ?? 0
             const skipped = processedRows.length - validRows.length
-            return `Successfully imported ${created} ${selectedEntity}${skipped > 0 ? ` (${skipped} skipped)` : ''}`
+            const parts = []
+            if (created > 0) parts.push(`${created} created`)
+            if (updated > 0) parts.push(`${updated} updated`)
+            if (skipped > 0) parts.push(`${skipped} skipped`)
+            return `Successfully imported ${selectedEntity}: ${parts.join(', ')}`
           },
           error: 'Failed to import data'
         }
       )
 
       setImportResults({
-        created: results.created || validRows.length,
+        created: results.created ?? 0,
+        updated: results.updated ?? 0,
         skipped: processedRows.length - validRows.length,
-        errors: results.errors || []
+        errors: results.errors || [],
+        marketsCreated: results.marketsCreated || [],
+        verticalsCreated: results.verticalsCreated || [],
+        mode: importMode,
       })
       
       setCurrentStep('complete')
@@ -255,6 +317,8 @@ export default function ImportPage() {
     setProcessedRows([])
     setImportResults(null)
     setError(null)
+    setExistingCount(0)
+    setImportMode('append')
   }
 
   const canProceedToPreview = () => {
@@ -403,6 +467,67 @@ export default function ImportPage() {
                 Upload a CSV file containing {selectedEntity} data:
               </p>
 
+              {/* Existing data warning */}
+              {existingCount > 0 && (
+                <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <h3 className="font-medium text-amber-900">
+                        You already have {existingCount} {selectedEntity}
+                      </h3>
+                      <p className="text-sm text-amber-700 mt-1">
+                        Importing will merge new data with existing records. Choose how to handle matches below.
+                      </p>
+
+                      {/* Import mode toggle */}
+                      <div className="mt-3 flex flex-col sm:flex-row gap-3">
+                        <button
+                          onClick={() => setImportMode('append')}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors ${
+                            importMode === 'append'
+                              ? 'bg-cyan-50 border-cyan-300 text-cyan-800'
+                              : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                          }`}
+                        >
+                          <Shield className="w-4 h-4" />
+                          <div className="text-left">
+                            <div>Append (Safe)</div>
+                            <div className="font-normal text-xs opacity-75">Only fills in empty fields on existing records</div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => setImportMode('overwrite')}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors ${
+                            importMode === 'overwrite'
+                              ? 'bg-red-50 border-red-300 text-red-800'
+                              : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                          }`}
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          <div className="text-left">
+                            <div>Overwrite</div>
+                            <div className="font-normal text-xs opacity-75">CSV values replace all existing fields</div>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* Export existing data */}
+                      {selectedEntity === 'companies' && (
+                        <button
+                          onClick={handleExportExisting}
+                          disabled={isExporting}
+                          className="mt-3 inline-flex items-center gap-1.5 text-sm text-amber-800 hover:text-amber-900 underline underline-offset-2"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          {isExporting ? 'Exporting...' : 'Export existing data as CSV'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <CsvUploader
                 onDataParsed={handleDataParsed}
                 onError={handleCsvError}
@@ -508,7 +633,7 @@ export default function ImportPage() {
                 Import Complete!
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-emerald-50 rounded-lg p-4">
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="w-5 h-5 text-emerald-500" />
@@ -518,6 +643,18 @@ export default function ImportPage() {
                     </div>
                   </div>
                 </div>
+
+                {importResults.updated > 0 && (
+                  <div className="bg-cyan-50 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                      <RefreshCw className="w-5 h-5 text-cyan-500" />
+                      <div>
+                        <div className="text-sm font-medium text-cyan-700">Updated</div>
+                        <div className="text-2xl font-bold text-cyan-900">{importResults.updated}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-amber-50 rounded-lg p-4">
                   <div className="flex items-center space-x-2">
@@ -538,6 +675,28 @@ export default function ImportPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Auto-created entities */}
+              {(importResults.marketsCreated.length > 0 || importResults.verticalsCreated.length > 0) && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h3 className="font-medium text-blue-900 mb-2">Auto-Created During Import</h3>
+                  {importResults.marketsCreated.length > 0 && (
+                    <p className="text-sm text-blue-700">
+                      Markets: {importResults.marketsCreated.join(', ')}
+                    </p>
+                  )}
+                  {importResults.verticalsCreated.length > 0 && (
+                    <p className="text-sm text-blue-700 mt-1">
+                      Verticals: {importResults.verticalsCreated.join(', ')}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Import mode used */}
+              <div className="mb-6 text-sm text-slate-500">
+                Import mode: <span className="font-medium text-slate-700">{importResults.mode === 'append' ? 'Append (safe)' : 'Overwrite'}</span>
               </div>
 
               {importResults.errors.length > 0 && (

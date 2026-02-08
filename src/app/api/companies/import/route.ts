@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validation = validateRequest(importCompaniesSchema, body)
     if (!validation.success) return validation.response
-    const { data: importData } = validation.data
+    const { data: importData, mode } = validation.data
 
     const organization_id = await resolveUserOrgId(supabase)
     if (!organization_id) {
@@ -178,11 +178,55 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Insert all valid records
+    // Insert/update all valid records
     if (processedData.length > 0) {
+      let upsertData = processedData
+      let updatedCount = 0
+
+      if (mode === 'append') {
+        // Fetch existing companies by name so we can merge non-null CSV fields
+        const names = processedData.map(r => r.name)
+        const { data: existing } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('organization_id', organization_id)
+          .in('name', names)
+          .is('deleted_at', null)
+
+        const existingByName = new Map<string, Record<string, unknown>>()
+        for (const row of existing || []) {
+          existingByName.set((row.name as string).toLowerCase(), row)
+        }
+
+        upsertData = processedData.map(csvRow => {
+          const existingRow = existingByName.get(csvRow.name.toLowerCase())
+          if (!existingRow) return csvRow // New record, no merge needed
+
+          // Merge: start with existing DB values, overlay only non-null CSV values
+          const merged = { ...csvRow }
+          const mergeFields = [
+            'website', 'phone', 'address_line1', 'address_line2',
+            'city', 'state', 'zip', 'estimated_revenue', 'employee_count',
+            'year_founded', 'ownership_type', 'qualifying_tier', 'status',
+            'manufacturer_affiliations', 'certifications', 'awards', 'notes',
+            'market_id', 'vertical_id',
+          ] as const
+
+          for (const field of mergeFields) {
+            if (merged[field] === null || merged[field] === undefined) {
+              // CSV didn't provide this field — keep existing DB value
+              (merged as Record<string, unknown>)[field] = existingRow[field] ?? null
+            }
+          }
+
+          updatedCount++
+          return merged
+        })
+      }
+
       const { data, error } = await supabase
         .from('companies')
-        .upsert(processedData, {
+        .upsert(upsertData, {
           onConflict: 'organization_id,name',
           ignoreDuplicates: false
         })
@@ -201,20 +245,29 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      const totalCount = data?.length || 0
+      const createdCount = totalCount - updatedCount
+
       return NextResponse.json({
-        created: data?.length || 0,
+        created: createdCount,
+        updated: updatedCount,
+        total: totalCount,
         errors,
         data,
         marketsCreated,
-        verticalsCreated
+        verticalsCreated,
+        mode,
       })
     } else {
       return NextResponse.json({
         created: 0,
+        updated: 0,
+        total: 0,
         errors,
         data: [],
         marketsCreated,
-        verticalsCreated
+        verticalsCreated,
+        mode,
       })
     }
 
