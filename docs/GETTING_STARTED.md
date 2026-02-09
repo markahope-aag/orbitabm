@@ -45,7 +45,7 @@ Run the database migrations in your Supabase project:
 # Link to your Supabase project
 npx supabase link --project-ref your-project-ref
 
-# Push all 14 migrations to your database
+# Push all 20 migrations to your database
 npx supabase db push
 
 # Verify migrations were applied
@@ -54,9 +54,9 @@ npx supabase migration list
 
 **Option 2: Manual SQL Execution**
 1. Open Supabase Dashboard → SQL Editor
-2. Execute each migration file in order (001 through 014)
+2. Execute each migration file in order (001 through 020)
 3. Start with `supabase/migrations/001_initial_schema.sql`
-4. Continue through all 14 migration files
+4. Continue through all 20 migration files
 
 This creates all necessary tables, indexes, relationships, RLS policies, and security functions.
 

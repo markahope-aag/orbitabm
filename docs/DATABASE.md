@@ -670,9 +670,10 @@ Common query optimizations:
 ## 🔄 Migration Strategy
 
 ### Version Control
-- All schema changes tracked in migration files
-- Sequential numbering: `001_initial_schema.sql`, `002_add_indexes.sql`
-- Rollback scripts for each migration
+- All schema changes tracked in 20 migration files
+- Sequential numbering: `001_initial_schema.sql` through `015_fix_audit_logs_rls_policy.sql`
+- Latest migration (015) fixes audit logs RLS policy security issue
+- Rollback scripts available for critical migrations
 
 ### Data Migration
 - Use `INSERT ... ON CONFLICT DO NOTHING` for safe re-runs

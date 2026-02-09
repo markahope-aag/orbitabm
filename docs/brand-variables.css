@@ -1,0 +1,54 @@
+/* OrbitABM — CSS Custom Properties
+   Add to your global stylesheet (globals.css) */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* PRIMARY — Navy */
+  --navy-950: #0a0f1e;
+  --navy-900: #0f172a;
+  --navy-800: #1a2340;
+  --navy-700: #253256;
+  --navy-600: #334570;
+  --navy-500: #475b8a;
+  --navy-400: #6b82b0;
+  --navy-300: #94a8cd;
+  --navy-200: #bcc8e2;
+  --navy-100: #dfe5f2;
+  --navy-50: #f0f3f9;
+
+  /* ACCENT — Electric Cyan */
+  --cyan-500: #06b6d4;
+  --cyan-400: #22d3ee;
+  --cyan-300: #67e8f9;
+  --cyan-200: #a5f3fc;
+  --cyan-100: #cffafe;
+
+  /* ACCENT 2 — Signal Orange */
+  --orange-500: #f97316;
+  --orange-400: #fb923c;
+  --orange-300: #fdba74;
+
+  /* SEMANTIC */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --neutral: #64748b;
+
+  /* TYPOGRAPHY */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* SURFACES */
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-sidebar: #0a0f1e;
+  --border-card: #e2e8f0;
+  --border-subtle: #f1f5f9;
+
+  /* TEXT */
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+}

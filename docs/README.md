@@ -72,18 +72,16 @@ Welcome to the OrbitABM documentation hub. This directory contains comprehensive
 
 ## 🔄 Documentation Updates
 
-### Recent Updates (v2.1.0)
-- ✅ Added comprehensive [Testing Guide](TESTING.md)
-- ✅ Created detailed [Architecture Documentation](ARCHITECTURE.md) with current tech stack
-- ✅ Enhanced [API Documentation](API.md) with new endpoints (health, performance, security)
-- ✅ Added [Migration Guide](MIGRATION_GUIDE.md) for database updates
-- ✅ Updated [Security Model](SECURITY.md) with comprehensive v2.1.0 security features
-- ✅ Added [Environment Validation](ENVIRONMENT_VALIDATION.md) for configuration management
-- ✅ Implemented [Security Headers](SECURITY_HEADERS.md) with XSS, CSRF, and rate limiting protection
-- ✅ Added [Query Performance](QUERY_PERFORMANCE.md) optimization with N+1 prevention and caching
-- ✅ Updated [Database Schema](DATABASE.md) with audit logs and document intelligence tables
-- ✅ Enhanced [Getting Started Guide](GETTING_STARTED.md) with current setup procedures
-- ✅ Updated [Changelog](../CHANGELOG.md) with comprehensive v2.1.0 feature list
+### Recent Updates (v2.1.1 - February 2026)
+- ✅ Updated [README.md](../README.md) with current project status and 51 API endpoints
+- ✅ Enhanced [API Documentation](API.md) with platform user management and import endpoints
+- ✅ Updated [Architecture Documentation](ARCHITECTURE.md) with latest technology stack versions
+- ✅ Enhanced [Security Model](SECURITY.md) with audit logs RLS policy fix (v2.1.1)
+- ✅ Updated [Database Schema](DATABASE.md) with current 20 migration files
+- ✅ Enhanced [Getting Started Guide](GETTING_STARTED.md) with updated migration procedures
+- ✅ Updated [Deployment Guide](DEPLOYMENT.md) with current migration workflow
+- ✅ Comprehensive documentation audit and updates across all 22 documentation files
+- ✅ Updated [Changelog](../CHANGELOG.md) with recent security fixes and improvements
 
 ### Maintenance Schedule
 - **Weekly**: Review and update based on code changes

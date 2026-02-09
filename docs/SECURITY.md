@@ -445,6 +445,11 @@ const securityHeaders = [
 - ✅ **PERFORMANCE MONITORING**: Real-time security and performance metrics
 - ✅ **ENVIRONMENT VALIDATION**: Startup validation and health monitoring
 
+### Version 2.1.1 (February 2026)
+- ✅ **AUDIT LOGS RLS FIX**: Fixed overly permissive INSERT policy for audit_logs table
+- ✅ **ORGANIZATION SCOPING**: Restricted audit log creation to user's organization context
+- ✅ **SECURITY HARDENING**: Enhanced audit trail security with proper multi-tenant isolation
+
 ### Version 2.0.0
 - ✅ **DOCUMENT SECURITY**: Secured document intelligence system
 - ✅ **ORGANIZATION CONTEXT**: Enhanced multi-tenant security

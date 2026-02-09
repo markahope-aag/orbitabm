@@ -18,11 +18,14 @@ Complete guide for deploying OrbitABM to production environments.
 3. Choose region closest to your users
 4. Set strong database password
 
-**Run Migration:**
-1. Open SQL Editor in Supabase dashboard
-2. Copy contents of `supabase/migrations/001_initial_schema.sql`
-3. Execute the migration
-4. Verify all tables are created
+**Run Migrations:**
+1. Use Supabase CLI (recommended):
+   ```bash
+   npx supabase link --project-ref your-project-ref
+   npx supabase db push
+   ```
+2. Or manually execute all 20 migration files in order
+3. Verify all tables and functions are created
 
 **Configure API Keys:**
 1. Go to Settings → API

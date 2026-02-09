@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OrbitABM — Brand Guide v2.0 Enhanced</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* PRIMARY — Navy System */
+  --navy-950: #0a0f1e;
+  --navy-900: #0f172a;
+  --navy-800: #1a2340;
+  --navy-700: #253256;
+  --navy-600: #334570;
+  --navy-500: #475b8a;
+  --navy-400: #6b82b0;
+  --navy-300: #94a8cd;
+  --navy-200: #bcc8e2;
+  --navy-100: #dfe5f2;
+  --navy-50: #f0f3f9;
+
+  /* ACCENT — Electric Cyan */
+  --cyan-600: #0891b2;
+  --cyan-500: #06b6d4;
+  --cyan-400: #22d3ee;
+  --cyan-300: #67e8f9;
+  --cyan-200: #a5f3fc;
+  --cyan-100: #cffafe;
+
+  /* ACCENT 2 — Signal Orange */
+  --orange-600: #ea580c;
+  --orange-500: #f97316;
+  --orange-400: #fb923c;
+  --orange-300: #fdba74;
+
+  /* SEMANTIC COLORS */
+  --emerald-500: #10b981;
+  --emerald-400: #34d399;
+  --emerald-100: #d1fae5;
+  --emerald-900: #064e3b;
+  --amber-500: #f59e0b;
+  --amber-400: #fbbf24;
+  --amber-100: #fef3c7;
+  --amber-900: #78350f;
+  --red-500: #ef4444;
+  --red-400: #f87171;
+  --red-100: #fee2e2;
+  --red-900: #7f1d1d;
+
+  /* NEUTRAL — Slate */
+  --slate-950: #020617;
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+  --slate-50: #f8fafc;
+
+  /* TYPOGRAPHY */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--slate-50);
+  color: var(--navy-900);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* COVER */
+.cover {
+  background: linear-gradient(135deg, var(--navy-950) 0%, var(--navy-800) 50%, var(--navy-700) 100%);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+}
+
+.cover-logo {
+  margin-bottom: 24px;
+}
+
+.cover h1 {
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  margin-bottom: 8px;
+}
+
+.cover h1 span {
+  color: var(--cyan-400);
+}
+
+.cover p {
+  font-size: 18px;
+  color: var(--slate-400);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* LAYOUT */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 40px;
+}
+
+section {
+  margin-bottom: 120px;
+}
+
+.section-label {
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--orange-500);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--navy-900);
+  margin-bottom: 16px;
+}
+
+.section-desc {
+  font-size: 18px;
+  color: var(--slate-600);
+  max-width: 600px;
+  margin-bottom: 48px;
+}
+
+/* ENHANCED LOGO */
+.logo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+.logo-card {
+  border-radius: 20px;
+  padding: 48px 32px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.logo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.logo-card.dark {
+  background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
+  border-color: var(--navy-700);
+}
+
+.logo-card.light {
+  background: #fff;
+  border-color: var(--slate-200);
+}
+
+.logo-card.sidebar {
+  background: var(--navy-950);
+  border-color: var(--navy-800);
+}
+
+.logo-card svg {
+  margin-bottom: 24px;
+}
+
+.logo-card .logo-text {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+}
+
+/* Enhanced color variants */
+.logo-card.dark .logo-text { color: #fff; }
+.logo-card.dark .logo-text span { color: var(--cyan-400); }
+.logo-card.light .logo-text { color: var(--orange-600); }
+.logo-card.light .logo-text span { color: var(--cyan-600); }
+.logo-card.sidebar .logo-text { color: var(--orange-500); }
+.logo-card.sidebar .logo-text span { color: var(--cyan-400); }
+
+.logo-card .logo-sub {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--slate-400);
+}
+
+.enhancement-note {
+  background: linear-gradient(135deg, var(--orange-50) 0%, var(--cyan-50) 100%);
+  border: 1px solid var(--orange-200);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.enhancement-note h4 {
+  color: var(--orange-600);
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.enhancement-note p {
+  color: var(--navy-700);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.enhancement-specs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.enhancement-specs div {
+  background: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--navy-800);
+}
+
+.logo-rules {
+  background: #fff;
+  border: 1px solid var(--slate-200);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.logo-rules h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--navy-800);
+}
+
+.rules-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.rule {
+  font-size: 14px;
+  padding: 12px 0;
+  color: var(--slate-600);
+  line-height: 1.5;
+}
+
+.rule.do::before { content: '✓ '; color: var(--emerald-500); font-weight: 700; }
+.rule.dont::before { content: '✗ '; color: var(--red-500); font-weight: 700; }
+
+/* COLOR SYSTEM */
+.color-section-group {
+  margin-bottom: 48px;
+}
+
+.color-section-group h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--navy-800);
+}
+
+.color-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.color-chip {
+  flex: 1;
+  min-width: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.color-chip .swatch {
+  height: 72px;
+  width: 100%;
+}
+
+.color-chip .info {
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid var(--slate-200);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+}
+
+.color-chip .info .name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy-800);
+  margin-bottom: 2px;
+}
+
+.color-chip .info .hex {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--slate-500);
+}
+
+/* USAGE CARDS */
+.usage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.usage-card {
+  background: #fff;
+  border: 1px solid var(--slate-200);
+  border-radius: 16px;
+  padding: 28px;
+  transition: transform 0.2s ease;
+}
+
+.usage-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+
+.usage-card .dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.usage-card h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy-800);
+  margin-bottom: 8px;
+}
+
+.usage-card p {
+  font-size: 14px;
+  color: var(--slate-500);
+  line-height: 1.5;
+}
+
+/* TYPOGRAPHY */
+.type-specimen {
+  background: #fff;
+  border: 1px solid var(--slate-200);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
+}
+
+.type-row {
+  display: flex;
+  align-items: baseline;
+  gap: 32px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.type-row:last-child {
+  border-bottom: none;
+}
+
+.type-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate-500);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  min-width: 80px;
+}
+
+.type-sample {
+  flex: 1;
+  color: var(--navy-900);
+}
+
+.type-specs {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--slate-400);
+  min-width: 100px;
+  text-align: right;
+}
+
+/* Voice & Tone */
+.voice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.voice-card {
+  background: #fff;
+  border: 1px solid var(--slate-200);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.voice-card h4 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy-800);
+  margin-bottom: 12px;
+}
+
+.voice-card p {
+  font-size: 14px;
+  color: var(--slate-600);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.voice-card .example {
+  padding: 16px 20px;
+  background: var(--slate-50);
+  border-left: 4px solid var(--cyan-500);
+  border-radius: 0 12px 12px 0;
+  font-size: 14px;
+  color: var(--navy-700);
+  font-style: italic;
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-logo">
+    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Enhanced cover icon -->
+      <circle cx="40" cy="40" r="6" fill="#22d3ee"/>
+      <ellipse cx="40" cy="40" rx="28" ry="11" stroke="#22d3ee" stroke-width="3.0" transform="rotate(-20 40 40)" opacity="0.8"/>
+      <ellipse cx="40" cy="40" rx="35" ry="14" stroke="#22d3ee" stroke-width="3.5" transform="rotate(25 40 40)" opacity="0.95"/>
+      <circle cx="40" cy="40" r="38" stroke="rgba(255,255,255,0.08)" stroke-width="0.75"/>
+    </svg>
+  </div>
+  <h1>Orbit<span>ABM</span></h1>
+  <p>Enhanced Brand Guide — v2.0</p>
+</div>
+
+<div class="container">
+
+<!-- ENHANCED LOGO -->
+<section>
+  <div class="section-label">01 — Identity Enhanced</div>
+  <h2 class="section-title">Logo & Wordmark</h2>
+  <p class="section-desc">The enhanced OrbitABM identity uses Signal Orange and Electric Cyan for maximum visibility. The orbital icon features enhanced stroke weights and opacity for better presence at all sizes.</p>
+
+  <div class="enhancement-note">
+    <h4>🔥 Enhanced for Maximum Visibility</h4>
+    <p>Signal Orange text ensures visibility on dark sidebars, while thicker orbital strokes create stronger brand presence.</p>
+    <div class="enhancement-specs">
+      <div>Orbital strokes: 2.0px and 2.5px (3x thicker)</div>
+      <div>Opacity: 0.7 and 0.9 (2x more visible)</div>
+    </div>
+  </div>
+
+  <div class="logo-grid">
+    <div class="logo-card sidebar">
+      <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+        <!-- Enhanced icon for sidebar -->
+        <circle cx="24" cy="24" r="4" fill="#22d3ee"/>
+        <ellipse cx="24" cy="24" rx="17" ry="7" stroke="#22d3ee" stroke-width="2.0" transform="rotate(-20 24 24)" opacity="0.7"/>
+        <ellipse cx="24" cy="24" rx="21" ry="9" stroke="#22d3ee" stroke-width="2.5" transform="rotate(25 24 24)" opacity="0.9"/>
+      </svg>
+      <div class="logo-text">Orbit<span>ABM</span></div>
+      <div class="logo-sub">Enhanced — Dark Sidebar</div>
+    </div>
+    <div class="logo-card light">
+      <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+        <!-- Enhanced icon for light backgrounds -->
+        <circle cx="24" cy="24" r="4" fill="#0891b2"/>
+        <ellipse cx="24" cy="24" rx="17" ry="7" stroke="#0891b2" stroke-width="2.0" transform="rotate(-20 24 24)" opacity="0.7"/>
+        <ellipse cx="24" cy="24" rx="21" ry="9" stroke="#0891b2" stroke-width="2.5" transform="rotate(25 24 24)" opacity="0.9"/>
+      </svg>
+      <div class="logo-text">Orbit<span>ABM</span></div>
+      <div class="logo-sub">Enhanced — Light Backgrounds</div>
+    </div>
+    <div class="logo-card dark">
+      <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+        <!-- Enhanced icon for dark headers -->
+        <circle cx="24" cy="24" r="4" fill="#22d3ee"/>
+        <ellipse cx="24" cy="24" rx="17" ry="7" stroke="#22d3ee" stroke-width="2.0" transform="rotate(-20 24 24)" opacity="0.7"/>
+        <ellipse cx="24" cy="24" rx="21" ry="9" stroke="#22d3ee" stroke-width="2.5" transform="rotate(25 24 24)" opacity="0.9"/>
+      </svg>
+      <div class="logo-text">Orbit<span>ABM</span></div>
+      <div class="logo-sub">Enhanced — Dark Headers</div>
+    </div>
+  </div>
+
+  <div class="logo-rules">
+    <h3>Enhanced Logo Usage Rules</h3>
+    <div class="rules-grid">
+      <div class="rule do">Use Signal Orange "Orbit" for dark backgrounds</div>
+      <div class="rule dont">Don't use the old thin orbital strokes</div>
+      <div class="rule do">Enhanced icon ensures 24px minimum visibility</div>
+      <div class="rule dont">Don't reduce stroke weights below 2.0px</div>
+      <div class="rule do">Electric Cyan "ABM" maintains brand accent</div>
+      <div class="rule dont">Don't use white text when orange is available</div>
+      <div class="rule do">Higher opacity orbital rings (0.7/0.9)</div>
+      <div class="rule dont">Don't reduce opacity below enhancement specs</div>
+    </div>
+  </div>
+</section>
+
+<!-- ENHANCED COLORS -->
+<section>
+  <div class="section-label">02 — Enhanced Color System</div>
+  <h2 class="section-title">Color System</h2>
+  <p class="section-desc">Navy anchors the interface. Signal Orange ensures visibility on dark backgrounds. Electric Cyan creates brand moments and interactions.</p>
+
+  <div class="color-section-group">
+    <h3>Primary — Navy</h3>
+    <div class="color-row">
+      <div class="color-chip"><div class="swatch" style="background: #0a0f1e"></div><div class="info"><div class="name">950</div><div class="hex">#0a0f1e</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #0f172a"></div><div class="info"><div class="name">900</div><div class="hex">#0f172a</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #1a2340"></div><div class="info"><div class="name">800</div><div class="hex">#1a2340</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #253256"></div><div class="info"><div class="name">700</div><div class="hex">#253256</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #334570"></div><div class="info"><div class="name">600</div><div class="hex">#334570</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #475b8a"></div><div class="info"><div class="name">500</div><div class="hex">#475b8a</div></div></div>
+    </div>
+  </div>
+
+  <div class="color-section-group">
+    <h3>Enhanced Accent — Signal Orange</h3>
+    <div class="color-row">
+      <div class="color-chip"><div class="swatch" style="background: #ea580c"></div><div class="info"><div class="name">600</div><div class="hex">#ea580c</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #f97316"></div><div class="info"><div class="name">500</div><div class="hex">#f97316</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #fb923c"></div><div class="info"><div class="name">400</div><div class="hex">#fb923c</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #fdba74"></div><div class="info"><div class="name">300</div><div class="hex">#fdba74</div></div></div>
+    </div>
+  </div>
+
+  <div class="color-section-group">
+    <h3>Brand Accent — Electric Cyan</h3>
+    <div class="color-row">
+      <div class="color-chip"><div class="swatch" style="background: #0891b2"></div><div class="info"><div class="name">600</div><div class="hex">#0891b2</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #06b6d4"></div><div class="info"><div class="name">500</div><div class="hex">#06b6d4</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #22d3ee"></div><div class="info"><div class="name">400</div><div class="hex">#22d3ee</div></div></div>
+      <div class="color-chip"><div class="swatch" style="background: #67e8f9"></div><div class="info"><div class="name">300</div><div class="hex">#67e8f9</div></div></div>
+    </div>
+  </div>
+
+  <div class="usage-grid">
+    <div class="usage-card">
+      <div class="dot" style="background: linear-gradient(135deg, #f97316, #fb923c);"></div>
+      <h4>Signal Orange</h4>
+      <p>Primary text on dark backgrounds, CTAs, urgent alerts. Ensures maximum visibility on navy sidebar.</p>
+    </div>
+    <div class="usage-card">
+      <div class="dot" style="background: linear-gradient(135deg, #22d3ee, #67e8f9);"></div>
+      <h4>Electric Cyan</h4>
+      <p>Brand accent color, interactive elements, "ABM" text, and enhanced orbital icon.</p>
+    </div>
+    <div class="usage-card">
+      <div class="dot" style="background: linear-gradient(135deg, #0a0f1e, #253256);"></div>
+      <h4>Navy Foundation</h4>
+      <p>Primary backgrounds, text on light surfaces, professional anchoring throughout interface.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TYPOGRAPHY -->
+<section>
+  <div class="section-label">03 — Typography</div>
+  <h2 class="section-title">Type System</h2>
+  <p class="section-desc">Plus Jakarta Sans provides warmth and approachability. JetBrains Mono handles data and metrics with technical precision.</p>
+
+  <div class="type-specimen">
+    <div class="type-row">
+      <div class="type-label">Display</div>
+      <div class="type-sample" style="font-size: 36px; font-weight: 800; letter-spacing: -1px;">Campaign Intelligence Platform</div>
+      <div class="type-specs">36px / 800</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">H1</div>
+      <div class="type-sample" style="font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">HVAC Market Analysis</div>
+      <div class="type-specs">32px / 700</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">H2</div>
+      <div class="type-sample" style="font-size: 24px; font-weight: 700;">Madison, WI Market Profile</div>
+      <div class="type-specs">24px / 700</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">H3</div>
+      <div class="type-sample" style="font-size: 18px; font-weight: 600;">PE Consolidation Activity</div>
+      <div class="type-specs">18px / 600</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Body</div>
+      <div class="type-sample" style="font-size: 16px; font-weight: 400;">TurnPoint Services acquired Schaal Plumbing and Bell Brothers, creating consolidation pressure in Des Moines.</div>
+      <div class="type-specs">16px / 400</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Caption</div>
+      <div class="type-sample" style="font-size: 14px; font-weight: 400; color: var(--slate-500);">Last updated 3 days ago</div>
+      <div class="type-specs">14px / 400</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Metric</div>
+      <div class="type-sample" style="font-family: var(--font-mono); font-size: 28px; font-weight: 600; color: var(--cyan-500);">$47.2M</div>
+      <div class="type-specs">28px Mono</div>
+    </div>
+  </div>
+</section>
+
+<!-- VOICE & TONE -->
+<section>
+  <div class="section-label">04 — Voice & Tone</div>
+  <h2 class="section-title">Communication</h2>
+  <p class="section-desc">OrbitABM speaks like a strategic advisor—direct, informed, and focused on actionable insights.</p>
+
+  <div class="voice-grid">
+    <div class="voice-card">
+      <h4>Direct, Not Chatty</h4>
+      <p>Cut to what matters. No filler phrases, unnecessary qualifiers, or marketing speak.</p>
+      <div class="example">"Doc Dancer hasn't been contacted since Day 10."</div>
+    </div>
+    <div class="voice-card">
+      <h4>Strategic, Not Academic</h4>
+      <p>Frame information in terms of decisions and actions. What does this data mean for what to do next?</p>
+      <div class="example">"Grand Rapids: High PE consolidation. Exclude Vredevoogd and Schaafsma from targets."</div>
+    </div>
+    <div class="voice-card">
+      <h4>Confident, Not Arrogant</h4>
+      <p>The platform knows what it's tracking. Data speaks without over-qualification.</p>
+      <div class="example">"Fort Wayne: 2 PE-backed competitors, 4 independent targets. Market is consolidating."</div>
+    </div>
+    <div class="voice-card">
+      <h4>Concise, Not Sparse</h4>
+      <p>Every word earns its place. White space is content. Context appears when needed.</p>
+      <div class="example">"Step 5 of 8 · Day 18 · Email · Market Presence Report"</div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+</body>
+</html>
