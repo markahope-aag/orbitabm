@@ -80,8 +80,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Authenticated user on auth pages → dashboard (except callback)
-  if (user && isAuthPage && !request.nextUrl.pathname.includes('/auth/callback')) {
+  // Authenticated user on auth pages → dashboard (except callback and set-password)
+  if (user && isAuthPage
+    && !request.nextUrl.pathname.includes('/auth/callback')
+    && !request.nextUrl.pathname.includes('/auth/set-password')
+  ) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

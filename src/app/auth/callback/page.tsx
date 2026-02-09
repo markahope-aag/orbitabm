@@ -1,19 +1,20 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       const supabase = createClient()
-      
+
       try {
         const { data, error } = await supabase.auth.getSession()
-        
+
         if (error) {
           console.error('Auth callback error:', error)
           router.push('/auth/login?error=callback_error')
@@ -21,8 +22,13 @@ export default function AuthCallbackPage() {
         }
 
         if (data.session) {
-          // User is authenticated, redirect to dashboard
-          router.push('/dashboard')
+          // Honor a `next` param (e.g. from invite flow → set-password)
+          const next = searchParams.get('next')
+          if (next && next.startsWith('/')) {
+            router.push(next)
+          } else {
+            router.push('/dashboard')
+          }
         } else {
           // No session found, redirect to login
           router.push('/auth/login')
@@ -34,7 +40,7 @@ export default function AuthCallbackPage() {
     }
 
     handleAuthCallback()
-  }, [router])
+  }, [router, searchParams])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -142,11 +142,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // Invite user via admin API
+    // Invite user via admin API — redirect to set-password page after invite link click
+    const origin = request.headers.get('origin') || request.nextUrl.origin
     const adminClient = createAdminClient()
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
       email,
-      { data: { full_name } }
+      {
+        data: { full_name },
+        redirectTo: `${origin}/auth/set-password`,
+      }
     )
 
     if (inviteError) {
