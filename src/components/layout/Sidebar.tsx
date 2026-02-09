@@ -60,7 +60,7 @@ export function Sidebar({ children }: SidebarProps) {
             {/* App Logo & Name */}
             <div className="flex items-center space-x-3 mb-4">
               <Image
-                src="/brand/logo-light.svg"
+                src="/brand/logo-dark.svg"
                 alt="OrbitABM"
                 width={120}
                 height={32}

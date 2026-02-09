@@ -1,10 +1,10 @@
 <svg viewBox="0 0 200 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Orbit Icon -->
+  <!-- Enhanced Orbit Icon -->
   <circle cx="24" cy="24" r="4" fill="#22d3ee"/>
-  <ellipse cx="24" cy="24" rx="17" ry="7" stroke="#22d3ee" stroke-width="1.25" transform="rotate(-20 24 24)" opacity="0.6"/>
-  <ellipse cx="24" cy="24" rx="21" ry="9" stroke="#22d3ee" stroke-width="0.75" transform="rotate(25 24 24)" opacity="0.35"/>
-  <!-- Wordmark -->
+  <ellipse cx="24" cy="24" rx="17" ry="7" stroke="#22d3ee" stroke-width="2.0" transform="rotate(-20 24 24)" opacity="0.7"/>
+  <ellipse cx="24" cy="24" rx="21" ry="9" stroke="#22d3ee" stroke-width="2.5" transform="rotate(25 24 24)" opacity="0.9"/>
+  <!-- Wordmark - Signal Orange + Electric Cyan -->
   <text x="52" y="31" font-family="Plus Jakarta Sans, system-ui, sans-serif" font-size="26" font-weight="800" letter-spacing="-1">
-    <tspan fill="#ffffff">Orbit</tspan><tspan fill="#22d3ee">ABM</tspan>
+    <tspan fill="#f97316">Orbit</tspan><tspan fill="#22d3ee">ABM</tspan>
   </text>
 </svg>
