@@ -7,6 +7,9 @@ import { resolveUserOrgId } from '@/lib/auth/resolve-org'
 import { normalizeName } from '@/lib/utils/normalize'
 
 const PE_ACTIVITY_LEVELS = new Set(['none', 'low', 'moderate', 'high', 'critical'])
+const PE_CONSOLIDATION_LEVELS = new Set(['low', 'moderate', 'high'])
+const COMPETITION_LEVELS = new Set(['low', 'moderate', 'high'])
+const MARKET_MATURITY_LEVELS = new Set(['emerging', 'growing', 'mature', 'declining'])
 
 function trimString(val: string | null | undefined): string | null {
   if (val == null) return null
@@ -18,6 +21,24 @@ function normalizePeActivityLevel(val: string | null | undefined): string | null
   if (!val) return null
   const key = val.trim().toLowerCase()
   return PE_ACTIVITY_LEVELS.has(key) ? key : null
+}
+
+function normalizePeConsolidationStatus(val: string | null | undefined): string | null {
+  if (!val) return null
+  const key = val.trim().toLowerCase()
+  return PE_CONSOLIDATION_LEVELS.has(key) ? key : null
+}
+
+function normalizeCompetitionLevel(val: string | null | undefined): string | null {
+  if (!val) return null
+  const key = val.trim().toLowerCase()
+  return COMPETITION_LEVELS.has(key) ? key : null
+}
+
+function normalizeMarketMaturity(val: string | null | undefined): string | null {
+  if (!val) return null
+  const key = val.trim().toLowerCase()
+  return MARKET_MATURITY_LEVELS.has(key) ? key : null
 }
 
 export async function POST(request: NextRequest) {
@@ -71,6 +92,15 @@ export async function POST(request: NextRequest) {
             ? (isNaN(Number(record.market_size_estimate)) ? null : Number(record.market_size_estimate))
             : null,
           pe_activity_level: normalizePeActivityLevel(record.pe_activity_level as string | null),
+          target_company_count: record.target_company_count ? parseInt(String(record.target_company_count)) || null : null,
+          pe_consolidation_status: normalizePeConsolidationStatus(record.pe_consolidation_status as string | null),
+          competition_level: normalizeCompetitionLevel(record.competition_level as string | null),
+          primary_trade_association: trimString(record.primary_trade_association as string | null),
+          peak_season_months: trimString(record.peak_season_months as string | null),
+          market_maturity: normalizeMarketMaturity(record.market_maturity as string | null),
+          avg_cpc_estimate: record.avg_cpc_estimate
+            ? (isNaN(Number(record.avg_cpc_estimate)) ? null : Number(record.avg_cpc_estimate))
+            : null,
           notes: trimString(record.notes),
         }
 
@@ -135,7 +165,7 @@ export async function POST(request: NextRequest) {
           }
 
           const merged = { ...csvRow }
-          const mergeFields = ['state', 'metro_population', 'market_size_estimate', 'pe_activity_level', 'notes']
+          const mergeFields = ['state', 'metro_population', 'market_size_estimate', 'pe_activity_level', 'target_company_count', 'pe_consolidation_status', 'competition_level', 'primary_trade_association', 'peak_season_months', 'market_maturity', 'avg_cpc_estimate', 'notes']
           for (const field of mergeFields) {
             if (merged[field] === null || merged[field] === undefined) {
               merged[field] = existingRow[field] ?? null

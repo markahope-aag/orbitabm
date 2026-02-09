@@ -19,6 +19,9 @@ const positiveInt = z.number().int().positive()
 
 const organizationTypeSchema = z.enum(['agency', 'client'])
 const peActivityLevelSchema = z.enum(['none', 'low', 'moderate', 'high', 'critical'])
+const peConsolidationStatusSchema = z.enum(['low', 'moderate', 'high'])
+const competitionLevelSchema = z.enum(['low', 'moderate', 'high'])
+const marketMaturitySchema = z.enum(['emerging', 'growing', 'mature', 'declining'])
 const b2bTypeSchema = z.enum(['B2B', 'B2C', 'Both'])
 const verticalTierSchema = z.enum(['tier_1', 'tier_2', 'tier_3', 'borderline', 'eliminated'])
 const ownershipTypeSchema = z.enum(['independent', 'pe_backed', 'franchise', 'corporate'])
@@ -79,6 +82,14 @@ const createMarketFields = {
   metro_population: nonnegInt.nullable().optional(),
   market_size_estimate: nonnegNum.nullable().optional(),
   pe_activity_level: peActivityLevelSchema.nullable().optional(),
+  target_company_count: nonnegInt.nullable().optional(),
+  pe_consolidation_status: peConsolidationStatusSchema.nullable().optional(),
+  competition_level: competitionLevelSchema.nullable().optional(),
+  primary_trade_association: z.string().max(255).nullable().optional(),
+  peak_season_months: z.string().max(100).nullable().optional(),
+  market_maturity: marketMaturitySchema.nullable().optional(),
+  avg_cpc_estimate: nonnegNum.nullable().optional(),
+  last_updated: z.string().datetime({ offset: true }).nullable().optional(),
   notes: optionalText,
 }
 export const createMarketSchema = z.object(createMarketFields).strict()
@@ -91,6 +102,13 @@ const marketImportItemSchema = z.object({
   metro_population: z.union([z.number(), z.string()]).nullable().optional(),
   market_size_estimate: z.union([z.number(), z.string()]).nullable().optional(),
   pe_activity_level: z.string().nullable().optional(),
+  target_company_count: z.union([z.number(), z.string()]).nullable().optional(),
+  pe_consolidation_status: z.string().nullable().optional(),
+  competition_level: z.string().nullable().optional(),
+  primary_trade_association: z.string().max(255).nullable().optional(),
+  peak_season_months: z.string().max(100).nullable().optional(),
+  market_maturity: z.string().nullable().optional(),
+  avg_cpc_estimate: z.union([z.number(), z.string()]).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
 }).passthrough()
 export const importMarketsSchema = z.object({

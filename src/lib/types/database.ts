@@ -9,6 +9,9 @@ export type OrganizationType = 'agency' | 'client'
 export type UserRole = 'owner' | 'admin' | 'user' | 'viewer'
 export type PlatformRole = 'platform_owner' | 'platform_admin'
 export type PEActivityLevel = 'none' | 'low' | 'moderate' | 'high' | 'critical'
+export type PEConsolidationStatus = 'low' | 'moderate' | 'high'
+export type CompetitionLevel = 'low' | 'moderate' | 'high'
+export type MarketMaturity = 'emerging' | 'growing' | 'mature' | 'declining'
 export type B2BType = 'B2B' | 'B2C' | 'Both'
 export type VerticalTier = 'tier_1' | 'tier_2' | 'tier_3' | 'borderline' | 'eliminated'
 export type OwnershipType = 'independent' | 'pe_backed' | 'franchise' | 'corporate'
@@ -134,6 +137,14 @@ export interface MarketRow {
   metro_population: number | null
   market_size_estimate: number | null
   pe_activity_level: PEActivityLevel | null
+  target_company_count: number | null
+  pe_consolidation_status: PEConsolidationStatus | null
+  competition_level: CompetitionLevel | null
+  primary_trade_association: string | null
+  peak_season_months: string | null
+  market_maturity: MarketMaturity | null
+  avg_cpc_estimate: number | null
+  last_updated: string | null
   name_normalized: string | null
   notes: string | null
   created_at: string
@@ -149,6 +160,14 @@ export interface MarketInsert {
   metro_population?: number | null
   market_size_estimate?: number | null
   pe_activity_level?: PEActivityLevel | null
+  target_company_count?: number | null
+  pe_consolidation_status?: PEConsolidationStatus | null
+  competition_level?: CompetitionLevel | null
+  primary_trade_association?: string | null
+  peak_season_months?: string | null
+  market_maturity?: MarketMaturity | null
+  avg_cpc_estimate?: number | null
+  last_updated?: string | null
   name_normalized?: string | null
   notes?: string | null
   created_at?: string
@@ -164,6 +183,14 @@ export interface MarketUpdate {
   metro_population?: number | null
   market_size_estimate?: number | null
   pe_activity_level?: PEActivityLevel | null
+  target_company_count?: number | null
+  pe_consolidation_status?: PEConsolidationStatus | null
+  competition_level?: CompetitionLevel | null
+  primary_trade_association?: string | null
+  peak_season_months?: string | null
+  market_maturity?: MarketMaturity | null
+  avg_cpc_estimate?: number | null
+  last_updated?: string | null
   name_normalized?: string | null
   notes?: string | null
   created_at?: string
