@@ -9,6 +9,7 @@
  * - Security headers
  */
 
+import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { csrfMiddleware } from './csrf'
 import { rateLimitMiddleware, getRateLimitConfig } from './rate-limit'
@@ -78,7 +79,6 @@ export function isValidUrl(url: string, allowedDomains?: string[]): boolean {
  * Generate secure random string
  */
 export function generateSecureToken(length: number = 32): string {
-  const crypto = require('crypto')
   return crypto.randomBytes(length).toString('hex')
 }
 
@@ -86,7 +86,6 @@ export function generateSecureToken(length: number = 32): string {
  * Hash sensitive data (passwords, tokens)
  */
 export async function hashSensitiveData(data: string): Promise<string> {
-  const crypto = require('crypto')
   const salt = crypto.randomBytes(16).toString('hex')
   const hash = crypto.pbkdf2Sync(data, salt, 10000, 64, 'sha512').toString('hex')
   return `${salt}:${hash}`
@@ -96,7 +95,6 @@ export async function hashSensitiveData(data: string): Promise<string> {
  * Verify hashed sensitive data
  */
 export async function verifySensitiveData(data: string, hash: string): Promise<boolean> {
-  const crypto = require('crypto')
   const [salt, originalHash] = hash.split(':')
   const verifyHash = crypto.pbkdf2Sync(data, salt, 10000, 64, 'sha512').toString('hex')
   return originalHash === verifyHash
@@ -106,7 +104,6 @@ export async function verifySensitiveData(data: string, hash: string): Promise<b
  * Content Security Policy nonce generator
  */
 export function generateCSPNonce(): string {
-  const crypto = require('crypto')
   return crypto.randomBytes(16).toString('base64')
 }
 
@@ -209,11 +206,11 @@ export function securityMiddleware(request: NextRequest): NextResponse | null {
  * Security audit logging
  */
 export function logSecurityEvent(event: {
-  type: 'csrf_violation' | 'rate_limit_exceeded' | 'invalid_input' | 'suspicious_activity'
+  type: 'csrf_violation' | 'rate_limit_exceeded' | 'invalid_input' | 'suspicious_activity' | 'xss_attempt' | 'csrf_mismatch' | 'suspicious_behavior'
   ip: string
   userAgent?: string
   path: string
-  details?: any
+  details?: Record<string, unknown>
 }): void {
   // In production, send to security monitoring service
   console.warn(`[SECURITY] ${event.type}:`, {
@@ -232,7 +229,7 @@ export const requestValidation = {
   /**
    * Validate JSON request body
    */
-  validateJSON(body: any, maxSize: number = 1024 * 1024): boolean {
+  validateJSON(body: unknown, maxSize: number = 1024 * 1024): boolean {
     try {
       const jsonString = JSON.stringify(body)
       return jsonString.length <= maxSize

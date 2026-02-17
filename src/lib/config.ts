@@ -120,7 +120,7 @@ function validateEnv() {
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.issues.map((err: any) => `${err.path.join('.')}: ${err.message}`).join('\n')
+      const missingVars = error.issues.map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`).join('\n')
       
       throw new Error(
         `❌ Environment variable validation failed:\n\n${missingVars}\n\n` +
@@ -171,13 +171,13 @@ export const isFeatureEnabled = (feature: 'FEATURE_AUDIT_LOGS' | 'FEATURE_DOCUME
 export const supabaseConfig = {
   url: env.NEXT_PUBLIC_SUPABASE_URL,
   anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  serviceRoleKey: 'SUPABASE_SERVICE_ROLE_KEY' in env ? (env as any).SUPABASE_SERVICE_ROLE_KEY : undefined,
+  serviceRoleKey: 'SUPABASE_SERVICE_ROLE_KEY' in env ? (env as Record<string, unknown>).SUPABASE_SERVICE_ROLE_KEY as string | undefined : undefined,
 } as const
 
 /**
  * Debug logging helper
  */
-export const debugLog = (...args: any[]) => {
+export const debugLog = (...args: unknown[]) => {
   if (env.DEBUG === true && isDevelopment) {
     console.log('[DEBUG]', ...args)
   }

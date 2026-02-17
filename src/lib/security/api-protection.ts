@@ -16,7 +16,7 @@ import { logSecurityEvent } from './index'
 type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS'
 
 interface RouteHandler {
-  (request: NextRequest, context?: any): Promise<NextResponse> | NextResponse
+  (request: NextRequest, context?: Record<string, unknown>): Promise<NextResponse> | NextResponse
 }
 
 interface ProtectedRouteOptions {
@@ -40,7 +40,7 @@ export function withSecurity(
     skipValidation,
   } = options
 
-  return async (request: NextRequest, context?: any): Promise<NextResponse> => {
+  return async (request: NextRequest, context?: Record<string, unknown>): Promise<NextResponse> => {
     try {
       // Check if method is allowed
       if (!methods.includes(request.method as HTTPMethod)) {
@@ -167,7 +167,7 @@ export async function validateRequestBody(
     maxSize?: number
     allowedContentTypes?: string[]
   } = {}
-): Promise<{ valid: boolean; error?: string; data?: any }> {
+): Promise<{ valid: boolean; error?: string; data?: unknown }> {
   const { maxSize = 1024 * 1024, allowedContentTypes = ['application/json'] } = options
   
   try {
@@ -203,7 +203,7 @@ export async function validateRequestBody(
     
     return { valid: true, data: body }
     
-  } catch (error) {
+  } catch {
     return {
       valid: false,
       error: 'Failed to read request body',

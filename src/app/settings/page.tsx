@@ -7,11 +7,11 @@ import { createClient } from '@/lib/supabase/client'
 import { Tabs } from '@/components/ui/Tabs'
 import { Badge } from '@/components/ui/Badge'
 import { showSuccessToast, showErrorToast } from '@/lib/utils/toast'
-import { User, Building2, Users } from 'lucide-react'
 import type { ProfileRow, OrganizationType } from '@/lib/types/database'
 import { TemplatesContent } from '@/app/settings/templates/TemplatesContent'
 import { ImportContent } from '@/app/import/ImportContent'
 import { AuditLogContent } from '@/app/audit-log/AuditLogContent'
+import { EmailSettingsTab } from '@/components/email/EmailSettingsTab'
 
 // ---------------------------------------------------------------------------
 // My Profile Tab
@@ -471,6 +471,11 @@ export default function SettingsPage() {
       id: 'import',
       label: 'Import Data',
       content: <ImportContent />,
+    },
+    {
+      id: 'email',
+      label: 'Email',
+      content: <EmailSettingsTab />,
     },
     {
       id: 'audit',

@@ -210,12 +210,35 @@ async function getSystemMetrics() {
   }
 }
 
-function generatePerformanceAlerts(queryStats: any, cacheMetrics: any, systemMetrics: any) {
+interface QueryStats {
+  totalQueries: number
+  cachedQueries: number
+  cacheHitRate: number
+  avgDuration: number
+  slowQueries: number
+  slowQueryRate: number
+}
+
+interface SystemMetrics {
+  memory: {
+    used: number
+    total: number
+    external: number
+    rss: number
+    usage: number
+  }
+  uptime: number
+  nodeVersion: string
+  platform: string
+  cpuUsage: NodeJS.CpuUsage
+}
+
+function generatePerformanceAlerts(queryStats: QueryStats, _cacheMetrics: unknown, systemMetrics: SystemMetrics) {
   const alerts: Array<{
     level: 'info' | 'warning' | 'error'
     message: string
     metric: string
-    value: any
+    value: string | number
   }> = []
 
   // Query performance alerts

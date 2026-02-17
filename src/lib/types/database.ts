@@ -49,6 +49,9 @@ export type AuditEntityType =
   | 'generated_document'
   | 'profile'
   | 'platform_role'
+  | 'email_settings'
+  | 'email_send'
+  | 'email_unsubscribe'
 
 // Document Intelligence types
 export type DocumentType = 'prospect_research' | 'campaign_sequence' | 'competitive_analysis' | 'audit_report' | 'proposal'
@@ -1123,6 +1126,84 @@ export interface PlatformRoleRow {
   role: PlatformRole
   created_at: string
   updated_at: string
+}
+
+// =====================================================
+// EMAIL AUTOMATION TABLES
+// =====================================================
+
+export type EmailSendStatus = 'queued' | 'sending' | 'delivered' | 'opened' | 'clicked' | 'replied' | 'bounced' | 'complained' | 'failed' | 'cancelled'
+
+// Email Settings
+export interface EmailSettingsRow {
+  id: string
+  organization_id: string
+  ses_region: string
+  ses_from_name: string | null
+  ses_from_email: string | null
+  ses_reply_to: string | null
+  ses_config_set: string | null
+  aws_access_key_id_encrypted: string | null
+  aws_secret_key_encrypted: string | null
+  daily_send_limit: number
+  sends_today: number
+  sends_today_reset_at: string
+  delay_between_sends_ms: number
+  sending_enabled: boolean
+  signature_html: string | null
+  signature_plain: string | null
+  hubspot_token_encrypted: string | null
+  hubspot_owner_id: string | null
+  hubspot_enabled: boolean
+  unsubscribe_url: string | null
+  sender_address: string | null
+  created_at: string
+  updated_at: string
+}
+
+// Email Sends
+export interface EmailSendRow {
+  id: string
+  organization_id: string
+  campaign_id: string | null
+  contact_id: string | null
+  activity_id: string | null
+  email_template_id: string | null
+  recipient_email: string
+  from_email: string
+  subject_line: string
+  subject_line_variant: 'A' | 'B' | null
+  body_plain: string | null
+  body_html: string | null
+  ses_message_id: string | null
+  status: EmailSendStatus
+  open_count: number
+  click_count: number
+  first_opened_at: string | null
+  last_opened_at: string | null
+  first_clicked_at: string | null
+  clicked_links: string[] | null
+  bounced_at: string | null
+  bounce_type: string | null
+  complained_at: string | null
+  scheduled_at: string
+  sent_at: string | null
+  error_message: string | null
+  hubspot_engagement_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+// Email Unsubscribes
+export interface EmailUnsubscribeRow {
+  id: string
+  organization_id: string
+  contact_id: string | null
+  email_address: string
+  reason: string | null
+  source_email_send_id: string | null
+  unsubscribed_at: string
+  created_at: string
 }
 
 // =====================================================

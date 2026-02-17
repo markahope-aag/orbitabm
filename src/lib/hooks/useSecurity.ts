@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import { useCSRFToken } from '@/lib/security/csrf'
 
 /**
@@ -13,24 +13,9 @@ import { useCSRFToken } from '@/lib/security/csrf'
  * - Content validation
  */
 
-interface SecurityState {
-  csrfToken: string | null
-  isSecure: boolean
-}
-
 export function useSecurity() {
   const csrfToken = useCSRFToken()
-  const [securityState, setSecurityState] = useState<SecurityState>({
-    csrfToken: null,
-    isSecure: false,
-  })
-
-  useEffect(() => {
-    setSecurityState({
-      csrfToken,
-      isSecure: !!csrfToken && window.location.protocol === 'https:',
-    })
-  }, [csrfToken])
+  const isSecure = !!csrfToken && typeof window !== 'undefined' && window.location.protocol === 'https:'
 
   /**
    * Secure fetch wrapper with CSRF protection
@@ -100,7 +85,7 @@ export function useSecurity() {
    * Generate secure form data with CSRF protection
    */
   const createSecureFormData = useCallback(
-    (data: Record<string, any>): FormData => {
+    (data: Record<string, unknown>): FormData => {
       const formData = new FormData()
       
       // Add CSRF token
@@ -163,7 +148,7 @@ export function useSecurity() {
   const reportSecurityIncident = useCallback(
     async (incident: {
       type: 'xss_attempt' | 'csrf_mismatch' | 'invalid_input' | 'suspicious_behavior'
-      details?: any
+      details?: Record<string, unknown>
     }) => {
       try {
         await secureFetch('/api/security/report', {
@@ -185,8 +170,8 @@ export function useSecurity() {
 
   return {
     // State
-    csrfToken: securityState.csrfToken,
-    isSecure: securityState.isSecure,
+    csrfToken,
+    isSecure,
     
     // Methods
     secureFetch,
@@ -211,7 +196,7 @@ export function useSecureApi() {
   )
 
   const post = useCallback(
-    (url: string, data: any) =>
+    (url: string, data: unknown) =>
       secureFetch(url, {
         method: 'POST',
         body: JSON.stringify(data),
@@ -220,7 +205,7 @@ export function useSecureApi() {
   )
 
   const put = useCallback(
-    (url: string, data: any) =>
+    (url: string, data: unknown) =>
       secureFetch(url, {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -246,13 +231,13 @@ export function useSecureForm() {
    * Create secure form submission handler
    */
   const createSubmitHandler = useCallback(
-    (onSubmit: (data: Record<string, any>) => Promise<void>) =>
+    (onSubmit: (data: Record<string, string | FormDataEntryValue>) => Promise<void>) =>
       async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        
+
         const form = event.currentTarget
         const formData = new FormData(form)
-        const data: Record<string, any> = {}
+        const data: Record<string, string | FormDataEntryValue> = {}
         
         // Extract and sanitize form data
         formData.forEach((value, key) => {

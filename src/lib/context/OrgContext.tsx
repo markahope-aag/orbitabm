@@ -7,6 +7,7 @@ import type { OrganizationRow, PlatformRole, UserRole } from '@/lib/types/databa
 interface OrgContextType {
   currentOrgId: string | null
   currentOrg: OrganizationRow | null
+  homeOrgId: string | null
   organizations: OrganizationRow[] | null
   setCurrentOrg: (org: OrganizationRow) => void
   setCurrentOrgId: (orgId: string) => void
@@ -30,6 +31,7 @@ export function OrgProvider({ children }: OrgProviderProps) {
   const [organizations, setOrganizations] = useState<OrganizationRow[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [homeOrgId, setHomeOrgId] = useState<string | null>(null)
   const [platformRole, setPlatformRole] = useState<PlatformRole | null>(null)
   const [userRole, setUserRole] = useState<UserRole | null>(null)
 
@@ -38,6 +40,7 @@ export function OrgProvider({ children }: OrgProviderProps) {
     if (!user) {
       setOrganizations(null)
       setCurrentOrgId(null)
+      setHomeOrgId(null)
       setPlatformRole(null)
       setUserRole(null)
       setLoading(false)
@@ -58,6 +61,7 @@ export function OrgProvider({ children }: OrgProviderProps) {
       setOrganizations(orgs)
       setPlatformRole(result.platform_role ?? null)
       setUserRole(result.user_role ?? null)
+      setHomeOrgId(result.current_organization_id ?? null)
 
       // Set current organization
       if (orgs.length > 0) {
@@ -118,6 +122,7 @@ export function OrgProvider({ children }: OrgProviderProps) {
   const value: OrgContextType = {
     currentOrgId,
     currentOrg,
+    homeOrgId,
     organizations,
     setCurrentOrg,
     setCurrentOrgId: handleSetCurrentOrgId,

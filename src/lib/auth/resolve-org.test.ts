@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest'
 import { createMockSupabaseClient } from '@/__tests__/mocks/supabase'
 import { resolveUserOrgId } from './resolve-org'

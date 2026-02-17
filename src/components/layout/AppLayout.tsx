@@ -3,7 +3,7 @@
 import { useAuth } from '@/lib/context/AuthContext'
 import { useOrg } from '@/lib/context/OrgContext'
 import { usePathname } from 'next/navigation'
-import { Building2, LogOut } from 'lucide-react'
+import { ArrowLeft, Building2, LogOut } from 'lucide-react'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -12,7 +12,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, sidebar }: AppLayoutProps) {
   const { user, loading: authLoading, signOut } = useAuth()
-  const { organizations, loading: orgLoading, error: orgError, refreshOrganizations } = useOrg()
+  const { organizations, loading: orgLoading, error: orgError, refreshOrganizations, currentOrgId, currentOrg, homeOrgId, setCurrentOrg } = useOrg()
   const pathname = usePathname()
 
   // Check if current route is an auth route
@@ -92,11 +92,30 @@ export function AppLayout({ children, sidebar }: AppLayoutProps) {
     mainContent = children
   }
 
+  const isViewingOtherOrg = currentOrgId && homeOrgId && currentOrgId !== homeOrgId
+  const homeOrg = organizations?.find(org => org.id === homeOrgId) ?? null
+
   // For all app routes: always render sidebar + main shell
   return (
     <div className="flex h-screen bg-slate-50">
       {sidebar}
       <main className="flex-1 overflow-auto">
+        {isViewingOtherOrg && (
+          <div className="sticky top-0 z-30 bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between">
+            <span className="text-sm text-amber-800">
+              Viewing as <strong>{currentOrg?.name}</strong>
+            </span>
+            {homeOrg && (
+              <button
+                onClick={() => setCurrentOrg(homeOrg)}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-900 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Return to {homeOrg.name}
+              </button>
+            )}
+          </div>
+        )}
         {mainContent}
       </main>
     </div>

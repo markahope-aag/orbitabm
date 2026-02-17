@@ -5,7 +5,7 @@ import { createOrganizationSchema } from '@/lib/validations/schemas'
 import { validateRequest } from '@/lib/validations/helpers'
 import { logCreate } from '@/lib/audit'
 import { supabaseConfig } from '@/lib/config'
-import { withSecurity, securityConfigs } from '@/lib/security/api-protection'
+import { withSecurity } from '@/lib/security/api-protection'
 
 const ITEMS_PER_PAGE = 20
 

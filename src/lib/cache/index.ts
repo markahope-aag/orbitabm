@@ -58,7 +58,7 @@ interface CacheEntry<T> {
 
 // In-memory cache using LRU
 class MemoryCache {
-  private cache: LRUCache<string, CacheEntry<any>>
+  private cache: LRUCache<string, CacheEntry<unknown>>
 
   constructor(config: CacheConfig) {
     this.cache = new LRUCache({
@@ -140,16 +140,16 @@ export const cacheKeys = {
   pePlatforms: (orgId: string) => `pe-platforms:${orgId}`,
   
   // Entity keys with filters
-  companies: (orgId: string, filters: Record<string, any> = {}) => 
+  companies: (orgId: string, filters: Record<string, unknown> = {}) => 
     `companies:${orgId}:${JSON.stringify(filters)}`,
   
-  contacts: (orgId: string, filters: Record<string, any> = {}) =>
+  contacts: (orgId: string, filters: Record<string, unknown> = {}) =>
     `contacts:${orgId}:${JSON.stringify(filters)}`,
   
-  campaigns: (orgId: string, filters: Record<string, any> = {}) =>
+  campaigns: (orgId: string, filters: Record<string, unknown> = {}) =>
     `campaigns:${orgId}:${JSON.stringify(filters)}`,
   
-  activities: (orgId: string, filters: Record<string, any> = {}) =>
+  activities: (orgId: string, filters: Record<string, unknown> = {}) =>
     `activities:${orgId}:${JSON.stringify(filters)}`,
   
   // Single entity keys
@@ -158,7 +158,7 @@ export const cacheKeys = {
   campaign: (id: string) => `campaign:${id}`,
   
   // Query result keys
-  query: (table: string, query: string, params: any[]) =>
+  query: (table: string, query: string, params: unknown[]) =>
     `query:${table}:${query}:${JSON.stringify(params)}`,
   
   // User-specific keys
@@ -321,17 +321,17 @@ export async function warmCache(orgId: string) {
 }
 
 // Placeholder fetch functions (to be implemented)
-async function fetchMarkets(orgId: string) {
+async function fetchMarkets(_orgId: string) {
   // Implementation will be added
   return []
 }
 
-async function fetchVerticals(orgId: string) {
+async function fetchVerticals(_orgId: string) {
   // Implementation will be added
   return []
 }
 
-async function fetchPEPlatforms(orgId: string) {
+async function fetchPEPlatforms(_orgId: string) {
   // Implementation will be added
   return []
 }

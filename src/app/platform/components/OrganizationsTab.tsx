@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { DataTable, Badge, SlideOver, ConfirmDialog } from '@/components/ui'
+import { useOrg } from '@/lib/context/OrgContext'
 import { showSuccessToast, showErrorToast } from '@/lib/utils/toast'
-import { Trash2 } from 'lucide-react'
+import { Trash2, ArrowRightLeft } from 'lucide-react'
 import type { OrganizationRow } from '@/lib/types/database'
 
 interface OrgWithMembers extends OrganizationRow {
@@ -14,6 +15,7 @@ interface OrgWithMembers extends OrganizationRow {
 
 export function OrganizationsTab() {
   const supabase = createClient()
+  const { currentOrgId, setCurrentOrg } = useOrg()
   const [orgs, setOrgs] = useState<OrgWithMembers[]>([])
   const [loading, setLoading] = useState(true)
   const [slideOpen, setSlideOpen] = useState(false)
@@ -153,7 +155,20 @@ export function OrganizationsTab() {
   }
 
   const columns = [
-    { key: 'name', header: 'Name' },
+    {
+      key: 'name',
+      header: 'Name',
+      render: (row: OrgWithMembers) => (
+        <span className="flex items-center gap-2">
+          {row.name}
+          {row.id === currentOrgId && (
+            <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-cyan-50 text-cyan-700 rounded">
+              Current
+            </span>
+          )}
+        </span>
+      ),
+    },
     { key: 'slug', header: 'Slug' },
     {
       key: 'type',
@@ -176,13 +191,24 @@ export function OrganizationsTab() {
       key: 'actions',
       header: 'Actions',
       render: (row: OrgWithMembers) => (
-        <button
-          onClick={(e) => { e.stopPropagation(); setDeleteTarget(row) }}
-          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-          title="Delete"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          {row.id !== currentOrgId && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setCurrentOrg(row) }}
+              className="p-1.5 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded transition-colors"
+              title="Switch to this organization"
+            >
+              <ArrowRightLeft className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(row) }}
+            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       ),
     },
   ]

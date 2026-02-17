@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { supabaseConfig } from '@/lib/config'
-import { withSecurity, securityConfigs } from '@/lib/security/api-protection'
-import { cachedFetch, cacheKeys, invalidateCache, invalidationPatterns } from '@/lib/cache'
+import { withSecurity } from '@/lib/security/api-protection'
+import { cacheKeys, invalidateCache, invalidationPatterns } from '@/lib/cache'
 import { getCompaniesWithRelations, batchCreateCompanies, QueryMonitor } from '@/lib/query/optimization'
 
 /**
@@ -244,7 +244,7 @@ async function optionsHandler(request: NextRequest) {
   }
 }
 
-function generatePerformanceRecommendations(stats: any): string[] {
+function generatePerformanceRecommendations(stats: { cacheHitRate: number; avgDuration: number; slowQueryRate: number }): string[] {
   const recommendations: string[] = []
 
   if (stats.cacheHitRate < 0.6) {

@@ -18,6 +18,7 @@ import {
   Layers,
   Users,
   FileSearch,
+  Mail,
   Settings,
   Shield,
 } from 'lucide-react'
@@ -49,6 +50,7 @@ const navigation = [
       { name: 'Contacts', href: '/contacts', icon: Users },
       { name: 'Playbooks', href: '/playbooks', icon: BookOpen },
       { name: 'Activities', href: '/activities', icon: CheckSquare },
+      { name: 'Email Dashboard', href: '/email-dashboard', icon: Mail },
       { name: 'Assets', href: '/assets', icon: FileText },
     ]
   },

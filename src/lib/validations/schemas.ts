@@ -456,3 +456,63 @@ const createGeneratedDocumentFields = {
 }
 export const createGeneratedDocumentSchema = z.object(createGeneratedDocumentFields).strict()
 export const updateGeneratedDocumentSchema = z.object(createGeneratedDocumentFields).partial().strip()
+
+// --- Email Settings ---
+const emailSendStatusSchema = z.enum([
+  'queued', 'sending', 'delivered', 'opened', 'clicked', 'replied',
+  'bounced', 'complained', 'failed', 'cancelled',
+])
+
+const createEmailSettingsFields = {
+  ses_region: z.string().max(50).optional(),
+  ses_from_name: z.string().max(255).nullable().optional(),
+  ses_from_email: z.string().email().max(255).nullable().optional(),
+  ses_reply_to: z.string().email().max(255).nullable().optional(),
+  ses_config_set: z.string().max(255).nullable().optional(),
+  aws_access_key_id: z.string().max(500).nullable().optional(),
+  aws_secret_key: z.string().max(500).nullable().optional(),
+  daily_send_limit: z.number().int().min(1).max(10000).optional(),
+  delay_between_sends_ms: z.number().int().min(0).max(60000).optional(),
+  sending_enabled: z.boolean().optional(),
+  signature_html: z.string().max(10000).nullable().optional(),
+  signature_plain: z.string().max(5000).nullable().optional(),
+  hubspot_token: z.string().max(500).nullable().optional(),
+  hubspot_owner_id: z.string().max(255).nullable().optional(),
+  hubspot_enabled: z.boolean().optional(),
+  unsubscribe_url: z.string().url().max(500).nullable().optional(),
+  sender_address: z.string().max(500).nullable().optional(),
+}
+export const createEmailSettingsSchema = z.object(createEmailSettingsFields).strict()
+export const updateEmailSettingsSchema = z.object(createEmailSettingsFields).partial().strip()
+
+// --- Email Sends ---
+const createEmailSendFields = {
+  campaign_id: uuid.nullable().optional(),
+  contact_id: uuid.nullable().optional(),
+  activity_id: uuid.nullable().optional(),
+  email_template_id: uuid.nullable().optional(),
+  recipient_email: z.string().email().max(255),
+  from_email: z.string().email().max(255),
+  subject_line: shortText,
+  subject_line_variant: z.enum(['A', 'B']).nullable().optional(),
+  body_plain: z.string().max(50000).nullable().optional(),
+  body_html: z.string().max(100000).nullable().optional(),
+  status: emailSendStatusSchema.optional(),
+  scheduled_at: dateStr,
+}
+export const createEmailSendSchema = z.object(createEmailSendFields).strict()
+export const updateEmailSendSchema = z.object(createEmailSendFields).partial().strip()
+
+// --- Email Sends Bulk ---
+export const bulkEmailSendsSchema = z.object({
+  campaign_id: uuid,
+  start_from_step: z.number().int().positive().optional(),
+}).strict()
+
+// --- Webhook SES Events ---
+export const sesEventSchema = z.object({
+  ses_message_id: z.string().min(1),
+  event_type: z.enum(['Open', 'Click', 'Bounce', 'Complaint', 'Delivery']),
+  timestamp: z.string().optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
+})

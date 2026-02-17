@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // Log the security incident
     logSecurityEvent({
-      type: type as any,
+      type: type as 'csrf_violation' | 'rate_limit_exceeded' | 'invalid_input' | 'suspicious_activity' | 'xss_attempt' | 'csrf_mismatch' | 'suspicious_behavior',
       ip: clientIP,
       userAgent: userAgent || request.headers.get('user-agent') || undefined,
       path: url || request.nextUrl.pathname,
@@ -146,7 +146,7 @@ function getSeverityLevel(type: string): 'low' | 'medium' | 'high' | 'critical' 
 /**
  * GET endpoint for security incident statistics (admin only)
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(

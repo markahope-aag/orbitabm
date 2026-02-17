@@ -9,7 +9,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import { cachedFetch, cacheKeys, dynamicCache, staticCache } from '@/lib/cache'
+import { cachedFetch, cacheKeys, dynamicCache } from '@/lib/cache'
 import { extractDomain } from '@/lib/utils/normalize'
 
 // DataLoader-like batch loading utility
@@ -138,11 +138,11 @@ export const campaignLoader = new BatchLoader(async (ids: readonly string[]) => 
 
 // Optimized query builders
 export class OptimizedQuery {
-  private supabase: any
+  private supabase: Awaited<ReturnType<typeof createClient>> | null = null
   private tableName: string
   private selectClause: string = '*'
   private joinClauses: string[] = []
-  private whereConditions: Array<{ column: string; operator: string; value: any }> = []
+  private whereConditions: Array<{ column: string; operator: string; value: string | number | boolean | null | (string | number)[] }> = []
   private orderBy: Array<{ column: string; ascending: boolean }> = []
   private limitValue?: number
   private offsetValue?: number
@@ -176,20 +176,20 @@ export class OptimizedQuery {
     return this
   }
 
-  where(column: string, operator: string, value: any) {
+  where(column: string, operator: string, value: string | number | boolean | null | (string | number)[]) {
     this.whereConditions.push({ column, operator, value })
     return this
   }
 
-  eq(column: string, value: any) {
+  eq(column: string, value: string | number | boolean | null) {
     return this.where(column, 'eq', value)
   }
 
-  in(column: string, values: any[]) {
+  in(column: string, values: (string | number)[]) {
     return this.where(column, 'in', values)
   }
 
-  is(column: string, value: any) {
+  is(column: string, value: null | boolean) {
     return this.where(column, 'is', value)
   }
 
@@ -231,7 +231,7 @@ export class OptimizedQuery {
   }
 
   private async executeQuery() {
-    let query = this.supabase
+    let query = this.supabase!
       .from(this.tableName)
       .select(this.selectClause)
 
@@ -242,7 +242,7 @@ export class OptimizedQuery {
           query = query.eq(column, value)
           break
         case 'in':
-          query = query.in(column, value)
+          query = query.in(column, value as (string | number)[])
           break
         case 'gte':
           query = query.gte(column, value)
@@ -296,7 +296,7 @@ export class OptimizedQuery {
 // Optimized query functions for common patterns
 export async function getCompaniesWithRelations(
   organizationId: string,
-  filters: Record<string, any> = {},
+  filters: Record<string, string | number | boolean | null | undefined> = {},
   options: { limit?: number; offset?: number } = {}
 ) {
   const query = new OptimizedQuery('companies')
@@ -329,7 +329,7 @@ export async function getCompaniesWithRelations(
 
 export async function getContactsWithCompanies(
   organizationId: string,
-  filters: Record<string, any> = {},
+  filters: Record<string, string | number | boolean | null | undefined> = {},
   options: { limit?: number; offset?: number } = {}
 ) {
   const query = new OptimizedQuery('contacts')
@@ -360,7 +360,7 @@ export async function getContactsWithCompanies(
 
 export async function getCampaignsWithRelations(
   organizationId: string,
-  filters: Record<string, any> = {},
+  filters: Record<string, string | number | boolean | null | undefined> = {},
   options: { limit?: number; offset?: number } = {}
 ) {
   const query = new OptimizedQuery('campaigns')
@@ -392,7 +392,7 @@ export async function getCampaignsWithRelations(
 
 // Batch operations to reduce round trips
 export async function batchCreateCompanies(
-  companies: any[],
+  companies: Array<Record<string, unknown> & { website?: string | null }>,
   organizationId: string
 ) {
   const supabase = await createClient()

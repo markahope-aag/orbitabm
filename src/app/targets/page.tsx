@@ -62,7 +62,7 @@ export default function TargetsPage() {
 
       // 2. Batch-fetch campaigns for those companies (skip if none)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let campaignsByCompany: Record<string, any> = {}
+      const campaignsByCompany: Record<string, any> = {}
 
       if (companyIds.length > 0) {
         const { data: cData, error: campError } = await supabase

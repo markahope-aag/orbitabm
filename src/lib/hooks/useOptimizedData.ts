@@ -11,7 +11,7 @@
  * - Error boundaries and retry logic
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cachedFetch, cacheKeys, invalidateCache, invalidationPatterns } from '@/lib/cache'
 import { 
@@ -45,13 +45,14 @@ interface UseOptimizedSingleResult<T> {
 }
 
 // Request deduplication map
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pendingRequests = new Map<string, Promise<any>>()
 
 // Generic optimized data hook
 function useOptimizedData<T>(
   key: string,
   fetcher: () => Promise<T>,
-  dependencies: any[] = [],
+  dependencies: unknown[] = [],
   options: {
     enabled?: boolean
     refetchOnMount?: boolean
@@ -70,7 +71,7 @@ function useOptimizedData<T>(
     enabled = true,
     refetchOnMount = true,
     refetchInterval,
-    staleTime = 5 * 60 * 1000, // 5 minutes
+    staleTime: _staleTime = 5 * 60 * 1000, // 5 minutes
   } = options
 
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -135,6 +136,7 @@ function useOptimizedData<T>(
         setLoading(false)
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, fetcher, enabled, ...dependencies])
 
   // Initial fetch
@@ -183,61 +185,67 @@ function useOptimizedData<T>(
     isStale,
     fromCache,
     lastUpdated,
-  } as any
+  } as UseOptimizedDataResult<T> & UseOptimizedSingleResult<T>
 }
 
 // Optimized companies hook
 export function useOptimizedCompanies(
   organizationId: string,
-  filters: Record<string, any> = {},
+  filters: Record<string, string | number | boolean | null | undefined> = {},
   options: { limit?: number; offset?: number } = {}
 ) {
-  const key = cacheKeys.companies(organizationId, { ...filters, ...options })
-  
+  const filtersKey = JSON.stringify(filters)
+  const optionsKey = JSON.stringify(options)
+  const stableFilters = useMemo(() => filters, [filtersKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const stableOptions = useMemo(() => options, [optionsKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const key = cacheKeys.companies(organizationId, { ...stableFilters, ...stableOptions })
+
   const fetcher = useCallback(async () => {
     if (!organizationId) return { data: [], count: 0 }
-    
-    const result = await getCompaniesWithRelations(organizationId, filters, options)
-    return result
-  }, [organizationId, JSON.stringify(filters), JSON.stringify(options)])
+    return getCompaniesWithRelations(organizationId, stableFilters, stableOptions)
+  }, [organizationId, stableFilters, stableOptions])
 
-  return useOptimizedData(key, fetcher, [organizationId, filters, options])
+  return useOptimizedData(key, fetcher, [organizationId, filtersKey, optionsKey])
 }
 
 // Optimized contacts hook
 export function useOptimizedContacts(
   organizationId: string,
-  filters: Record<string, any> = {},
+  filters: Record<string, string | number | boolean | null | undefined> = {},
   options: { limit?: number; offset?: number } = {}
 ) {
-  const key = cacheKeys.contacts(organizationId, { ...filters, ...options })
-  
+  const filtersKey = JSON.stringify(filters)
+  const optionsKey = JSON.stringify(options)
+  const stableFilters = useMemo(() => filters, [filtersKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const stableOptions = useMemo(() => options, [optionsKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const key = cacheKeys.contacts(organizationId, { ...stableFilters, ...stableOptions })
+
   const fetcher = useCallback(async () => {
     if (!organizationId) return { data: [], count: 0 }
-    
-    const result = await getContactsWithCompanies(organizationId, filters, options)
-    return result
-  }, [organizationId, JSON.stringify(filters), JSON.stringify(options)])
+    return getContactsWithCompanies(organizationId, stableFilters, stableOptions)
+  }, [organizationId, stableFilters, stableOptions])
 
-  return useOptimizedData(key, fetcher, [organizationId, filters, options])
+  return useOptimizedData(key, fetcher, [organizationId, filtersKey, optionsKey])
 }
 
 // Optimized campaigns hook
 export function useOptimizedCampaigns(
   organizationId: string,
-  filters: Record<string, any> = {},
+  filters: Record<string, string | number | boolean | null | undefined> = {},
   options: { limit?: number; offset?: number } = {}
 ) {
-  const key = cacheKeys.campaigns(organizationId, { ...filters, ...options })
-  
+  const filtersKey = JSON.stringify(filters)
+  const optionsKey = JSON.stringify(options)
+  const stableFilters = useMemo(() => filters, [filtersKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const stableOptions = useMemo(() => options, [optionsKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const key = cacheKeys.campaigns(organizationId, { ...stableFilters, ...stableOptions })
+
   const fetcher = useCallback(async () => {
     if (!organizationId) return { data: [], count: 0 }
-    
-    const result = await getCampaignsWithRelations(organizationId, filters, options)
-    return result
-  }, [organizationId, JSON.stringify(filters), JSON.stringify(options)])
+    return getCampaignsWithRelations(organizationId, stableFilters, stableOptions)
+  }, [organizationId, stableFilters, stableOptions])
 
-  return useOptimizedData(key, fetcher, [organizationId, filters, options])
+  return useOptimizedData(key, fetcher, [organizationId, filtersKey, optionsKey])
 }
 
 // Optimized single entity hooks using batch loaders
@@ -396,7 +404,7 @@ export function useOptimizedMutation<T, V>(
 
 // Bulk operations hook
 export function useBulkOperations<T>(
-  operationFn: (items: T[]) => Promise<any>,
+  operationFn: (items: T[]) => Promise<unknown>,
   options: {
     batchSize?: number
     onProgress?: (completed: number, total: number) => void
