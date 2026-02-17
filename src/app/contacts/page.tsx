@@ -46,6 +46,13 @@ export default function ContactsPage() {
     linkedin_url: '',
     is_primary: false,
     relationship_status: 'unknown',
+    department: '',
+    email_source: '',
+    persona: '',
+    priority: '',
+    buying_role: '',
+    enrich_status: 'not_started',
+    hubspot_contact_id: '',
     notes: ''
   })
 
@@ -144,6 +151,13 @@ export default function ContactsPage() {
       linkedin_url: contact.linkedin_url || '',
       is_primary: contact.is_primary,
       relationship_status: contact.relationship_status || 'unknown',
+      department: contact.department || '',
+      email_source: contact.email_source || '',
+      persona: contact.persona || '',
+      priority: contact.priority || '',
+      buying_role: contact.buying_role || '',
+      enrich_status: contact.enrich_status || 'not_started',
+      hubspot_contact_id: contact.hubspot_contact_id || '',
       notes: contact.notes || ''
     })
     setContactModalOpen(true)
@@ -182,6 +196,13 @@ export default function ContactsPage() {
       linkedin_url: '',
       is_primary: false,
       relationship_status: 'unknown',
+      department: '',
+      email_source: '',
+      persona: '',
+      priority: '',
+      buying_role: '',
+      enrich_status: 'not_started',
+      hubspot_contact_id: '',
       notes: ''
     })
   }
@@ -495,6 +516,108 @@ export default function ContactsPage() {
             <label htmlFor="is_primary" className="text-sm font-medium text-slate-700">
               Primary Contact
             </label>
+          </div>
+
+          {/* ABM Details */}
+          <div className="border-t border-slate-200 pt-4 mt-4">
+            <h4 className="text-sm font-semibold text-slate-900 mb-3">ABM Details</h4>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                  <input
+                    type="text"
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    placeholder="e.g., Operations"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Persona</label>
+                  <input
+                    type="text"
+                    value={formData.persona}
+                    onChange={(e) => setFormData({ ...formData, persona: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    placeholder="Buyer persona type"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Buying Role</label>
+                  <input
+                    type="text"
+                    value={formData.buying_role}
+                    onChange={(e) => setFormData({ ...formData, buying_role: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    placeholder="e.g., Decision Maker"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
+                  <select
+                    value={formData.priority}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  >
+                    <option value="">None</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Enrichment */}
+          <div className="border-t border-slate-200 pt-4 mt-4">
+            <h4 className="text-sm font-semibold text-slate-900 mb-3">Enrichment</h4>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Enrich Status</label>
+                  <select
+                    value={formData.enrich_status}
+                    onChange={(e) => setFormData({ ...formData, enrich_status: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  >
+                    <option value="not_started">Not Started</option>
+                    <option value="email_found">Email Found</option>
+                    <option value="verified">Verified</option>
+                    <option value="no_email">No Email</option>
+                    <option value="skip">Skip</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Email Source</label>
+                  <input
+                    type="text"
+                    value={formData.email_source}
+                    onChange={(e) => setFormData({ ...formData, email_source: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    placeholder="e.g., Hunter, ZoomInfo"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">HubSpot Contact ID</label>
+                <input
+                  type="text"
+                  value={formData.hubspot_contact_id}
+                  onChange={(e) => setFormData({ ...formData, hubspot_contact_id: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  placeholder="HubSpot CRM ID"
+                />
+              </div>
+            </div>
           </div>
 
           <div>

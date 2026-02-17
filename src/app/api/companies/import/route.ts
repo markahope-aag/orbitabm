@@ -250,6 +250,7 @@ export async function POST(request: NextRequest) {
             'year_founded', 'ownership_type', 'qualifying_tier', 'status',
             'manufacturer_affiliations', 'certifications', 'awards', 'notes',
             'market_id', 'vertical_id',
+            'sub_industry', 'revenue_range', 'current_vendor', 'hubspot_company_id',
           ]
 
           for (const field of mergeFields) {

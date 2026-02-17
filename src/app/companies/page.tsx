@@ -38,6 +38,10 @@ interface CompanyFormData {
   awards: string
   qualifying_tier: 'top' | 'qualified' | 'borderline' | 'excluded' | null
   status: 'prospect' | 'target' | 'active_campaign' | 'client' | 'lost' | 'churned' | 'excluded'
+  sub_industry: string
+  revenue_range: string
+  current_vendor: string
+  hubspot_company_id: string
   notes: string
 }
 
@@ -62,6 +66,10 @@ const initialFormData: CompanyFormData = {
   awards: '',
   qualifying_tier: null,
   status: 'prospect',
+  sub_industry: '',
+  revenue_range: '',
+  current_vendor: '',
+  hubspot_company_id: '',
   notes: ''
 }
 
@@ -129,6 +137,10 @@ export default function Companies() {
               awards: formData.awards.trim() || null,
               qualifying_tier: formData.qualifying_tier,
               status: formData.status,
+              sub_industry: formData.sub_industry.trim() || null,
+              revenue_range: formData.revenue_range.trim() || null,
+              current_vendor: formData.current_vendor.trim() || null,
+              hubspot_company_id: formData.hubspot_company_id.trim() || null,
               notes: formData.notes.trim() || null
             }
             const { error } = await supabase
@@ -162,6 +174,10 @@ export default function Companies() {
               awards: formData.awards.trim() || null,
               qualifying_tier: formData.qualifying_tier,
               status: formData.status,
+              sub_industry: formData.sub_industry.trim() || null,
+              revenue_range: formData.revenue_range.trim() || null,
+              current_vendor: formData.current_vendor.trim() || null,
+              hubspot_company_id: formData.hubspot_company_id.trim() || null,
               notes: formData.notes.trim() || null
             }
             const { error } = await supabase
@@ -686,6 +702,41 @@ export default function Companies() {
                     placeholder="e.g., Best HVAC Company 2023"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Sub-Industry</label>
+                    <input
+                      type="text"
+                      value={formData.sub_industry}
+                      onChange={(e) => setFormData(prev => ({ ...prev, sub_industry: e.target.value }))}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      placeholder="e.g., Commercial HVAC"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Revenue Range</label>
+                    <input
+                      type="text"
+                      value={formData.revenue_range}
+                      onChange={(e) => setFormData(prev => ({ ...prev, revenue_range: e.target.value }))}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      placeholder="e.g., $10M-$50M"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Current Vendor</label>
+                  <input
+                    type="text"
+                    value={formData.current_vendor}
+                    onChange={(e) => setFormData(prev => ({ ...prev, current_vendor: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    placeholder="Current vendor/competitor"
+                  />
+                </div>
               </div>
             </div>
 
@@ -731,6 +782,17 @@ export default function Companies() {
                       <option value="excluded">Excluded</option>
                     </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">HubSpot Company ID</label>
+                  <input
+                    type="text"
+                    value={formData.hubspot_company_id}
+                    onChange={(e) => setFormData(prev => ({ ...prev, hubspot_company_id: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    placeholder="HubSpot CRM ID"
+                  />
                 </div>
 
                 <div>

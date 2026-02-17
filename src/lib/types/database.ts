@@ -58,6 +58,8 @@ export type DocumentType = 'prospect_research' | 'campaign_sequence' | 'competit
 export type DocumentStatus = 'draft' | 'in_review' | 'approved' | 'delivered' | 'archived'
 export type TargetContactRole = 'economic_buyer' | 'technical_buyer' | 'brand_buyer' | 'champion' | 'any'
 export type DMURole = 'economic_buyer' | 'technical_buyer' | 'brand_buyer' | 'champion' | 'blocker' | 'influencer' | 'unknown'
+export type ContactPriority = 'high' | 'medium' | 'low'
+export type EnrichStatus = 'not_started' | 'email_found' | 'verified' | 'no_email' | 'skip'
 
 // =====================================================
 // TABLE TYPES
@@ -332,6 +334,10 @@ export interface CompanyRow {
   readiness_score: number | null
   last_researched_at: string | null
   domain: string | null
+  sub_industry: string | null
+  revenue_range: string | null
+  current_vendor: string | null
+  hubspot_company_id: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -364,6 +370,10 @@ export interface CompanyInsert {
   awards?: string | null
   readiness_score?: number | null
   last_researched_at?: string | null
+  sub_industry?: string | null
+  revenue_range?: string | null
+  current_vendor?: string | null
+  hubspot_company_id?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -396,6 +406,10 @@ export interface CompanyUpdate {
   awards?: string | null
   readiness_score?: number | null
   last_researched_at?: string | null
+  sub_industry?: string | null
+  revenue_range?: string | null
+  current_vendor?: string | null
+  hubspot_company_id?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -418,6 +432,13 @@ export interface ContactRow {
   dmu_role: DMURole | null
   email_verified: boolean
   email_verification_date: string | null
+  department: string | null
+  email_source: string | null
+  persona: string | null
+  priority: ContactPriority | null
+  buying_role: string | null
+  enrich_status: EnrichStatus
+  hubspot_contact_id: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -439,6 +460,13 @@ export interface ContactInsert {
   dmu_role?: DMURole | null
   email_verified?: boolean
   email_verification_date?: string | null
+  department?: string | null
+  email_source?: string | null
+  persona?: string | null
+  priority?: ContactPriority | null
+  buying_role?: string | null
+  enrich_status?: EnrichStatus
+  hubspot_contact_id?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -460,6 +488,13 @@ export interface ContactUpdate {
   dmu_role?: DMURole | null
   email_verified?: boolean
   email_verification_date?: string | null
+  department?: string | null
+  email_source?: string | null
+  persona?: string | null
+  priority?: ContactPriority | null
+  buying_role?: string | null
+  enrich_status?: EnrichStatus
+  hubspot_contact_id?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -1048,6 +1083,7 @@ export interface EmailTemplateRow {
   body: string
   target_contact_role: TargetContactRole | null
   merge_fields_required: string[] | null
+  cta_type: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -1064,6 +1100,7 @@ export interface EmailTemplateInsert {
   body: string
   target_contact_role?: TargetContactRole | null
   merge_fields_required?: string[] | null
+  cta_type?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -1080,6 +1117,7 @@ export interface EmailTemplateUpdate {
   body?: string
   target_contact_role?: TargetContactRole | null
   merge_fields_required?: string[] | null
+  cta_type?: string | null
   notes?: string | null
   created_at?: string
   updated_at?: string

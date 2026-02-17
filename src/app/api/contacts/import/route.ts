@@ -9,6 +9,9 @@ const VALID_RELATIONSHIP_STATUSES = new Set([
   'unknown', 'identified', 'connected', 'engaged', 'responsive', 'meeting_held', 'client',
 ])
 
+const VALID_PRIORITIES = new Set(['high', 'medium', 'low'])
+const VALID_ENRICH_STATUSES = new Set(['not_started', 'email_found', 'verified', 'no_email', 'skip'])
+
 function trimString(val: string | null | undefined): string | null {
   if (val == null) return null
   const trimmed = val.trim()
@@ -83,6 +86,9 @@ export async function POST(request: NextRequest) {
 
         const relStatus = trimString(record.relationship_status)
 
+        const priority = trimString(record.priority)
+        const enrichStatus = trimString(record.enrich_status)
+
         processedData.push({
           organization_id,
           company_id,
@@ -94,6 +100,14 @@ export async function POST(request: NextRequest) {
           linkedin_url: trimString(record.linkedin_url),
           is_primary: parseBool(record.is_primary),
           relationship_status: relStatus && VALID_RELATIONSHIP_STATUSES.has(relStatus) ? relStatus : 'unknown',
+          department: trimString(record.department),
+          email_source: trimString(record.email_source),
+          persona: trimString(record.persona),
+          priority: priority && VALID_PRIORITIES.has(priority) ? priority : null,
+          buying_role: trimString(record.buying_role),
+          dmu_role: trimString(record.dmu_role),
+          enrich_status: enrichStatus && VALID_ENRICH_STATUSES.has(enrichStatus) ? enrichStatus : 'not_started',
+          hubspot_contact_id: trimString(record.hubspot_contact_id),
           notes: trimString(record.notes),
         })
       } catch (err) {
@@ -134,7 +148,11 @@ export async function POST(request: NextRequest) {
 
           // Merge: overlay non-null CSV values onto existing
           const merged = { ...csvRow }
-          const mergeFields = ['title', 'phone', 'linkedin_url', 'notes']
+          const mergeFields = [
+            'title', 'phone', 'linkedin_url', 'notes',
+            'department', 'email_source', 'persona', 'priority',
+            'buying_role', 'dmu_role', 'enrich_status', 'hubspot_contact_id',
+          ]
           for (const field of mergeFields) {
             if (merged[field] === null || merged[field] === undefined) {
               merged[field] = existingRow[field] ?? null

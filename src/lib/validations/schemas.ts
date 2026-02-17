@@ -58,6 +58,8 @@ const documentTypeSchema = z.enum(['prospect_research', 'campaign_sequence', 'co
 const documentStatusSchema = z.enum(['draft', 'in_review', 'approved', 'delivered', 'archived'])
 const targetContactRoleSchema = z.enum(['economic_buyer', 'technical_buyer', 'brand_buyer', 'champion', 'any'])
 const dmuRoleSchema = z.enum(['economic_buyer', 'technical_buyer', 'brand_buyer', 'champion', 'blocker', 'influencer', 'unknown'])
+const contactPrioritySchema = z.enum(['high', 'medium', 'low'])
+const enrichStatusSchema = z.enum(['not_started', 'email_found', 'verified', 'no_email', 'skip'])
 
 // =====================================================
 // ENTITY SCHEMAS
@@ -178,6 +180,10 @@ const createCompanyFields = {
   awards: optionalText,
   readiness_score: z.number().min(0).max(10).nullable().optional(),
   last_researched_at: dateStr.nullable().optional(),
+  sub_industry: optionalText,
+  revenue_range: z.string().max(255).nullable().optional(),
+  current_vendor: z.string().max(255).nullable().optional(),
+  hubspot_company_id: z.string().max(255).nullable().optional(),
   notes: optionalText,
 }
 export const createCompanySchema = z.object(createCompanyFields).strict()
@@ -204,6 +210,10 @@ const companyImportItemSchema = z.object({
   manufacturer_affiliations: z.string().nullable().optional(),
   certifications: z.string().nullable().optional(),
   awards: z.string().nullable().optional(),
+  sub_industry: z.string().nullable().optional(),
+  revenue_range: z.string().nullable().optional(),
+  current_vendor: z.string().nullable().optional(),
+  hubspot_company_id: z.string().nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   market: z.string().nullable().optional(),
   vertical: z.string().nullable().optional(),
@@ -229,6 +239,13 @@ const createContactFields = {
   dmu_role: dmuRoleSchema.nullable().optional(),
   email_verified: z.boolean().optional(),
   email_verification_date: dateStr.nullable().optional(),
+  department: z.string().max(255).nullable().optional(),
+  email_source: z.string().max(255).nullable().optional(),
+  persona: z.string().max(255).nullable().optional(),
+  priority: contactPrioritySchema.nullable().optional(),
+  buying_role: z.string().max(255).nullable().optional(),
+  enrich_status: enrichStatusSchema.optional(),
+  hubspot_contact_id: z.string().max(255).nullable().optional(),
   notes: optionalText,
 }
 export const createContactSchema = z.object(createContactFields).strict()
@@ -245,6 +262,14 @@ const contactImportItemSchema = z.object({
   linkedin_url: z.string().max(500).nullable().optional(),
   is_primary: z.union([z.boolean(), z.string()]).nullable().optional(),
   relationship_status: z.string().nullable().optional(),
+  dmu_role: z.string().nullable().optional(),
+  department: z.string().nullable().optional(),
+  email_source: z.string().nullable().optional(),
+  persona: z.string().nullable().optional(),
+  priority: z.string().nullable().optional(),
+  buying_role: z.string().nullable().optional(),
+  enrich_status: z.string().nullable().optional(),
+  hubspot_contact_id: z.string().nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
 }).passthrough()
 export const importContactsSchema = z.object({
@@ -420,6 +445,7 @@ const createEmailTemplateFields = {
   body: longText,
   target_contact_role: targetContactRoleSchema.nullable().optional(),
   merge_fields_required: z.array(z.string().max(100)).nullable().optional(),
+  cta_type: z.string().max(255).nullable().optional(),
   notes: optionalText,
 }
 export const createEmailTemplateSchema = z.object(createEmailTemplateFields).strict()
