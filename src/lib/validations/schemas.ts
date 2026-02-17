@@ -282,10 +282,10 @@ export const importContactsSchema = z.object({
 const createCampaignFields = {
   organization_id: uuid,
   name: shortText,
-  company_id: uuid,
+  company_id: uuid.nullable().optional(),
   playbook_template_id: uuid.nullable().optional(),
-  market_id: uuid,
-  vertical_id: uuid,
+  market_id: uuid.nullable().optional(),
+  vertical_id: uuid.nullable().optional(),
   status: campaignStatusSchema.optional(),
   start_date: dateStr.nullable().optional(),
   end_date: dateStr.nullable().optional(),

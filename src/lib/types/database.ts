@@ -708,10 +708,10 @@ export interface CampaignRow {
   id: string
   organization_id: string
   name: string
-  company_id: string
+  company_id: string | null
   playbook_template_id: string | null
-  market_id: string
-  vertical_id: string
+  market_id: string | null
+  vertical_id: string | null
   status: CampaignStatus
   start_date: string | null
   end_date: string | null
@@ -735,10 +735,10 @@ export interface CampaignInsert {
   id?: string
   organization_id: string
   name: string
-  company_id: string
+  company_id?: string | null
   playbook_template_id?: string | null
-  market_id: string
-  vertical_id: string
+  market_id?: string | null
+  vertical_id?: string | null
   status?: CampaignStatus
   start_date?: string | null
   end_date?: string | null
