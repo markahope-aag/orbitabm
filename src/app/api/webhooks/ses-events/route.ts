@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Look up the email send by SES message ID
     const { data: emailSend, error: lookupError } = await supabase
       .from('email_sends')
-      .select('id, organization_id, contact_id, campaign_id, status, open_count, click_count, clicked_links')
+      .select('id, organization_id, contact_id, campaign_id, activity_id, status, open_count, click_count, clicked_links')
       .eq('ses_message_id', ses_message_id)
       .single()
 
@@ -61,12 +61,11 @@ export async function POST(request: NextRequest) {
           update.status = 'opened'
         }
         // Update activity outcome
-        if (emailSend.contact_id) {
+        if (emailSend.activity_id) {
           await supabase
             .from('activities')
             .update({ outcome: 'opened' })
-            .eq('id', emailSend.id)
-            .eq('organization_id', emailSend.organization_id)
+            .eq('id', emailSend.activity_id)
         }
         break
 
@@ -86,6 +85,13 @@ export async function POST(request: NextRequest) {
         if (emailSend.status !== 'replied') {
           update.status = 'clicked'
         }
+        // Update activity outcome
+        if (emailSend.activity_id) {
+          await supabase
+            .from('activities')
+            .update({ outcome: 'clicked' })
+            .eq('id', emailSend.activity_id)
+        }
         break
       }
 
@@ -93,6 +99,13 @@ export async function POST(request: NextRequest) {
         update.bounced_at = now
         update.bounce_type = (details?.bounceType as string) || 'Permanent'
         update.status = 'bounced'
+        // Update activity outcome
+        if (emailSend.activity_id) {
+          await supabase
+            .from('activities')
+            .update({ outcome: 'bounced', status: 'completed' })
+            .eq('id', emailSend.activity_id)
+        }
 
         // Auto-pause: mark contact unsubscribed, cancel remaining queued sends
         const isPermanent = update.bounce_type === 'Permanent'
@@ -139,6 +152,13 @@ export async function POST(request: NextRequest) {
       case 'Complaint': {
         update.complained_at = now
         update.status = 'complained'
+        // Update activity outcome
+        if (emailSend.activity_id) {
+          await supabase
+            .from('activities')
+            .update({ outcome: 'complained', status: 'completed' })
+            .eq('id', emailSend.activity_id)
+        }
 
         // Same auto-pause as bounce
         if (emailSend.contact_id) {
