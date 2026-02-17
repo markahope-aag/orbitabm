@@ -52,7 +52,7 @@ export default function TargetsPage() {
         .from('companies')
         .select('*, markets(name, state), verticals(name)')
         .eq('organization_id', currentOrgId!)
-        .in('status', ['target', 'active_campaign'])
+        .in('status', ['prospect', 'target', 'active_campaign'])
         .is('deleted_at', null)
         .order('name')
 
@@ -302,6 +302,7 @@ export default function TargetsPage() {
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               >
                 <option value="">All</option>
+                <option value="prospect">Prospect</option>
                 <option value="target">Target</option>
                 <option value="active_campaign">Active Campaign</option>
               </select>
