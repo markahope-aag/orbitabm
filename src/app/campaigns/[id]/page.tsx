@@ -24,7 +24,11 @@ import {
   Users,
   MoreHorizontal,
   Target,
-  FileText
+  FileText,
+  Send,
+  Eye,
+  MousePointer,
+  XCircle
 } from 'lucide-react'
 import { useOrg } from '@/lib/context/OrgContext'
 import type {
@@ -71,6 +75,41 @@ interface AssetWithCompany extends AssetRow {
   companies?: { name: string }
 }
 
+interface EmailSendRow {
+  id: string
+  recipient_email: string
+  subject_line: string
+  status: string
+  scheduled_at: string | null
+  sent_at: string | null
+  open_count: number
+  click_count: number
+  bounced_at: string | null
+  error_message: string | null
+  contacts?: { id: string; first_name: string; last_name: string; email: string } | null
+}
+
+function EmailStatusBadge({ status }: { status: string }) {
+  const config: Record<string, { bg: string; text: string; label: string }> = {
+    queued: { bg: 'bg-slate-100', text: 'text-slate-700', label: 'Queued' },
+    sending: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Sending' },
+    delivered: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Delivered' },
+    opened: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Opened' },
+    clicked: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Clicked' },
+    replied: { bg: 'bg-cyan-100', text: 'text-cyan-700', label: 'Replied' },
+    bounced: { bg: 'bg-red-100', text: 'text-red-700', label: 'Bounced' },
+    complained: { bg: 'bg-red-100', text: 'text-red-700', label: 'Complained' },
+    failed: { bg: 'bg-red-100', text: 'text-red-700', label: 'Failed' },
+    cancelled: { bg: 'bg-slate-100', text: 'text-slate-500', label: 'Cancelled' },
+  }
+  const c = config[status] || { bg: 'bg-slate-100', text: 'text-slate-700', label: status }
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${c.bg} ${c.text}`}>
+      {c.label}
+    </span>
+  )
+}
+
 const channelIcons = {
   mail: Mail,
   email: MessageSquare,
@@ -95,6 +134,7 @@ export default function CampaignDetailPage() {
   const [assets, setAssets] = useState<AssetWithCompany[]>([])
   const [latestSnapshot, setLatestSnapshot] = useState<DigitalSnapshotRow | null>(null)
   const [sequenceDoc, setSequenceDoc] = useState<GeneratedDocumentRow | null>(null)
+  const [emailSends, setEmailSends] = useState<EmailSendRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -247,6 +287,20 @@ export default function CampaignDetailPage() {
         .maybeSingle()
 
       setSequenceDoc(seqData as GeneratedDocumentRow | null)
+
+      // Fetch email sends for this campaign
+      const { data: emailSendsData } = await supabase
+        .from('email_sends')
+        .select(`
+          id, recipient_email, subject_line, status, scheduled_at, sent_at,
+          open_count, click_count, bounced_at, error_message,
+          contacts (id, first_name, last_name, email)
+        `)
+        .eq('campaign_id', campaignId)
+        .order('scheduled_at', { ascending: true })
+        .limit(100)
+
+      setEmailSends((emailSendsData as unknown as EmailSendRow[]) || [])
 
     } catch (err) {
       console.error('Error fetching campaign data:', err)
@@ -641,6 +695,85 @@ export default function CampaignDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Email Queue Section */}
+            {emailSends.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 mt-8">
+                <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <h2 className="text-xl font-semibold text-slate-900">Email Queue</h2>
+                    <span className="text-sm text-slate-500">
+                      {emailSends.length} email{emailSends.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-1 text-emerald-600">
+                      <Send className="w-4 h-4" />
+                      <span>{emailSends.filter(e => e.status === 'delivered' || e.status === 'opened' || e.status === 'clicked').length} sent</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-blue-600">
+                      <Clock className="w-4 h-4" />
+                      <span>{emailSends.filter(e => e.status === 'queued').length} queued</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-amber-600">
+                      <Eye className="w-4 h-4" />
+                      <span>{emailSends.filter(e => e.open_count > 0).length} opened</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-purple-600">
+                      <MousePointer className="w-4 h-4" />
+                      <span>{emailSends.filter(e => e.click_count > 0).length} clicked</span>
+                    </div>
+                    {emailSends.some(e => e.status === 'bounced' || e.status === 'failed') && (
+                      <div className="flex items-center space-x-1 text-red-600">
+                        <XCircle className="w-4 h-4" />
+                        <span>{emailSends.filter(e => e.status === 'bounced' || e.status === 'failed').length} failed</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th className="text-left px-6 py-3 font-medium text-slate-600">Contact</th>
+                        <th className="text-left px-6 py-3 font-medium text-slate-600">Subject</th>
+                        <th className="text-left px-6 py-3 font-medium text-slate-600">Scheduled</th>
+                        <th className="text-left px-6 py-3 font-medium text-slate-600">Status</th>
+                        <th className="text-center px-6 py-3 font-medium text-slate-600">Opens</th>
+                        <th className="text-center px-6 py-3 font-medium text-slate-600">Clicks</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {emailSends.map((send) => (
+                        <tr key={send.id} className="hover:bg-slate-50">
+                          <td className="px-6 py-3">
+                            <div className="font-medium text-slate-900">
+                              {send.contacts ? `${send.contacts.first_name} ${send.contacts.last_name}` : 'Unknown'}
+                            </div>
+                            <div className="text-xs text-slate-500">{send.recipient_email}</div>
+                          </td>
+                          <td className="px-6 py-3 text-slate-700 max-w-xs truncate">
+                            {send.subject_line || '(no subject)'}
+                          </td>
+                          <td className="px-6 py-3 text-slate-600">
+                            {send.scheduled_at ? new Date(send.scheduled_at).toLocaleDateString() : 'N/A'}
+                          </td>
+                          <td className="px-6 py-3">
+                            <EmailStatusBadge status={send.status} />
+                          </td>
+                          <td className="px-6 py-3 text-center text-slate-700">
+                            {send.open_count || 0}
+                          </td>
+                          <td className="px-6 py-3 text-center text-slate-700">
+                            {send.click_count || 0}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Cards */}

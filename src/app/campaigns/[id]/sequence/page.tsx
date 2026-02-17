@@ -406,12 +406,31 @@ export default function SequencePage() {
         .eq('status', 'scheduled')
       if (actErr) throw actErr
 
+      // Generate email queue via bulk API
+      const bulkRes = await fetch('/api/email-sends/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaign_id: campaignId }),
+      })
+      const bulkData = await bulkRes.json()
+      if (!bulkRes.ok) {
+        console.error('Bulk email queue generation failed:', bulkData)
+        // Don't throw — campaign is already active, email queue can be retried
+      }
+
       setCampaign((prev) => prev ? { ...prev, status: 'active' } : prev)
+
+      return bulkData
     })()
 
     await toastPromise(launchPromise, {
-      loading: 'Launching campaign...',
-      success: 'Campaign launched!',
+      loading: 'Launching campaign and generating email queue...',
+      success: (data) => {
+        if (data?.created) {
+          return `Campaign launched! ${data.created} emails queued across ${data.steps} steps.`
+        }
+        return 'Campaign launched!'
+      },
       error: 'Failed to launch campaign',
     })
   }, [campaign, campaignId]) // eslint-disable-line react-hooks/exhaustive-deps
