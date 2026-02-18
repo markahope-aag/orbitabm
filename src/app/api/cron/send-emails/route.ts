@@ -4,6 +4,7 @@ import { createSesClient, sendViaSes } from '@/lib/email/ses-client'
 import { buildHtmlEmail, buildPlainEmail, buildUnsubscribeFooter, formatBodyText } from '@/lib/email/builder'
 import { renderMergeFields, buildMergeData } from '@/lib/email/merge-fields'
 import { signUnsubscribeToken } from '@/lib/email/unsubscribe-token'
+import { createEmailEngagement, decryptHubSpotToken } from '@/lib/email/hubspot'
 
 export const maxDuration = 300 // 5 min max for Vercel
 export const dynamic = 'force-dynamic'
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
       .from('email_sends')
       .select(`
         *,
-        contacts (id, first_name, last_name, title, email, email_unsubscribed, companies (id, name, website, city, state)),
+        contacts (id, first_name, last_name, title, email, email_unsubscribed, hubspot_contact_id, companies (id, name, website, city, state, hubspot_company_id)),
         campaigns (id, name, status),
         email_templates (id, subject_line, subject_line_alt, body, include_unsubscribe_footer)
       `)
@@ -205,6 +206,30 @@ export async function GET(request: NextRequest) {
             sent_at: new Date().toISOString(),
           })
           .eq('id', emailSend.id)
+
+        // Sync to HubSpot
+        if (settings.hubspot_enabled && settings.hubspot_token_encrypted && contact?.hubspot_contact_id) {
+          try {
+            const hsToken = decryptHubSpotToken(settings.hubspot_token_encrypted)
+            const engagementId = await createEmailEngagement(hsToken, {
+              subject,
+              bodyPlain,
+              fromEmail: settings.from_email,
+              fromName: settings.from_name || '',
+              hubspotOwnerId: settings.hubspot_owner_id,
+              contactHsId: contact.hubspot_contact_id,
+              companyHsId: company?.hubspot_company_id,
+            })
+            if (engagementId) {
+              await supabase
+                .from('email_sends')
+                .update({ hubspot_engagement_id: engagementId })
+                .eq('id', emailSend.id)
+            }
+          } catch (hsErr) {
+            console.error(`[cron] HubSpot sync failed for email ${emailSend.id}:`, hsErr)
+          }
+        }
 
         // Update linked activity
         if (emailSend.activity_id) {

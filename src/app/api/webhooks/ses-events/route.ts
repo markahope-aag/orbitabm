@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sesEventSchema } from '@/lib/validations/schemas'
+import { createTimelineNote, decryptHubSpotToken } from '@/lib/email/hubspot'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     // Look up the email send by SES message ID
     const { data: emailSend, error: lookupError } = await supabase
       .from('email_sends')
-      .select('id, organization_id, contact_id, campaign_id, activity_id, status, open_count, click_count, clicked_links')
+      .select('id, organization_id, contact_id, campaign_id, activity_id, status, open_count, click_count, clicked_links, hubspot_engagement_id, subject_line')
       .eq('ses_message_id', ses_message_id)
       .single()
 
@@ -204,6 +205,41 @@ export async function POST(request: NextRequest) {
         .from('email_sends')
         .update(update)
         .eq('id', emailSend.id)
+    }
+
+    // Sync event to HubSpot as a timeline note
+    if (['Open', 'Click', 'Bounce', 'Complaint'].includes(event_type)) {
+      try {
+        const { data: orgSettings } = await supabase
+          .from('email_settings')
+          .select('hubspot_enabled, hubspot_token_encrypted')
+          .eq('organization_id', emailSend.organization_id)
+          .single()
+
+        if (orgSettings?.hubspot_enabled && orgSettings.hubspot_token_encrypted && emailSend.contact_id) {
+          const { data: hsContact } = await supabase
+            .from('contacts')
+            .select('hubspot_contact_id, companies(hubspot_company_id)')
+            .eq('id', emailSend.contact_id)
+            .single()
+
+          if (hsContact?.hubspot_contact_id) {
+            const hsToken = decryptHubSpotToken(orgSettings.hubspot_token_encrypted)
+            const company = hsContact.companies as { hubspot_company_id?: string } | null
+            await createTimelineNote(hsToken, {
+              eventType: event_type as 'Open' | 'Click' | 'Bounce' | 'Complaint',
+              contactHsId: hsContact.hubspot_contact_id,
+              companyHsId: company?.hubspot_company_id,
+              subject: emailSend.subject_line || '',
+              timestamp: now,
+              link: (details?.link as string) || undefined,
+              bounceType: (details?.bounceType as string) || undefined,
+            })
+          }
+        }
+      } catch (hsErr) {
+        console.error('[ses-events] HubSpot note sync failed:', hsErr)
+      }
     }
 
     return NextResponse.json({ success: true, event_type, email_send_id: emailSend.id })
