@@ -19,6 +19,7 @@ import {
   Users,
   FileSearch,
   Mail,
+  CalendarClock,
   Settings,
   Shield,
 } from 'lucide-react'
@@ -51,6 +52,7 @@ const navigation = [
       { name: 'Playbooks', href: '/playbooks', icon: BookOpen },
       { name: 'Activities', href: '/activities', icon: CheckSquare },
       { name: 'Email Dashboard', href: '/email-dashboard', icon: Mail },
+      { name: 'Email Pipeline', href: '/email-pipeline', icon: CalendarClock },
       { name: 'Assets', href: '/assets', icon: FileText },
     ]
   },
